@@ -10,6 +10,15 @@ describe('useHapticAction', () => {
     jest.clearAllMocks();
   });
 
+  it('returns a stable async action function', () => {
+    const { result, rerender } = renderHook(() => useHapticAction());
+    const firstAction = result.current;
+
+    rerender();
+
+    expect(result.current).toBe(firstAction);
+  });
+
   it('runs medium haptic feedback by default', async () => {
     impactMock.mockResolvedValue(undefined);
     const { result } = renderHook(() => useHapticAction());

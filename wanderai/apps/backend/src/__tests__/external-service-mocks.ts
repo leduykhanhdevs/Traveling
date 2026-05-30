@@ -17,6 +17,7 @@ jest.mock('../services/prisma.service.js', () => ({
     },
     itinerary: {
       create: jest.fn(),
+      findUnique: jest.fn(),
     },
     review: {
       create: jest.fn(),

@@ -1,275 +1,345 @@
-import { useAuth } from '@clerk/clerk-expo';
-import { useMutation } from '@tanstack/react-query';
-import type { LanguageCode, OcrTextBlock, TranslationMode } from '@wanderai/shared';
-import * as ImagePicker from 'expo-image-picker';
-import * as Speech from 'expo-speech';
-import { Camera, Keyboard, Mic, Volume2 } from 'lucide-react-native';
-import { useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SUPPORTED_LANGUAGES, type LanguageCode } from '@wanderai/shared';
+import { ArrowLeftRight, BookOpen, Mic, Send, Volume2 } from 'lucide-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GlassCard } from '../../../components/GlassCard';
 import { LanguagePicker } from '../../../components/LanguagePicker';
+import { PhrasebookSheet, type PhrasebookPhrase } from '../../../components/PhrasebookSheet';
 import { PrimaryButton } from '../../../components/PrimaryButton';
-import { SegmentedControl } from '../../../components/SegmentedControl';
 import { TextField } from '../../../components/TextField';
+import {
+  TranslationBubble,
+  type TranslationBubbleMessage,
+} from '../../../components/TranslationBubble';
 import { theme } from '../../../constants/theme';
-import { useHapticAction } from '../../../hooks/useHapticAction';
 import { useVoiceRecorder } from '../../../hooks/useVoiceRecorder';
-import { translateImage, translateText, transcribeAudio } from '../../../services/translation';
 import { useOfflinePhrasesStore } from '../../../stores/offlinePhrasesStore';
 import { usePreferencesStore } from '../../../stores/preferencesStore';
-import { useSubscriptionStore } from '../../../stores/subscriptionStore';
 
-const modes: readonly TranslationMode[] = ['keyboard', 'voice', 'camera'];
+type ClipboardLike = {
+  clipboard?: {
+    writeText: (text: string) => Promise<void>;
+  };
+};
+
+const languageFlags: Partial<Record<LanguageCode, string>> = {
+  en: '🇺🇸',
+  es: '🇪🇸',
+  fr: '🇫🇷',
+  de: '🇩🇪',
+  it: '🇮🇹',
+  ja: '🇯🇵',
+  ko: '🇰🇷',
+  vi: '🇻🇳',
+  zh: '🇨🇳',
+};
+
+const initialMessages: readonly TranslationBubbleMessage[] = [
+  {
+    id: 'message-1-source',
+    languageLabel: 'English',
+    role: 'source',
+    text: 'Hi, can you recommend a local breakfast spot near here?',
+  },
+  {
+    flag: '🇻🇳',
+    id: 'message-1-translation',
+    languageLabel: 'Vietnamese',
+    role: 'translation',
+    text: 'Xin chao, ban co the goi y mot quan an sang dia phuong gan day khong?',
+  },
+  {
+    id: 'message-2-source',
+    languageLabel: 'English',
+    role: 'source',
+    text: 'Please make it not too spicy.',
+  },
+  {
+    flag: '🇻🇳',
+    id: 'message-2-translation',
+    languageLabel: 'Vietnamese',
+    role: 'translation',
+    text: 'Lam on dung lam qua cay.',
+  },
+];
+
+const getLanguageLabel = (language: LanguageCode): string =>
+  SUPPORTED_LANGUAGES.find((item) => item.code === language)?.name ?? language.toUpperCase();
+
+const mockTranslate = (text: string, targetLanguage: LanguageCode): string => {
+  if (targetLanguage === 'vi') {
+    return `Ban dich: ${text}`;
+  }
+  if (targetLanguage === 'en') {
+    return `Translation: ${text}`;
+  }
+  return `${getLanguageLabel(targetLanguage)} translation: ${text}`;
+};
+
+const copyToClipboard = async (text: string): Promise<void> => {
+  const maybeNavigator = (globalThis as typeof globalThis & { navigator?: ClipboardLike }).navigator;
+  await maybeNavigator?.clipboard?.writeText(text);
+};
 
 export default function TranslateScreen(): JSX.Element {
-  const { getToken } = useAuth();
   const preferredLanguage = usePreferencesStore((state) => state.preferredLanguage);
-  const [mode, setMode] = useState<TranslationMode>('keyboard');
-  const [sourceText, setSourceText] = useState('');
-  const [targetLang, setTargetLang] = useState<LanguageCode>(
+  const packs = useOfflinePhrasesStore((state) => state.packs);
+  const recorder = useVoiceRecorder();
+  const listRef = useRef<FlatList<TranslationBubbleMessage>>(null);
+  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('en');
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>(
     preferredLanguage === 'en' ? 'vi' : preferredLanguage,
   );
-  const [conversationLang, setConversationLang] = useState<LanguageCode>('en');
-  const [conversationTurn, setConversationTurn] = useState<'a' | 'b'>('a');
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [ocrBlocks, setOcrBlocks] = useState<readonly OcrTextBlock[]>([]);
-  const recorder = useVoiceRecorder();
-  const haptic = useHapticAction();
-  const incrementTranslation = useSubscriptionStore((state) => state.incrementTranslation);
-  const packs = useOfflinePhrasesStore((state) => state.packs);
-  const downloadPack = useOfflinePhrasesStore((state) => state.downloadPack);
+  const [messages, setMessages] = useState<readonly TranslationBubbleMessage[]>(initialMessages);
+  const [inputText, setInputText] = useState('');
+  const [phrasebookVisible, setPhrasebookVisible] = useState(false);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [lastPlayedId, setLastPlayedId] = useState<string | null>(null);
+  const reducedMotion = useReducedMotion();
+  const swapRotation = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
 
-  const translation = useMutation({
-    mutationFn: async (text: string) => {
-      const token = await getToken();
-      const activeTarget = conversationTurn === 'a' ? targetLang : conversationLang;
-      return translateText(
-        {
-          sourceText: text,
-          sourceLang: 'auto',
-          targetLang: activeTarget,
-        },
-        token,
-      );
-    },
-    onSuccess: (data) => {
-      incrementTranslation();
-      Speech.speak(data.translatedText, { language: data.targetLang });
-      setConversationTurn((turn) => (turn === 'a' ? 'b' : 'a'));
-    },
-  });
+  const sourceLabel = useMemo(() => getLanguageLabel(sourceLanguage), [sourceLanguage]);
+  const targetLabel = useMemo(() => getLanguageLabel(targetLanguage), [targetLanguage]);
+  const offlinePhraseCount = packs.vn?.length ?? 0;
 
-  const cameraMutation = useMutation({
-    mutationFn: async (base64: string) => {
-      const token = await getToken();
-      return translateImage(base64, targetLang, token);
-    },
-    onSuccess: (data) => {
-      setOcrBlocks(data.blocks);
-      incrementTranslation();
-    },
-  });
+  useEffect(() => {
+    const scrollTimer = setTimeout(() => {
+      listRef.current?.scrollToEnd({ animated: !reducedMotion });
+    }, 80);
+    return () => clearTimeout(scrollTimer);
+  }, [messages, reducedMotion]);
 
-  const runKeyboardTranslation = async (): Promise<void> => {
-    await haptic();
-    if (sourceText.trim()) {
-      translation.mutate(sourceText.trim());
-    }
-  };
-
-  const stopVoiceTranslation = async (): Promise<void> => {
-    await haptic();
-    const audio = await recorder.stopRecording();
-    if (!audio) {
+  useEffect(() => {
+    if (recorder.recording && !reducedMotion) {
+      pulseScale.value = withRepeat(withTiming(1.35, { duration: 720 }), -1, true);
       return;
     }
-    try {
-      const token = await getToken();
-      const transcription = await transcribeAudio(audio.base64, 'auto', token);
-      setSourceText(transcription.transcript);
-      translation.mutate(transcription.transcript);
-    } catch {
-      // Keep the previous translation visible if transcription fails.
+
+    cancelAnimation(pulseScale);
+    pulseScale.value = withTiming(1, { duration: 160 });
+  }, [pulseScale, recorder.recording, reducedMotion]);
+
+  const swapStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${swapRotation.value}deg` }],
+  }));
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: recorder.recording ? 0.28 : 0,
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  const appendTranslationPair = (text: string): void => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return;
     }
+
+    const timestamp = Date.now();
+    const translatedText = mockTranslate(trimmed, targetLanguage);
+    const nextMessages: readonly TranslationBubbleMessage[] = [
+      {
+        id: `message-${timestamp}-source`,
+        languageLabel: sourceLabel,
+        role: 'source',
+        text: trimmed,
+      },
+      {
+        flag: languageFlags[targetLanguage] ?? '🌐',
+        id: `message-${timestamp}-translation`,
+        languageLabel: targetLabel,
+        role: 'translation',
+        text: translatedText,
+      },
+    ];
+
+    setMessages((current) => [...current, ...nextMessages]);
+    setInputText('');
   };
 
-  const captureMenu = async (): Promise<void> => {
-    await haptic();
-    try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        return;
-      }
-      const result = await ImagePicker.launchCameraAsync({
-        base64: true,
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.8,
-      });
-      if (result.canceled || !result.assets[0]?.base64) {
-        return;
-      }
-      setImageUri(result.assets[0].uri);
-      cameraMutation.mutate(result.assets[0].base64);
-    } catch {
-      setOcrBlocks([]);
-    }
+  const swapLanguages = (): void => {
+    setSourceLanguage(targetLanguage);
+    setTargetLanguage(sourceLanguage);
+    swapRotation.value = withTiming(swapRotation.value + 180, { duration: reducedMotion ? 0 : 260 });
+  };
+
+  const startVoiceInput = async (): Promise<void> => {
+    await recorder.startRecording();
+  };
+
+  const stopVoiceInput = async (): Promise<void> => {
+    await recorder.stopRecording();
+    appendTranslationPair('Could you help me find the nearest pharmacy?');
+  };
+
+  const handleCopy = (message: TranslationBubbleMessage): void => {
+    setCopiedMessageId(message.id);
+    void copyToClipboard(message.text).catch(() => undefined);
+    setTimeout(() => setCopiedMessageId(null), 1400);
+  };
+
+  const playMessage = (message: TranslationBubbleMessage): void => {
+    setLastPlayedId(message.id);
+    setTimeout(() => setLastPlayedId(null), 900);
+  };
+
+  const playPhrase = (phrase: PhrasebookPhrase): void => {
+    setLastPlayedId(phrase.id);
+    setTimeout(() => setLastPlayedId(null), 900);
   };
 
   return (
     <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-5" contentContainerClassName="gap-4 pb-32 pt-5">
-        <View>
-          <Text className="font-inter-bold text-4xl text-white">Translate</Text>
+      <View className="flex-1 px-5 pb-4 pt-5">
+        <View className="mb-5">
+          <Text accessibilityLabel="Translate" className="font-inter-bold text-4xl text-white">
+            Translate
+          </Text>
           <Text className="mt-2 font-inter text-base text-zinc-300">
-            Keyboard, voice, camera, and two-way conversation.
+            A bilingual conversation space for the road.
           </Text>
         </View>
 
-        <SegmentedControl options={modes} value={mode} onChange={setMode} />
+        <View className="mb-4 rounded-2xl border border-white/10 bg-white/10 p-4">
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="font-inter-bold text-lg text-white">Languages</Text>
+            <TouchableOpacity
+              accessibilityHint="Swaps source and target languages."
+              accessibilityLabel="Swap translation languages"
+              accessibilityRole="button"
+              className="h-11 w-11 items-center justify-center rounded-full bg-primary"
+              onPress={swapLanguages}
+            >
+              <Animated.View style={swapStyle}>
+                <ArrowLeftRight color="#FFFFFF" size={20} />
+              </Animated.View>
+            </TouchableOpacity>
+          </View>
+          <Text className="mb-2 font-inter-semibold text-sm text-zinc-300">Source language</Text>
+          <LanguagePicker value={sourceLanguage} onChange={setSourceLanguage} />
+          <Text className="mb-2 mt-4 font-inter-semibold text-sm text-zinc-300">Target language</Text>
+          <LanguagePicker value={targetLanguage} onChange={setTargetLanguage} />
+        </View>
 
-        <GlassCard>
-          <Text className="mb-3 font-inter-semibold text-white">Target language</Text>
-          <LanguagePicker value={targetLang} onChange={setTargetLang} />
-          <Text className="mb-3 mt-4 font-inter-semibold text-white">Conversation partner</Text>
-          <LanguagePicker value={conversationLang} onChange={setConversationLang} />
-        </GlassCard>
+        <FlatList
+          ref={listRef}
+          accessibilityLabel="Translation conversation"
+          className="flex-1"
+          contentContainerClassName="pb-5"
+          data={messages}
+          inverted={false}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TranslationBubble
+              copied={copiedMessageId === item.id}
+              message={item}
+              onCopy={handleCopy}
+              onPlay={playMessage}
+            />
+          )}
+        />
 
-        {mode === 'keyboard' ? (
-          <GlassCard>
-            <View className="gap-3">
-              <View className="flex-row items-center gap-2">
-                <Keyboard size={18} color={theme.colors.text} />
-                <Text className="font-inter-semibold text-white">Keyboard input</Text>
-              </View>
-              <TextField
-                multiline
-                className="min-h-32 text-top"
-                value={sourceText}
-                onChangeText={setSourceText}
-                placeholder="Type text from a sign, menu, or conversation"
-              />
-              <PrimaryButton
-                label="Translate"
-                loading={translation.isPending}
-                accessibilityHint="Translates the entered text into the selected target language."
-                onPress={() => void runKeyboardTranslation()}
-              />
+        <View className="rounded-3xl border border-white/10 bg-surface p-4">
+          <View className="mb-3 flex-row items-center justify-between">
+            <TouchableOpacity
+              accessibilityHint="Opens the quick offline phrasebook panel."
+              accessibilityLabel="Open phrasebook"
+              accessibilityRole="button"
+              className="flex-row items-center gap-2 rounded-full bg-white/10 px-4 py-2"
+              onPress={() => setPhrasebookVisible(true)}
+            >
+              <BookOpen color="#FFFFFF" size={18} />
+              <Text className="font-inter-semibold text-sm text-white">Phrasebook</Text>
+            </TouchableOpacity>
+            <View className="flex-row items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2">
+              <Text className="font-inter-semibold text-xs text-emerald-300">
+                ✓ {offlinePhraseCount > 0 ? 'Available offline' : 'Offline ready'}
+              </Text>
             </View>
-          </GlassCard>
-        ) : null}
+          </View>
 
-        {mode === 'voice' ? (
-          <GlassCard>
-            <View className="items-center gap-4 py-4">
+          <TextField
+            accessibilityLabel="Translation input"
+            className="min-h-24 text-top"
+            multiline
+            onChangeText={setInputText}
+            placeholder="Type a message to translate..."
+            value={inputText}
+          />
+
+          <View className="mt-3 flex-row items-center gap-3">
+            <View className="relative h-14 w-14 items-center justify-center">
+              <Animated.View
+                className="absolute h-14 w-14 rounded-full bg-accent"
+                pointerEvents="none"
+                style={pulseStyle}
+              />
               <TouchableOpacity
-                accessibilityHint="Hold to record speech, then release to translate it."
-                accessibilityLabel="Voice translation microphone"
+                accessibilityHint="Hold to record voice input, release to mock translate it."
+                accessibilityLabel="Voice input microphone"
                 accessibilityRole="button"
                 accessibilityState={{ selected: recorder.recording }}
-                className={`h-28 w-28 items-center justify-center rounded-full ${
-                  recorder.recording ? 'bg-accent' : 'bg-primary'
+                className={`h-12 w-12 items-center justify-center rounded-full ${
+                  recorder.recording ? 'bg-accent' : 'bg-white/10'
                 }`}
                 onPressIn={() => {
-                  void recorder.startRecording();
+                  void startVoiceInput();
                 }}
                 onPressOut={() => {
-                  void stopVoiceTranslation();
+                  void stopVoiceInput();
                 }}
               >
-                <Mic size={40} color={theme.colors.text} />
-              </TouchableOpacity>
-              <Text className="font-inter text-zinc-300">
-                {recorder.recording ? 'Release to translate' : 'Hold to record'}
-              </Text>
-            </View>
-          </GlassCard>
-        ) : null}
-
-        {mode === 'camera' ? (
-          <GlassCard>
-            <View className="gap-3">
-              <PrimaryButton
-                label="Capture menu"
-                icon={Camera}
-                loading={cameraMutation.isPending}
-                accessibilityHint="Opens the camera to capture a menu or sign for translation."
-                onPress={() => void captureMenu()}
-              />
-              {imageUri ? (
-                <View className="relative overflow-hidden rounded-lg">
-                  <Image
-                    accessibilityLabel="Captured image for camera translation"
-                    source={{ uri: imageUri }}
-                    className="h-96 w-full rounded-lg"
-                  />
-                  {ocrBlocks.map((block) => (
-                    <View
-                      key={`${block.text}-${block.boundingBox.x}-${block.boundingBox.y}`}
-                      className="absolute rounded-md bg-background/80 px-2 py-1"
-                      style={{
-                        left: Math.max(4, block.boundingBox.x * 0.22),
-                        top: Math.max(4, block.boundingBox.y * 0.22),
-                        maxWidth: 260,
-                      }}
-                    >
-                      <Text className="font-inter-semibold text-xs text-white">
-                        {block.translatedText}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-            </View>
-          </GlassCard>
-        ) : null}
-
-        {translation.data ? (
-          <GlassCard>
-            <View className="flex-row items-center justify-between">
-              <Text className="font-inter-semibold text-white">Translated output</Text>
-              <TouchableOpacity
-                accessibilityHint="Plays the translated output aloud."
-                accessibilityLabel="Play translated output"
-                accessibilityRole="button"
-                onPress={() =>
-                  Speech.speak(translation.data.translatedText, {
-                    language: translation.data.targetLang,
-                  })
-                }
-              >
-                <Volume2 color={theme.colors.text} size={20} />
+                <Mic color="#FFFFFF" size={22} />
               </TouchableOpacity>
             </View>
-            <Text className="mt-3 font-inter-bold text-2xl text-white">
-              {translation.data.translatedText}
-            </Text>
-            <Text className="mt-3 font-inter text-sm text-zinc-300">
-              IPA {translation.data.pronunciation.ipa}
-            </Text>
-            <Text className="font-inter text-sm text-zinc-300">
-              Romanization {translation.data.pronunciation.romanization}
-            </Text>
-          </GlassCard>
-        ) : null}
 
-        <GlassCard>
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="font-inter-semibold text-white">Offline Vietnam pack</Text>
-              <Text className="font-inter text-sm text-zinc-300">
-                {packs.vn?.length ?? 0} phrases available offline
-              </Text>
-            </View>
             <PrimaryButton
-              label="Download"
-              variant="ghost"
-              accessibilityHint="Downloads the Vietnam offline phrase pack."
-              onPress={() => downloadPack('vn')}
+              accessibilityHint="Adds a mock translated response to the conversation."
+              className="flex-1"
+              disabled={!inputText.trim()}
+              icon={Send}
+              label="Translate"
+              onPress={() => appendTranslationPair(inputText)}
             />
+
+            <TouchableOpacity
+              accessibilityHint="Replays the most recent mock spoken translation."
+              accessibilityLabel="Play latest translation"
+              accessibilityRole="button"
+              className={`h-12 w-12 items-center justify-center rounded-full ${
+                lastPlayedId ? 'bg-primary' : 'bg-white/10'
+              }`}
+              onPress={() => {
+                const latest = [...messages].reverse().find((message) => message.role === 'translation');
+                if (latest) {
+                  playMessage(latest);
+                }
+              }}
+            >
+              <Volume2 color={theme.colors.text} size={20} />
+            </TouchableOpacity>
           </View>
-        </GlassCard>
-      </ScrollView>
+
+          {recorder.error ? (
+            <Text className="mt-2 font-inter-semibold text-xs text-accent">{recorder.error}</Text>
+          ) : null}
+        </View>
+      </View>
+
+      <PhrasebookSheet
+        offlineAvailable
+        onClose={() => setPhrasebookVisible(false)}
+        onPlayPhrase={playPhrase}
+        visible={phrasebookVisible}
+      />
     </SafeAreaView>
   );
 }

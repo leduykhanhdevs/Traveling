@@ -24,6 +24,9 @@ describe('profile.controller', () => {
   const userFindUniqueMock = prisma.user.findUnique as unknown as jest.MockedFunction<
     (args: unknown) => Promise<unknown>
   >;
+  const userUpsertMock = prisma.user.upsert as unknown as jest.MockedFunction<
+    (args: unknown) => Promise<unknown>
+  >;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -61,13 +64,41 @@ describe('profile.controller', () => {
       expect(userFindUniqueMock).toHaveBeenCalledWith({ where: { clerkId: 'clerk_user_1' } });
       expect(getEntitlementStatusMock).toHaveBeenCalledWith('clerk_user_1');
     });
+
+    it('upserts profile data for the authenticated user', async () => {
+      const user = {
+        id: 'user_1',
+        clerkId: 'clerk_user_1',
+        ...validProfileBody,
+      };
+      userUpsertMock.mockResolvedValue(user);
+      const app = buildTestApp([
+        {
+          method: 'put',
+          path: '/',
+          handlers: [authenticated('clerk_user_1'), putProfile],
+        },
+      ]);
+
+      const response = await request(app).put('/').send(validProfileBody);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ success: true, data: user });
+      expect(userUpsertMock).toHaveBeenCalledWith({
+        where: {
+          clerkId: 'clerk_user_1',
+        },
+        update: validProfileBody,
+        create: {
+          clerkId: 'clerk_user_1',
+          ...validProfileBody,
+        },
+      });
+    });
   });
 
   describe('4xx error', () => {
     it('returns validation error for invalid profile payload', async () => {
-      const userUpsertMock = prisma.user.upsert as unknown as jest.MockedFunction<
-        (args: unknown) => Promise<unknown>
-      >;
       const app = buildTestApp([
         {
           method: 'put',
@@ -101,6 +132,22 @@ describe('profile.controller', () => {
       expect(response.body.error.code).toBe('UNAUTHORIZED');
       expect(userFindUniqueMock).not.toHaveBeenCalled();
       expect(getEntitlementStatusMock).not.toHaveBeenCalled();
+    });
+
+    it('rejects profile updates without auth context', async () => {
+      const app = buildTestApp([
+        {
+          method: 'put',
+          path: '/',
+          handlers: [putProfile],
+        },
+      ]);
+
+      const response = await request(app).put('/').send(validProfileBody);
+
+      expect(response.status).toBe(401);
+      expect(response.body.error.code).toBe('UNAUTHORIZED');
+      expect(userUpsertMock).not.toHaveBeenCalled();
     });
   });
 });

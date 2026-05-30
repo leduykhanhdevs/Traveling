@@ -84,8 +84,12 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       gcTime: queryCacheMaxAgeMs,
+      networkMode: 'offlineFirst',
       retry: 1,
       staleTime: defaultQueryStaleTimeMs,
+    },
+    mutations: {
+      networkMode: 'offlineFirst',
     },
   },
 });

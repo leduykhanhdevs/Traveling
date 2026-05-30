@@ -89,10 +89,11 @@ const privacyPolicyHtml = page(
     <ul>
       <li><strong>Account and authentication data:</strong> name, email address, social login identifiers, and session metadata provided through Clerk.</li>
       <li><strong>Location data:</strong> GPS coordinates and approximate location used for nearby discovery, maps, emergency utilities, recommendations, and itinerary planning.</li>
+      <li><strong>Microphone and voice data:</strong> voice recordings or audio snippets you choose to capture for speech-to-text, voice translation, pronunciation, and conversation features.</li>
       <li><strong>Search and app activity:</strong> discovery queries, place interactions, saved places, itinerary requests, translation requests, and feature usage.</li>
       <li><strong>Preferences:</strong> preferred language, dietary restrictions, travel style, taste preferences, nationality, and personalization settings.</li>
       <li><strong>User content:</strong> reviews, ratings, photos you choose to upload, community posts, and emergency contact information you choose to store.</li>
-      <li><strong>Device and diagnostics data:</strong> device type, operating system, app version, crash logs, performance data, push notification tokens, and analytics events.</li>
+      <li><strong>Device and diagnostics data:</strong> device type, operating system, app version, Sentry crash reports, performance data, push notification tokens, and analytics events.</li>
       <li><strong>Subscription data:</strong> entitlement status, purchase identifiers, renewal status, and product information processed through RevenueCat.</li>
     </ul>
 
@@ -115,7 +116,7 @@ const privacyPolicyHtml = page(
       <li><strong>OpenAI:</strong> AI reasoning, place analysis, query understanding, and personalization outputs.</li>
       <li><strong>RevenueCat:</strong> subscription status, in-app purchase entitlement management, and purchase metadata.</li>
       <li><strong>Analytics providers:</strong> product analytics events, usage trends, and operational metrics.</li>
-      <li><strong>Crash and diagnostics providers:</strong> crash reporting and error diagnostics.</li>
+      <li><strong>Sentry:</strong> crash reporting, unhandled error capture, performance diagnostics, device metadata, and reliability monitoring.</li>
     </ul>
 
     <h2>Location Data</h2>
@@ -125,11 +126,20 @@ const privacyPolicyHtml = page(
       your device settings, but some features may not work correctly without location access.
     </p>
 
+    <h2>Microphone and Voice Data</h2>
+    <p>
+      Microphone access is used only when you choose voice translation, voice recording, or
+      conversation features. Audio may be processed for speech-to-text and translation. You can
+      disable microphone permissions in your device settings, but voice features may not work
+      correctly without microphone access.
+    </p>
+
     <h2>Analytics and Diagnostics</h2>
     <p>
       We collect analytics events and diagnostics data to understand feature usage, identify bugs,
-      improve performance, and measure reliability. Analytics events are not intended to include
-      sensitive travel documents, payment card numbers, or passwords.
+      improve performance, and measure reliability. Sentry crash data may include device metadata,
+      stack traces, app version, operating system, and recent error context. Analytics events are
+      not intended to include sensitive travel documents, payment card numbers, or passwords.
     </p>
 
     <h2>Sharing of Information</h2>
@@ -249,8 +259,8 @@ const termsHtml = page(
     <h2>Third-Party Services</h2>
     <p>
       WanderAI integrates with third-party services such as Clerk, Google Places API, OpenAI,
-      RevenueCat, analytics providers, app stores, and diagnostics providers. We are not responsible
-      for third-party services, data, content, availability, or terms.
+      RevenueCat, analytics providers, Sentry, app stores, and diagnostics providers. We are not
+      responsible for third-party services, data, content, availability, or terms.
     </p>
 
     <h2>Privacy</h2>

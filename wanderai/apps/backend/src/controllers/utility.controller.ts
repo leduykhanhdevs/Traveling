@@ -15,7 +15,7 @@ import { sendSuccess } from '../utils/http-response.js';
 
 const deviceTokenSchema = z.object({
   token: z.string().trim().min(1),
-  platform: z.string().trim().min(1).max(32),
+  platform: z.enum(['ios', 'android']),
 });
 
 const pushNotificationSchema = z.object({

@@ -15,6 +15,41 @@ export type CommunityPage = {
   filters: CommunityFilters;
 };
 
+export type CommunityAuthor = {
+  id: string;
+  name: string;
+  initials: string;
+};
+
+export type CommunityPost = {
+  id: string;
+  userId: string;
+  author: CommunityAuthor;
+  content: string;
+  imageUrl?: string;
+  placeId?: string;
+  createdAt: string;
+  updatedAt: string;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+};
+
+export type CommunityComment = {
+  id: string;
+  postId: string;
+  userId: string;
+  author: CommunityAuthor;
+  content: string;
+  createdAt: string;
+};
+
+export type CreateCommunityPostInput = {
+  content: string;
+  imageUrl?: string;
+  placeId?: string;
+};
+
 export const getCommunityFeed = (
   filters: CommunityFilters,
   token?: string | null,
@@ -43,6 +78,42 @@ export const postReview = (
   apiRequest('/api/v1/community/reviews', {
     method: 'POST',
     body: review,
+    token,
+  });
+
+export const createCommunityPost = (
+  post: CreateCommunityPostInput,
+  token?: string | null,
+): Promise<CommunityPost> =>
+  apiRequest('/api/v1/community/posts', {
+    method: 'POST',
+    body: post,
+    token,
+  });
+
+export const getPostComments = (
+  postId: string,
+  token?: string | null,
+): Promise<{ comments: readonly CommunityComment[] }> =>
+  apiRequest(`/api/v1/community/posts/${encodeURIComponent(postId)}/comments`, { token });
+
+export const addPostComment = (
+  postId: string,
+  content: string,
+  token?: string | null,
+): Promise<CommunityComment> =>
+  apiRequest(`/api/v1/community/posts/${encodeURIComponent(postId)}/comments`, {
+    method: 'POST',
+    body: { content },
+    token,
+  });
+
+export const togglePostLike = (
+  postId: string,
+  token?: string | null,
+): Promise<{ liked: boolean; count: number }> =>
+  apiRequest(`/api/v1/community/posts/${encodeURIComponent(postId)}/like`, {
+    method: 'POST',
     token,
   });
 

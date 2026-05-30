@@ -11,6 +11,14 @@ describe('useCurrentLocation', () => {
     jest.clearAllMocks();
   });
 
+  it('starts with empty location state', () => {
+    const { result } = renderHook(() => useCurrentLocation());
+
+    expect(result.current.location).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
   it('loads the current GPS coordinates after permission is granted', async () => {
     requestPermissionMock.mockResolvedValue({
       status: Location.PermissionStatus.GRANTED,
@@ -80,6 +88,24 @@ describe('useCurrentLocation', () => {
 
     expect(location).toBeNull();
     expect(result.current.error).toBe('GPS unavailable');
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('uses the fallback error message for non-Error lookup failures', async () => {
+    requestPermissionMock.mockResolvedValue({
+      status: Location.PermissionStatus.GRANTED,
+      granted: true,
+      canAskAgain: true,
+      expires: 'never',
+    });
+    getCurrentPositionMock.mockRejectedValue('no gps');
+    const { result } = renderHook(() => useCurrentLocation());
+
+    await act(async () => {
+      await result.current.refreshLocation();
+    });
+
+    expect(result.current.error).toBe('Location lookup failed.');
     expect(result.current.loading).toBe(false);
   });
 });

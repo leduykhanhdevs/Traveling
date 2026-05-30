@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime logs
+*.log
+backend-dev.err.log
+backend-dev.out.log
+clerk-*.txt

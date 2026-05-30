@@ -6,8 +6,16 @@ jest.mock('../services/community.service.js', () => ({
 
 import './external-service-mocks.js';
 import request from 'supertest';
-import { getCommunityFeed, postCommunityReview } from '../controllers/community.controller.js';
-import { createCommunityReview, listCommunityReviews } from '../services/community.service.js';
+import {
+  getCommunityFeed,
+  postCommunityReview,
+  postFollowTraveler,
+} from '../controllers/community.controller.js';
+import {
+  createCommunityReview,
+  followTraveler,
+  listCommunityReviews,
+} from '../services/community.service.js';
 import { authenticated, buildTestApp } from './controller-test-utils.js';
 
 const validReviewBody = {
@@ -57,6 +65,24 @@ describe('community.controller', () => {
         ...validReviewBody,
       });
     });
+
+    it('follows another traveler for the authenticated user', async () => {
+      const followTravelerMock = jest.mocked(followTraveler);
+      followTravelerMock.mockResolvedValue({ followed: true });
+      const app = buildTestApp([
+        {
+          method: 'post',
+          path: '/follow',
+          handlers: [authenticated('clerk_user_1'), postFollowTraveler],
+        },
+      ]);
+
+      const response = await request(app).post('/follow').send({ userId: 'user_2' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ success: true, data: { followed: true } });
+      expect(followTravelerMock).toHaveBeenCalledWith('clerk_user_1', 'user_2');
+    });
   });
 
   describe('4xx error', () => {
@@ -78,6 +104,23 @@ describe('community.controller', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
       expect(createCommunityReviewMock).not.toHaveBeenCalled();
+    });
+
+    it('returns validation error for an empty follow target', async () => {
+      const followTravelerMock = jest.mocked(followTraveler);
+      const app = buildTestApp([
+        {
+          method: 'post',
+          path: '/follow',
+          handlers: [authenticated('clerk_user_1'), postFollowTraveler],
+        },
+      ]);
+
+      const response = await request(app).post('/follow').send({ userId: '' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(followTravelerMock).not.toHaveBeenCalled();
     });
   });
 

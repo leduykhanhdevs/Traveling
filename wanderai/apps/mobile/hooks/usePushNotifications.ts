@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { PermissionStatus } from 'expo-modules-core';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { apiRequest } from '../services/api';
 
 type PushNotificationState = {
@@ -122,6 +122,18 @@ export const usePushNotifications = (): PushNotificationState & {
 
   useEffect(() => {
     void registerForPushNotifications();
+  }, [registerForPushNotifications]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        void registerForPushNotifications();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, [registerForPushNotifications]);
 
   return {

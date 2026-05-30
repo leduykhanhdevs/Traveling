@@ -1,11 +1,15 @@
 jest.mock('../services/itinerary.service.js', () => ({
+  exportItineraryPdf: jest.fn(),
   generateItinerary: jest.fn(),
 }));
 
 import './external-service-mocks.js';
 import request from 'supertest';
-import { postGenerateItinerary } from '../controllers/itinerary.controller.js';
-import { generateItinerary } from '../services/itinerary.service.js';
+import {
+  postExportItinerary,
+  postGenerateItinerary,
+} from '../controllers/itinerary.controller.js';
+import { exportItineraryPdf, generateItinerary } from '../services/itinerary.service.js';
 import { authenticated, buildTestApp, requireAuthForTest } from './controller-test-utils.js';
 
 const validItineraryBody = {
@@ -57,6 +61,29 @@ describe('itinerary.controller', () => {
         userId: 'clerk_user_1',
       });
     });
+
+    it('exports an itinerary PDF by id', async () => {
+      const pdf = Buffer.from('%PDF test');
+      const exportItineraryPdfMock = jest.mocked(exportItineraryPdf);
+      exportItineraryPdfMock.mockResolvedValue(pdf);
+      const exportApp = buildTestApp([
+        {
+          method: 'post',
+          path: '/:id/export',
+          handlers: [authenticated('clerk_user_1'), postExportItinerary],
+        },
+      ]);
+
+      const response = await request(exportApp)
+        .post('/itinerary_1/export')
+        .send({ title: 'Trip' });
+
+      expect(response.status).toBe(200);
+      expect(response.header['content-type']).toContain('application/pdf');
+      expect(response.header['content-disposition']).toContain('wanderai-itinerary-itinerary_1.pdf');
+      expect(Buffer.from(response.body).toString()).toBe('%PDF test');
+      expect(exportItineraryPdfMock).toHaveBeenCalledWith('itinerary_1', { title: 'Trip' });
+    });
   });
 
   describe('4xx error', () => {
@@ -75,6 +102,23 @@ describe('itinerary.controller', () => {
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
       expect(generateItineraryMock).not.toHaveBeenCalled();
+    });
+
+    it('returns validation error for a blank export id', async () => {
+      const exportItineraryPdfMock = jest.mocked(exportItineraryPdf);
+      const app = buildTestApp([
+        {
+          method: 'post',
+          path: '/:id/export',
+          handlers: [authenticated('clerk_user_1'), postExportItinerary],
+        },
+      ]);
+
+      const response = await request(app).post('/%20/export').send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(exportItineraryPdfMock).not.toHaveBeenCalled();
     });
   });
 

@@ -13,6 +13,23 @@ import { apiRouter } from './routes/index.js';
 import { legalRouter } from './routes/legal.routes.js';
 import { sendSuccess } from './utils/http-response.js';
 
+type SentryExpressCompat = typeof Sentry & {
+  Handlers?: {
+    errorHandler?: () => express.ErrorRequestHandler;
+    requestHandler?: () => express.RequestHandler;
+  };
+  setupExpressErrorHandler?: (app: express.Express) => void;
+};
+
+const sentry = Sentry as SentryExpressCompat;
+const sentryDsn = process.env.SENTRY_DSN;
+
+Sentry.init({
+  dsn: sentryDsn,
+  enabled: Boolean(sentryDsn),
+  environment: env.NODE_ENV,
+});
+
 const sentryUserContext: express.RequestHandler = (req, _res, next) => {
   Sentry.setUser(req.auth?.userId ? { id: req.auth.userId } : null);
   next();
@@ -33,9 +50,12 @@ const appleAppSiteAssociation = {
 
 export const createServer = (): express.Express => {
   const app = express();
+  const sentryRequestHandler = sentry.Handlers?.requestHandler?.();
 
   app.disable('x-powered-by');
-  app.use(Sentry.Handlers.requestHandler());
+  if (sentryRequestHandler) {
+    app.use(sentryRequestHandler);
+  }
   app.use(helmet());
   app.use(
     cors({
@@ -72,7 +92,12 @@ export const createServer = (): express.Express => {
       },
     });
   });
-  app.use(Sentry.Handlers.errorHandler());
+  const sentryErrorHandler = sentry.Handlers?.errorHandler?.();
+  if (sentryErrorHandler) {
+    app.use(sentryErrorHandler);
+  } else {
+    sentry.setupExpressErrorHandler?.(app);
+  }
   app.use(errorHandler);
 
   return app;

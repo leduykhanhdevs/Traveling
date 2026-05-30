@@ -36,5 +36,6 @@ if (-not $ipAddress) {
 }
 
 $env:REACT_NATIVE_PACKAGER_HOSTNAME = $ipAddress
+$env:EXPO_OFFLINE = "1"
 Write-Host "Using Expo LAN host: $ipAddress"
 npx expo start --lan -c

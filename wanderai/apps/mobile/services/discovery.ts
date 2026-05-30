@@ -57,7 +57,7 @@ export const savePlace = (
 
 export const discoverQueryKey = (params: DiscoverRequest | null) => ['discover', params] as const;
 
-export const useDiscoverPlaces = (
+export const useDiscover = (
   params: DiscoverRequest | null,
   token?: string | null,
   options: { enabled?: boolean } = {},
@@ -74,6 +74,8 @@ export const useDiscoverPlaces = (
     queryKey: discoverQueryKey(params),
     staleTime: placesStaleTimeMs,
   });
+
+export const useDiscoverPlaces = useDiscover;
 
 export const usePlaceDetail = (
   placeId: string | null,

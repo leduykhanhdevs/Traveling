@@ -22,6 +22,13 @@ describe('useVoiceRecorder', () => {
     recording.stopAndUnloadAsync.mockResolvedValue(undefined as never);
   });
 
+  it('starts with idle recording state', () => {
+    const { result } = renderHook(() => useVoiceRecorder());
+
+    expect(result.current.recording).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
   it('starts a high-quality recording after microphone permission is granted', async () => {
     requestPermissionsMock.mockResolvedValue({
       canAskAgain: true,
@@ -64,6 +71,24 @@ describe('useVoiceRecorder', () => {
     expect(createRecordingMock).not.toHaveBeenCalled();
   });
 
+  it('sets an error when recording fails to start', async () => {
+    requestPermissionsMock.mockResolvedValue({
+      canAskAgain: true,
+      expires: 'never',
+      granted: true,
+      status: 'granted' as PermissionStatus,
+    });
+    setAudioModeMock.mockRejectedValue(new Error('Audio mode unavailable'));
+    const { result } = renderHook(() => useVoiceRecorder());
+
+    await act(async () => {
+      await result.current.startRecording();
+    });
+
+    expect(result.current.recording).toBe(false);
+    expect(result.current.error).toBe('Audio mode unavailable');
+  });
+
   it('stops recording and returns base64 audio', async () => {
     requestPermissionsMock.mockResolvedValue({
       canAskAgain: true,
@@ -91,5 +116,40 @@ describe('useVoiceRecorder', () => {
     expect(readAsStringMock).toHaveBeenCalledWith('file:///recording.m4a', {
       encoding: FileSystem.EncodingType.Base64,
     });
+  });
+
+  it('returns null when stopping without an active recording', async () => {
+    const { result } = renderHook(() => useVoiceRecorder());
+
+    let audio = null;
+    await act(async () => {
+      audio = await result.current.stopRecording();
+    });
+
+    expect(audio).toBeNull();
+    expect(readAsStringMock).not.toHaveBeenCalled();
+  });
+
+  it('sets an error when the recorded file URI is unavailable', async () => {
+    requestPermissionsMock.mockResolvedValue({
+      canAskAgain: true,
+      expires: 'never',
+      granted: true,
+      status: 'granted' as PermissionStatus,
+    });
+    setAudioModeMock.mockResolvedValue(undefined as never);
+    createRecordingMock.mockResolvedValue({ recording } as never);
+    recording.getURI.mockReturnValue(null as unknown as string);
+    const { result } = renderHook(() => useVoiceRecorder());
+
+    await act(async () => {
+      await result.current.startRecording();
+    });
+    await act(async () => {
+      await result.current.stopRecording();
+    });
+
+    expect(result.current.error).toBe('Recorded audio file was unavailable.');
+    expect(readAsStringMock).not.toHaveBeenCalled();
   });
 });

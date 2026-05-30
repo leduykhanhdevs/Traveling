@@ -22,6 +22,17 @@ describe('useDocumentVault', () => {
     jest.restoreAllMocks();
   });
 
+  it('starts with an empty document list when secure storage is empty', async () => {
+    getItemMock.mockResolvedValue(null);
+    const { result } = renderHook(() => useDocumentVault());
+
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(result.current.documents).toEqual([]);
+  });
+
   it('reloads stored vault documents from secure storage', async () => {
     const storedDocuments = [
       {
@@ -98,6 +109,51 @@ describe('useDocumentVault', () => {
 
     expect(launchCameraMock).not.toHaveBeenCalled();
     expect(setItemMock).not.toHaveBeenCalled();
+    expect(result.current.documents).toEqual([]);
+  });
+
+  it('does not add a document when the camera capture is cancelled', async () => {
+    getItemMock.mockResolvedValue('[]');
+    requestCameraPermissionMock.mockResolvedValue({
+      canAskAgain: true,
+      expires: 'never',
+      granted: true,
+      status: 'granted' as PermissionStatus,
+    });
+    launchCameraMock.mockResolvedValue({
+      canceled: true,
+      assets: null,
+    });
+    const { result } = renderHook(() => useDocumentVault());
+
+    await act(async () => {
+      await result.current.addDocument('Passport');
+    });
+
+    expect(makeDirectoryMock).not.toHaveBeenCalled();
+    expect(copyMock).not.toHaveBeenCalled();
+    expect(setItemMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to reload when document persistence fails', async () => {
+    getItemMock.mockResolvedValue('[]');
+    requestCameraPermissionMock.mockResolvedValue({
+      canAskAgain: true,
+      expires: 'never',
+      granted: true,
+      status: 'granted' as PermissionStatus,
+    });
+    launchCameraMock.mockResolvedValue({
+      canceled: false,
+      assets: [{ height: 100, uri: 'file:///camera/passport.jpg', width: 100 }],
+    });
+    makeDirectoryMock.mockRejectedValue(new Error('file system unavailable'));
+    const { result } = renderHook(() => useDocumentVault());
+
+    await act(async () => {
+      await result.current.addDocument('Passport');
+    });
+
     expect(result.current.documents).toEqual([]);
   });
 });

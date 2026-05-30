@@ -53,6 +53,38 @@ describe('translate.controller', () => {
         targetLang: 'vi',
       });
     });
+
+    it('translates OCR image blocks', async () => {
+      const blocks = [
+        {
+          text: 'Pho bo',
+          translatedText: 'Beef noodle soup',
+          boundingBox: {
+            x: 10,
+            y: 20,
+            width: 80,
+            height: 40,
+          },
+        },
+      ];
+      const translateImageTextMock = jest.mocked(translateImageText);
+      translateImageTextMock.mockResolvedValue(blocks);
+      const app = buildTestApp([
+        {
+          method: 'post',
+          path: '/ocr',
+          handlers: [authenticated('clerk_user_1'), postOcrTranslate],
+        },
+      ]);
+
+      const response = await request(app)
+        .post('/ocr')
+        .send({ imageBase64: 'b'.repeat(120), targetLang: 'en' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ success: true, data: { blocks } });
+      expect(translateImageTextMock).toHaveBeenCalledWith('b'.repeat(120), 'en');
+    });
   });
 
   describe('4xx error', () => {
@@ -71,6 +103,23 @@ describe('translate.controller', () => {
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
       expect(translateTextMock).not.toHaveBeenCalled();
+    });
+
+    it('returns validation error for too-short OCR image payload', async () => {
+      const translateImageTextMock = jest.mocked(translateImageText);
+      const app = buildTestApp([
+        {
+          method: 'post',
+          path: '/ocr',
+          handlers: [authenticated('clerk_user_1'), postOcrTranslate],
+        },
+      ]);
+
+      const response = await request(app).post('/ocr').send({ imageBase64: 'short', targetLang: 'en' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(translateImageTextMock).not.toHaveBeenCalled();
     });
   });
 

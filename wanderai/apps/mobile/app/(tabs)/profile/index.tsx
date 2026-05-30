@@ -1,203 +1,323 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
-import { useQuery } from '@tanstack/react-query';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import {
+  Bell,
   ChevronRight,
   CreditCard,
-  FileLock2,
   FileText,
   LogOut,
-  RefreshCcw,
+  Pencil,
   ShieldCheck,
+  UserRound,
 } from 'lucide-react-native';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BadgeCard, type TravelerBadge } from '../../../components/BadgeCard';
 import { GlassCard } from '../../../components/GlassCard';
-import { LanguagePicker } from '../../../components/LanguagePicker';
 import { PrimaryButton } from '../../../components/PrimaryButton';
+import { StatCard } from '../../../components/StatCard';
 import { theme } from '../../../constants/theme';
-import { useDocumentVault } from '../../../hooks/useDocumentVault';
-import { getProfile } from '../../../services/profile';
-import { getCurrencyRates, getWeather } from '../../../services/utilities';
-import { useOfflinePhrasesStore } from '../../../stores/offlinePhrasesStore';
-import { usePreferencesStore } from '../../../stores/preferencesStore';
+import { useSubscriptionStore } from '../../../stores/subscriptionStore';
+
+type TripCard = {
+  id: string;
+  destination: string;
+  dates: string;
+  colorClass: string;
+};
+
+type SettingRow = {
+  id: string;
+  label: string;
+  hint: string;
+  icon: typeof UserRound;
+  badge?: string;
+  danger?: boolean;
+  onPress: () => void;
+};
+
+const travelerStats = [
+  { label: 'Countries visited', value: 12, emoji: '🌍' },
+  { label: 'Trips planned', value: 8, emoji: '✈️' },
+  { label: 'Places saved', value: 47, emoji: '📍' },
+] as const;
+
+const badges: readonly TravelerBadge[] = [
+  {
+    id: 'first-itinerary',
+    icon: '🗺',
+    name: 'First Itinerary',
+    description: 'Built your first AI-powered trip plan.',
+    earned: true,
+  },
+  {
+    id: 'world-explorer',
+    icon: '🌏',
+    name: 'World Explorer',
+    description: 'Saved places across multiple countries.',
+    earned: true,
+  },
+  {
+    id: 'foodie',
+    icon: '🍜',
+    name: 'Foodie',
+    description: 'Found local food gems with WanderAI.',
+    earned: true,
+  },
+  {
+    id: 'mountain-lover',
+    icon: '🏔',
+    name: 'Mountain Lover',
+    description: 'Planned high-altitude adventures.',
+    earned: true,
+  },
+  {
+    id: 'solo-traveler',
+    icon: '🔒',
+    name: 'Solo Traveler',
+    description: 'Unlock after your first solo route.',
+    earned: false,
+  },
+];
+
+const recentTrips: readonly TripCard[] = [
+  {
+    id: 'trip-saigon',
+    destination: 'Ho Chi Minh City',
+    dates: 'May 25 - May 28',
+    colorClass: 'bg-primary',
+  },
+  {
+    id: 'trip-kyoto',
+    destination: 'Kyoto',
+    dates: 'Apr 11 - Apr 16',
+    colorClass: 'bg-accent',
+  },
+  {
+    id: 'trip-lisbon',
+    destination: 'Lisbon',
+    dates: 'Mar 2 - Mar 7',
+    colorClass: 'bg-teal-500',
+  },
+];
+
+const getInitials = (name: string, email?: string): string => {
+  const source = name.trim() || email?.split('@')[0] || 'Traveler';
+  const parts = source.split(/\s+/).filter(Boolean);
+  const initials = parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+  return initials || 'TR';
+};
+
+const getHandle = (username: string | null | undefined, email?: string): string => {
+  if (username) {
+    return `@${username}`;
+  }
+  const emailName = email?.split('@')[0];
+  return `@${emailName || 'wanderer'}`;
+};
 
 export default function ProfileScreen(): JSX.Element {
-  const { getToken, signOut } = useAuth();
+  const { signOut } = useAuth();
   const { user } = useUser();
-  const preferences = usePreferencesStore();
-  const phrasePacks = useOfflinePhrasesStore((state) => state.packs);
-  const downloadPack = useOfflinePhrasesStore((state) => state.downloadPack);
-  const vault = useDocumentVault();
+  const tier = useSubscriptionStore((state) => state.tier);
+  const isPro = tier === 'premium';
+  const displayName = user?.fullName ?? user?.username ?? 'WanderAI Traveler';
+  const email = user?.primaryEmailAddress?.emailAddress;
+  const handle = getHandle(user?.username, email);
+  const initials = getInitials(displayName, email);
 
-  const profile = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      const token = await getToken();
-      return getProfile(token);
+  const settings: readonly SettingRow[] = [
+    {
+      id: 'account',
+      label: 'Account',
+      hint: 'Opens account settings.',
+      icon: UserRound,
+      onPress: () => router.push('/(tabs)/profile/account' as never),
     },
-  });
-
-  const currency = useQuery({
-    queryKey: ['currency', 'USD'],
-    queryFn: async () => {
-      const token = await getToken();
-      return getCurrencyRates('USD', token);
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      hint: 'Opens notification preferences.',
+      icon: Bell,
+      onPress: () => router.push('/(tabs)/profile/notifications' as never),
     },
-  });
-
-  const weather = useQuery({
-    queryKey: ['weather', 'Ho Chi Minh City'],
-    queryFn: async () => {
-      const token = await getToken();
-      return getWeather('Ho Chi Minh City', token);
+    {
+      id: 'subscription',
+      label: 'Subscription',
+      hint: 'Opens the subscription and paywall screen.',
+      icon: CreditCard,
+      badge: isPro ? 'PRO' : undefined,
+      onPress: () => router.push('/paywall' as never),
     },
-  });
+    {
+      id: 'privacy',
+      label: 'Privacy Policy',
+      hint: 'Opens the Privacy Policy screen.',
+      icon: ShieldCheck,
+      onPress: () => router.push('/legal/privacy-policy' as never),
+    },
+    {
+      id: 'terms',
+      label: 'Terms of Service',
+      hint: 'Opens the Terms of Service screen.',
+      icon: FileText,
+      onPress: () => router.push('/legal/terms' as never),
+    },
+    {
+      id: 'sign-out',
+      label: 'Sign Out',
+      hint: 'Signs out of WanderAI.',
+      icon: LogOut,
+      danger: true,
+      onPress: () => {
+        void signOut().then(() => router.replace('/(auth)/login'));
+      },
+    },
+  ];
 
   return (
     <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-5" contentContainerClassName="gap-4 pb-32 pt-5">
-        <View>
-          <Text className="font-inter-bold text-4xl text-white">Profile</Text>
-          <Text className="mt-2 font-inter text-base text-zinc-300">
-            {user?.primaryEmailAddress?.emailAddress ?? 'Traveler'}
-          </Text>
-        </View>
-
+      <ScrollView className="flex-1 px-5" contentContainerClassName="gap-6 pb-32 pt-5">
         <GlassCard>
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="font-inter-semibold text-white">Plan</Text>
-              <Text className="font-inter-bold text-2xl text-primary">
-                {profile.data?.entitlement.tier ?? 'free'}
+          <View className="items-center">
+            <View className="relative mb-4 h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-primary">
+              <View className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-accent/70" />
+              <View className="absolute -bottom-6 -left-4 h-20 w-20 rounded-full bg-sky-500/60" />
+              {user?.imageUrl ? (
+                <Image
+                  accessibilityLabel={`${displayName} profile avatar`}
+                  className="h-full w-full rounded-full"
+                  source={{ uri: user.imageUrl }}
+                />
+              ) : (
+                <Text
+                  accessibilityLabel={`${displayName} initials avatar`}
+                  className="font-inter-bold text-4xl text-white"
+                >
+                  {initials}
+                </Text>
+              )}
+            </View>
+            <Text accessibilityLabel={`Username ${displayName}`} className="font-inter-bold text-3xl text-white">
+              {displayName}
+            </Text>
+            <Text accessibilityLabel={`Handle ${handle}`} className="mt-1 font-inter text-sm text-zinc-400">
+              {handle}
+            </Text>
+            <View className="mt-4 rounded-full bg-white/10 px-4 py-2">
+              <Text accessibilityLabel="Travel Personality Adventure Seeker" className="font-inter-semibold text-sm text-white">
+                Adventure Seeker
               </Text>
             </View>
-            <Link href="/paywall" asChild>
-              <PrimaryButton
-                label="Upgrade"
-                icon={CreditCard}
-                variant="accent"
-                accessibilityHint="Opens the premium subscription screen."
-              />
-            </Link>
+            <PrimaryButton
+              accessibilityHint="Navigates to the edit profile screen placeholder."
+              className="mt-5 w-full"
+              icon={Pencil}
+              label="Edit Profile"
+              onPress={() => router.push('/(tabs)/profile/edit' as never)}
+            />
           </View>
-        </GlassCard>
-
-        <GlassCard>
-          <Text className="mb-3 font-inter-semibold text-white">Language</Text>
-          <LanguagePicker
-            value={preferences.preferredLanguage}
-            onChange={preferences.setPreferredLanguage}
-          />
         </GlassCard>
 
         <View className="flex-row gap-3">
-          <GlassCard className="flex-1">
-            <Text className="font-inter-semibold text-white">Weather</Text>
-            <Text className="mt-2 font-inter-bold text-2xl text-white">
-              {weather.data ? `${weather.data.temperatureCelsius.toFixed(0)}°C` : '--'}
+          {travelerStats.map((stat) => (
+            <StatCard key={stat.label} emoji={stat.emoji} label={stat.label} value={stat.value} />
+          ))}
+        </View>
+
+        <View>
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text accessibilityLabel="Your Badges" className="font-inter-bold text-2xl text-white">
+              Your Badges
             </Text>
-            <Text className="font-inter text-sm text-zinc-300">
-              {weather.data?.description ?? 'Loading'}
-            </Text>
-          </GlassCard>
-          <GlassCard className="flex-1">
-            <Text className="font-inter-semibold text-white">Currency</Text>
-            <Text className="mt-2 font-inter-bold text-2xl text-white">
-              {currency.data?.rates.VND ? currency.data.rates.VND.toFixed(0) : '--'}
-            </Text>
-            <Text className="font-inter text-sm text-zinc-300">VND per USD</Text>
-          </GlassCard>
+            <TouchableOpacity
+              accessibilityHint="Shows all traveler badges."
+              accessibilityLabel="See all badges"
+              accessibilityRole="button"
+              className="rounded-full bg-white/10 px-3 py-2"
+            >
+              <Text className="font-inter-semibold text-xs text-white">See all</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {badges.map((badge) => (
+              <BadgeCard key={badge.id} badge={badge} />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View>
+          <Text accessibilityLabel="Recent trips" className="mb-3 font-inter-bold text-2xl text-white">
+            Recent Trips
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {recentTrips.map((trip) => (
+              <TouchableOpacity
+                key={trip.id}
+                accessibilityHint={`Opens trip history for ${trip.destination}.`}
+                accessibilityLabel={`${trip.destination}, ${trip.dates}`}
+                accessibilityRole="button"
+                className="mr-3 w-48 overflow-hidden rounded-lg border border-white/10 bg-white/10"
+              >
+                <View className={`h-24 justify-end p-4 ${trip.colorClass}`}>
+                  <Text className="font-inter-bold text-xl text-white" numberOfLines={1}>
+                    {trip.destination}
+                  </Text>
+                </View>
+                <View className="p-4">
+                  <Text className="font-inter text-sm text-zinc-300">{trip.dates}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         <GlassCard>
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="font-inter-semibold text-white">Document vault</Text>
-              <Text className="font-inter text-sm text-zinc-300">
-                {vault.documents.length} encrypted entries
-              </Text>
-            </View>
-            <TouchableOpacity
-              accessibilityHint="Adds a new travel document to the encrypted vault."
-              accessibilityLabel="Add travel document"
-              accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-lg bg-white/10"
-              onPress={() => {
-                void vault.addDocument('Travel document');
-              }}
-            >
-              <FileLock2 color={theme.colors.text} size={20} />
-            </TouchableOpacity>
-          </View>
-          {vault.documents.map((document) => (
-            <Text key={document.id} className="mt-3 font-inter text-sm text-zinc-300">
-              {document.label} • {new Date(document.createdAt).toLocaleDateString()}
-            </Text>
-          ))}
-        </GlassCard>
-
-        <GlassCard>
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="font-inter-semibold text-white">Offline packs</Text>
-              <Text className="font-inter text-sm text-zinc-300">
-                Vietnam pack: {phrasePacks.vn?.length ?? 0} phrases
-              </Text>
-            </View>
-            <TouchableOpacity
-              accessibilityHint="Downloads or refreshes the Vietnam offline phrase pack."
-              accessibilityLabel="Refresh Vietnam offline phrase pack"
-              accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-lg bg-white/10"
-              onPress={() => downloadPack('vn')}
-            >
-              <RefreshCcw color={theme.colors.text} size={20} />
-            </TouchableOpacity>
-          </View>
-        </GlassCard>
-
-        <GlassCard>
+          <Text accessibilityLabel="Settings" className="mb-3 font-inter-bold text-2xl text-white">
+            Settings
+          </Text>
           <View className="gap-1">
-            <TouchableOpacity
-              accessibilityHint="Opens the Privacy Policy screen."
-              accessibilityLabel="Privacy Policy"
-              accessibilityRole="button"
-              className="flex-row items-center justify-between rounded-lg py-2"
-              onPress={() => router.push('/legal/privacy-policy' as never)}
-            >
-              <View className="flex-row items-center gap-3">
-                <ShieldCheck color={theme.colors.text} size={20} />
-                <Text className="font-inter-semibold text-white">Privacy Policy</Text>
-              </View>
-              <ChevronRight color={theme.colors.muted} size={18} />
-            </TouchableOpacity>
-            <View className="h-px bg-white/10" />
-            <TouchableOpacity
-              accessibilityHint="Opens the Terms of Service screen."
-              accessibilityLabel="Terms of Service"
-              accessibilityRole="button"
-              className="flex-row items-center justify-between rounded-lg py-2"
-              onPress={() => router.push('/legal/terms' as never)}
-            >
-              <View className="flex-row items-center gap-3">
-                <FileText color={theme.colors.text} size={20} />
-                <Text className="font-inter-semibold text-white">Terms of Service</Text>
-              </View>
-              <ChevronRight color={theme.colors.muted} size={18} />
-            </TouchableOpacity>
+            {settings.map((row, index) => {
+              const Icon = row.icon;
+              return (
+                <View key={row.id}>
+                  <TouchableOpacity
+                    accessibilityHint={row.hint}
+                    accessibilityLabel={row.label}
+                    accessibilityRole="button"
+                    className="min-h-14 flex-row items-center justify-between rounded-lg py-2"
+                    onPress={row.onPress}
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                        <Icon color={row.danger ? theme.colors.accent : theme.colors.text} size={20} />
+                      </View>
+                      <Text
+                        className={`font-inter-semibold text-base ${
+                          row.danger ? 'text-accent' : 'text-white'
+                        }`}
+                      >
+                        {row.label}
+                      </Text>
+                    </View>
+                    <View className="flex-row items-center gap-2">
+                      {row.badge ? (
+                        <View className="rounded-full bg-accent px-2 py-1">
+                          <Text className="font-inter-bold text-[10px] text-white">{row.badge}</Text>
+                        </View>
+                      ) : null}
+                      <ChevronRight color={theme.colors.muted} size={18} />
+                    </View>
+                  </TouchableOpacity>
+                  {index < settings.length - 1 ? <View className="h-px bg-white/10" /> : null}
+                </View>
+              );
+            })}
           </View>
         </GlassCard>
-
-        <PrimaryButton
-          label="Sign out"
-          icon={LogOut}
-          variant="ghost"
-          accessibilityHint="Signs out and returns to the login screen."
-          onPress={() => {
-            void signOut().then(() => router.replace('/(auth)/login'));
-          }}
-        />
       </ScrollView>
     </SafeAreaView>
   );
