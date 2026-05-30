@@ -1,15 +1,16 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Globe, Navigation, Phone } from 'lucide-react-native';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { Globe, Navigation, Phone, Share2 } from 'lucide-react-native';
+import { Image, ScrollView, Share, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '../../../components/GlassCard';
 import { PlaceMap } from '../../../components/PlaceMap';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { Skeleton } from '../../../components/Skeleton';
 import { getPlaceDetail } from '../../../services/discovery';
+import { createDeepLink } from '../../../utils/deeplink';
 
 export default function PlaceDetailScreen(): JSX.Element {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
@@ -23,8 +24,26 @@ export default function PlaceDetailScreen(): JSX.Element {
     enabled: Boolean(placeId),
   });
 
+  const sharePlace = async (): Promise<void> => {
+    if (!placeId || !query.data) {
+      return;
+    }
+
+    const url = createDeepLink('discover', { placeId });
+
+    try {
+      await Share.share({
+        message: `${query.data.name}\n${url}`,
+        title: query.data.name,
+        url,
+      });
+    } catch {
+      // The native share sheet can be cancelled or unavailable on some simulators.
+    }
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView className="flex-1 px-5" contentContainerClassName="pb-28 pt-5">
         {query.isLoading ? <Skeleton className="h-96" /> : null}
@@ -32,6 +51,7 @@ export default function PlaceDetailScreen(): JSX.Element {
           <View className="gap-4">
             {query.data.photoUrl ? (
               <Image
+                accessibilityLabel={`${query.data.name} photo`}
                 source={{ uri: query.data.photoUrl }}
                 className="h-64 w-full rounded-lg bg-white/10"
               />
@@ -51,6 +71,7 @@ export default function PlaceDetailScreen(): JSX.Element {
                   label="Call"
                   icon={Phone}
                   className="flex-1"
+                  accessibilityHint={`Calls ${query.data.name}.`}
                   onPress={() => {
                     void Linking.openURL(`tel:${query.data.phone ?? ''}`);
                   }}
@@ -62,6 +83,7 @@ export default function PlaceDetailScreen(): JSX.Element {
                   icon={Globe}
                   variant="ghost"
                   className="flex-1"
+                  accessibilityHint={`Opens the website for ${query.data.name}.`}
                   onPress={() => {
                     void Linking.openURL(query.data?.website ?? '');
                   }}
@@ -72,6 +94,7 @@ export default function PlaceDetailScreen(): JSX.Element {
                 icon={Navigation}
                 variant="accent"
                 className="flex-1"
+                accessibilityHint={`Opens map directions to ${query.data.name}.`}
                 onPress={() => {
                   void Linking.openURL(
                     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query.data.name)}`,
@@ -79,6 +102,15 @@ export default function PlaceDetailScreen(): JSX.Element {
                 }}
               />
             </View>
+            <PrimaryButton
+              label="Share"
+              icon={Share2}
+              variant="ghost"
+              accessibilityHint={`Shares a deep link to ${query.data.name}.`}
+              onPress={() => {
+                void sharePlace();
+              }}
+            />
             <GlassCard>
               <Text className="mb-3 font-inter-bold text-xl text-white">Google reviews</Text>
               <View className="gap-3">

@@ -1,7 +1,15 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useQuery } from '@tanstack/react-query';
 import { Link, router } from 'expo-router';
-import { CreditCard, FileLock2, LogOut, RefreshCcw } from 'lucide-react-native';
+import {
+  ChevronRight,
+  CreditCard,
+  FileLock2,
+  FileText,
+  LogOut,
+  RefreshCcw,
+  ShieldCheck,
+} from 'lucide-react-native';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '../../../components/GlassCard';
@@ -47,7 +55,7 @@ export default function ProfileScreen(): JSX.Element {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-5" contentContainerClassName="gap-4 pb-32 pt-5">
         <View>
           <Text className="font-inter-bold text-4xl text-white">Profile</Text>
@@ -65,7 +73,12 @@ export default function ProfileScreen(): JSX.Element {
               </Text>
             </View>
             <Link href="/paywall" asChild>
-              <PrimaryButton label="Upgrade" icon={CreditCard} variant="accent" />
+              <PrimaryButton
+                label="Upgrade"
+                icon={CreditCard}
+                variant="accent"
+                accessibilityHint="Opens the premium subscription screen."
+              />
             </Link>
           </View>
         </GlassCard>
@@ -106,6 +119,9 @@ export default function ProfileScreen(): JSX.Element {
               </Text>
             </View>
             <TouchableOpacity
+              accessibilityHint="Adds a new travel document to the encrypted vault."
+              accessibilityLabel="Add travel document"
+              accessibilityRole="button"
               className="h-11 w-11 items-center justify-center rounded-lg bg-white/10"
               onPress={() => {
                 void vault.addDocument('Travel document');
@@ -130,6 +146,9 @@ export default function ProfileScreen(): JSX.Element {
               </Text>
             </View>
             <TouchableOpacity
+              accessibilityHint="Downloads or refreshes the Vietnam offline phrase pack."
+              accessibilityLabel="Refresh Vietnam offline phrase pack"
+              accessibilityRole="button"
               className="h-11 w-11 items-center justify-center rounded-lg bg-white/10"
               onPress={() => downloadPack('vn')}
             >
@@ -138,10 +157,43 @@ export default function ProfileScreen(): JSX.Element {
           </View>
         </GlassCard>
 
+        <GlassCard>
+          <View className="gap-1">
+            <TouchableOpacity
+              accessibilityHint="Opens the Privacy Policy screen."
+              accessibilityLabel="Privacy Policy"
+              accessibilityRole="button"
+              className="flex-row items-center justify-between rounded-lg py-2"
+              onPress={() => router.push('/legal/privacy-policy' as never)}
+            >
+              <View className="flex-row items-center gap-3">
+                <ShieldCheck color={theme.colors.text} size={20} />
+                <Text className="font-inter-semibold text-white">Privacy Policy</Text>
+              </View>
+              <ChevronRight color={theme.colors.muted} size={18} />
+            </TouchableOpacity>
+            <View className="h-px bg-white/10" />
+            <TouchableOpacity
+              accessibilityHint="Opens the Terms of Service screen."
+              accessibilityLabel="Terms of Service"
+              accessibilityRole="button"
+              className="flex-row items-center justify-between rounded-lg py-2"
+              onPress={() => router.push('/legal/terms' as never)}
+            >
+              <View className="flex-row items-center gap-3">
+                <FileText color={theme.colors.text} size={20} />
+                <Text className="font-inter-semibold text-white">Terms of Service</Text>
+              </View>
+              <ChevronRight color={theme.colors.muted} size={18} />
+            </TouchableOpacity>
+          </View>
+        </GlassCard>
+
         <PrimaryButton
           label="Sign out"
           icon={LogOut}
           variant="ghost"
+          accessibilityHint="Signs out and returns to the login screen."
           onPress={() => {
             void signOut().then(() => router.replace('/(auth)/login'));
           }}

@@ -15,13 +15,28 @@ type ResultCardProps = {
 };
 
 export const ResultCard = ({ place, onOpen, onNavigate, onSave }: ResultCardProps): JSX.Element => (
-  <TouchableOpacity activeOpacity={0.9} onPress={onOpen}>
+  <TouchableOpacity
+    accessibilityHint="Opens detailed information for this place."
+    accessibilityLabel={`Open ${place.name}. AI score ${place.score.compositeScore}. ${metersToDisplay(
+      place.distanceMeters,
+    )} away.`}
+    accessibilityRole="button"
+    activeOpacity={0.9}
+    onPress={onOpen}
+  >
     <GlassCard className="mb-4">
       <View className="flex-row gap-3">
         {place.photoUrl ? (
-          <Image source={{ uri: place.photoUrl }} className="h-24 w-24 rounded-lg bg-white/10" />
+          <Image
+            accessibilityLabel={`${place.name} photo`}
+            source={{ uri: place.photoUrl }}
+            className="h-24 w-24 rounded-lg bg-white/10"
+          />
         ) : (
-          <View className="h-24 w-24 items-center justify-center rounded-lg bg-white/10">
+          <View
+            accessibilityLabel={`${place.name} location placeholder image`}
+            className="h-24 w-24 items-center justify-center rounded-lg bg-white/10"
+          >
             <MapPinned size={28} color={theme.colors.muted} />
           </View>
         )}
@@ -66,12 +81,19 @@ export const ResultCard = ({ place, onOpen, onNavigate, onSave }: ResultCardProp
         </Text>
       ) : null}
       <View className="mt-4 flex-row gap-2">
-        <PrimaryButton label="Navigate" icon={Navigation} className="flex-1" onPress={onNavigate} />
+        <PrimaryButton
+          label="Navigate"
+          icon={Navigation}
+          className="flex-1"
+          accessibilityHint={`Opens directions to ${place.name}.`}
+          onPress={onNavigate}
+        />
         <PrimaryButton
           label="Save"
           icon={Bookmark}
           variant="ghost"
           className="flex-1"
+          accessibilityHint={`Saves ${place.name} to your saved places.`}
           onPress={onSave}
         />
       </View>

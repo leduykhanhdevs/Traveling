@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.wanderai.app",
+      "associatedDomains": ["applinks:wanderai.app"],
       "infoPlist": {
         "NSCameraUsageDescription": "WanderAI uses the camera to translate menus and signs.",
         "NSLocationWhenInUseUsageDescription": "WanderAI uses your location to find nearby restaurants and attractions.",

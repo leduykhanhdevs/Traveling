@@ -21,10 +21,63 @@ model User {
   nationality         String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
+  budgets             Budget[]
+  deviceTokens        DeviceToken[]
+  emergencyContacts   EmergencyContact[]
   itineraries         Itinerary[]
   reviews             Review[]
   savedPlaces         SavedPlace[]
   searchHistory       SearchHistory[]
+}
+
+model Budget {
+  id          String       @id @default(cuid())
+  userId      String
+  tripName    String
+  totalBudget Float
+  currency    String
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       BudgetItem[]
+
+  @@index([userId, createdAt])
+}
+
+model BudgetItem {
+  id          String   @id @default(cuid())
+  budgetId    String
+  category    String
+  amount      Float
+  description String
+  date        DateTime
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId, date])
+  @@index([category])
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String
+  platform  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, token])
+  @@index([userId])
+  @@index([token])
+}
+
+model EmergencyContact {
+  id           String @id @default(cuid())
+  userId       String
+  name         String
+  phone        String
+  relationship String
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model SearchHistory {

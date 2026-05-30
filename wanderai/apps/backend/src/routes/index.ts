@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { budgetRouter } from './budget.routes.js';
 import { communityRouter } from './community.routes.js';
 import { discoverRouter } from './discover.routes.js';
 import { itineraryRouter } from './itinerary.routes.js';
@@ -11,6 +12,7 @@ import { utilityRouter } from './utility.routes.js';
 export const apiRouter = Router();
 
 apiRouter.use('/discover', discoverRouter);
+apiRouter.use('/budget', budgetRouter);
 apiRouter.use('/places', placesRouter);
 apiRouter.use('/translate', translateRouter);
 apiRouter.use('/speech', speechRouter);

@@ -8,7 +8,10 @@ const scoreRows = (score: ScoreBreakdownType): readonly { label: string; value: 
 ];
 
 export const ScoreBreakdown = ({ score }: { score: ScoreBreakdownType }): JSX.Element => (
-  <View className="gap-2">
+  <View
+    accessibilityLabel={`Score breakdown. Google ${score.googleRatingScore}. Volume ${score.reviewVolumeScore}. Social ${score.socialProofScore}.`}
+    className="gap-2"
+  >
     {scoreRows(score).map((row) => (
       <View key={row.label} className="gap-1">
         <View className="flex-row justify-between">

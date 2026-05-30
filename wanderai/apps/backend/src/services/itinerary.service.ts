@@ -4,7 +4,9 @@ import type {
   ItineraryRequest,
   ItinerarySlot,
 } from '@wanderai/shared';
+import PDFDocument from 'pdfkit';
 import { v4 as uuid } from 'uuid';
+import { AppError } from '../utils/errors.js';
 import { logUnknownError } from '../utils/logger.js';
 import { textSearchPlaceCandidates } from './google-places.service.js';
 import { generateAiItinerary } from './openai.service.js';
@@ -59,6 +61,162 @@ const fallbackPlan = (request: ItineraryRequest): ItineraryPlan => {
     budgetRange: request.budgetRange,
     totalEstimatedSpend: days.reduce((total, day) => total + day.totalEstimatedSpend, 0),
   };
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isBudgetRange = (value: unknown): value is ItineraryPlan['budgetRange'] =>
+  value === 'budget' || value === 'midrange' || value === 'premium';
+
+const isItinerarySlot = (value: unknown): value is ItinerarySlot => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.day === 'number' &&
+    typeof value.startTime === 'string' &&
+    typeof value.endTime === 'string' &&
+    typeof value.title === 'string' &&
+    typeof value.description === 'string' &&
+    typeof value.estimatedSpend === 'number'
+  );
+};
+
+const isItineraryDay = (value: unknown): value is ItineraryDay => {
+  if (!isRecord(value) || !Array.isArray(value.slots)) {
+    return false;
+  }
+
+  return (
+    typeof value.day === 'number' &&
+    typeof value.title === 'string' &&
+    typeof value.totalEstimatedSpend === 'number' &&
+    value.slots.every(isItinerarySlot)
+  );
+};
+
+const isItineraryPlan = (value: unknown): value is ItineraryPlan => {
+  if (!isRecord(value) || !Array.isArray(value.days)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.destination === 'string' &&
+    isBudgetRange(value.budgetRange) &&
+    typeof value.totalEstimatedSpend === 'number' &&
+    value.days.every(isItineraryDay)
+  );
+};
+
+const planFromPayload = (payload: unknown): ItineraryPlan | null => {
+  if (isItineraryPlan(payload)) {
+    return payload;
+  }
+
+  if (isRecord(payload) && isItineraryPlan(payload.plan)) {
+    return payload.plan;
+  }
+
+  return null;
+};
+
+const placeNameForSlot = (slot: ItinerarySlot): string | null => {
+  const place = slot.place;
+  return place?.name ?? null;
+};
+
+const writeSectionTitle = (doc: PDFKit.PDFDocument, title: string): void => {
+  if (doc.y > 700) {
+    doc.addPage();
+  }
+
+  doc.moveDown(0.8);
+  doc.font('Helvetica-Bold').fontSize(16).fillColor('#111827').text(title);
+  doc.moveTo(48, doc.y + 4).lineTo(547, doc.y + 4).strokeColor('#E5E7EB').stroke();
+  doc.moveDown(0.8);
+};
+
+const writeSlot = (doc: PDFKit.PDFDocument, slot: ItinerarySlot): void => {
+  if (doc.y > 660) {
+    doc.addPage();
+  }
+
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#111827');
+  doc.text(`${slot.startTime} - ${slot.endTime}  ${slot.title}`);
+
+  const placeName = placeNameForSlot(slot);
+  if (placeName) {
+    doc.font('Helvetica').fontSize(10).fillColor('#374151').text(`Place: ${placeName}`);
+  }
+
+  doc.font('Helvetica').fontSize(10).fillColor('#4B5563').text(`Notes: ${slot.description}`, {
+    width: 500,
+  });
+  doc.fillColor('#6B7280').text(`Estimated spend: $${slot.estimatedSpend}`);
+  doc.moveDown(0.8);
+};
+
+const renderItineraryPdf = (plan: ItineraryPlan): Promise<Buffer> =>
+  new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      margin: 48,
+      size: 'A4',
+      info: {
+        Title: `${plan.destination} itinerary`,
+        Subject: 'WanderAI itinerary export',
+      },
+    });
+    const chunks: Buffer[] = [];
+
+    doc.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+    doc.on('end', () => {
+      resolve(Buffer.concat(chunks));
+    });
+    doc.on('error', reject);
+
+    doc.font('Helvetica-Bold').fontSize(24).fillColor('#111827').text(plan.destination);
+    doc.moveDown(0.3);
+    doc.font('Helvetica').fontSize(11).fillColor('#4B5563');
+    doc.text(`Trip title: ${plan.destination}`);
+    doc.text(`Trip dates: Day 1 to Day ${plan.days.length}`);
+    doc.text(`Budget range: ${plan.budgetRange}`);
+    doc.text(`Total estimated spend: $${plan.totalEstimatedSpend}`);
+    doc.text(`Itinerary ID: ${plan.id}`);
+    doc.text(`Exported: ${new Date().toISOString()}`);
+
+    plan.days.forEach((day) => {
+      writeSectionTitle(doc, day.title);
+      doc.font('Helvetica').fontSize(10).fillColor('#6B7280');
+      doc.text(`Day ${day.day} estimated spend: $${day.totalEstimatedSpend}`);
+      doc.moveDown(0.8);
+      day.slots.forEach((slot) => writeSlot(doc, slot));
+    });
+
+    doc.end();
+  });
+
+const loadPersistedItineraryPlan = async (itineraryId: string): Promise<ItineraryPlan> => {
+  const itinerary = await prisma.itinerary.findUnique({
+    where: {
+      id: itineraryId,
+    },
+  });
+
+  if (!itinerary) {
+    throw new AppError('ITINERARY_NOT_FOUND', 'Itinerary could not be found.', 404);
+  }
+
+  if (!isItineraryPlan(itinerary.content)) {
+    throw new AppError('INVALID_ITINERARY_CONTENT', 'Itinerary content cannot be exported.', 422);
+  }
+
+  return itinerary.content;
 };
 
 export const generateItinerary = async (request: ItineraryRequest): Promise<ItineraryPlan> => {
@@ -132,4 +290,15 @@ export const generateItinerary = async (request: ItineraryRequest): Promise<Itin
   }
 
   return enrichedPlan;
+};
+
+export const exportItineraryPdf = async (
+  itineraryId: string,
+  payload: unknown,
+): Promise<Buffer> => {
+  const plan = planFromPayload(payload) ?? (await loadPersistedItineraryPlan(itineraryId));
+  return renderItineraryPdf({
+    ...plan,
+    id: plan.id || itineraryId,
+  });
 };

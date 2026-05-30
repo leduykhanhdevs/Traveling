@@ -142,6 +142,23 @@ export default function OnboardingScreen(): JSX.Element {
           loading={mutation.isPending}
           onPress={() => mutation.mutate()}
         />
+        <Text className="px-2 text-center font-inter text-xs text-zinc-400">
+          By continuing you agree to our{' '}
+          <Text
+            className="font-inter-semibold text-primary"
+            onPress={() => router.push('/legal/terms' as never)}
+          >
+            Terms of Service
+          </Text>{' '}
+          and{' '}
+          <Text
+            className="font-inter-semibold text-primary"
+            onPress={() => router.push('/legal/privacy-policy' as never)}
+          >
+            Privacy Policy
+          </Text>
+          .
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );

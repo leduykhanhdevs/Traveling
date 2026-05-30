@@ -117,7 +117,7 @@ export default function TranslateScreen(): JSX.Element {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-5" contentContainerClassName="gap-4 pb-32 pt-5">
         <View>
           <Text className="font-inter-bold text-4xl text-white">Translate</Text>
@@ -152,6 +152,7 @@ export default function TranslateScreen(): JSX.Element {
               <PrimaryButton
                 label="Translate"
                 loading={translation.isPending}
+                accessibilityHint="Translates the entered text into the selected target language."
                 onPress={() => void runKeyboardTranslation()}
               />
             </View>
@@ -162,6 +163,10 @@ export default function TranslateScreen(): JSX.Element {
           <GlassCard>
             <View className="items-center gap-4 py-4">
               <TouchableOpacity
+                accessibilityHint="Hold to record speech, then release to translate it."
+                accessibilityLabel="Voice translation microphone"
+                accessibilityRole="button"
+                accessibilityState={{ selected: recorder.recording }}
                 className={`h-28 w-28 items-center justify-center rounded-full ${
                   recorder.recording ? 'bg-accent' : 'bg-primary'
                 }`}
@@ -188,11 +193,16 @@ export default function TranslateScreen(): JSX.Element {
                 label="Capture menu"
                 icon={Camera}
                 loading={cameraMutation.isPending}
+                accessibilityHint="Opens the camera to capture a menu or sign for translation."
                 onPress={() => void captureMenu()}
               />
               {imageUri ? (
                 <View className="relative overflow-hidden rounded-lg">
-                  <Image source={{ uri: imageUri }} className="h-96 w-full rounded-lg" />
+                  <Image
+                    accessibilityLabel="Captured image for camera translation"
+                    source={{ uri: imageUri }}
+                    className="h-96 w-full rounded-lg"
+                  />
                   {ocrBlocks.map((block) => (
                     <View
                       key={`${block.text}-${block.boundingBox.x}-${block.boundingBox.y}`}
@@ -219,6 +229,9 @@ export default function TranslateScreen(): JSX.Element {
             <View className="flex-row items-center justify-between">
               <Text className="font-inter-semibold text-white">Translated output</Text>
               <TouchableOpacity
+                accessibilityHint="Plays the translated output aloud."
+                accessibilityLabel="Play translated output"
+                accessibilityRole="button"
                 onPress={() =>
                   Speech.speak(translation.data.translatedText, {
                     language: translation.data.targetLang,
@@ -248,7 +261,12 @@ export default function TranslateScreen(): JSX.Element {
                 {packs.vn?.length ?? 0} phrases available offline
               </Text>
             </View>
-            <PrimaryButton label="Download" variant="ghost" onPress={() => downloadPack('vn')} />
+            <PrimaryButton
+              label="Download"
+              variant="ghost"
+              accessibilityHint="Downloads the Vietnam offline phrase pack."
+              onPress={() => downloadPack('vn')}
+            />
           </View>
         </GlassCard>
       </ScrollView>

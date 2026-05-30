@@ -1,7 +1,7 @@
 import '../global.css';
 import 'react-native-gesture-handler';
 
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import {
   Inter_400Regular,
@@ -9,42 +9,149 @@ import {
   Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
+import { persistQueryClient } from '@tanstack/query-persist-client-core';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { MMKV } from 'react-native-mmkv';
+import { OfflineBanner } from '../components/OfflineBanner';
 import { theme } from '../constants/theme';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+const queryCacheMaxAgeMs = 1000 * 60 * 60 * 24 * 7;
+const defaultQueryStaleTimeMs = 1000 * 60 * 5;
+
+type PersistStorage = {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+};
+
+Sentry.init({
+  dsn: sentryDsn,
+  enabled: Boolean(sentryDsn),
+  environment: __DEV__ ? 'development' : 'production',
+});
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
-export default function RootLayout(): JSX.Element | null {
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((state) => {
+    setOnline(state.isConnected !== false);
+  }),
+);
+
+const createMemoryPersistStorage = (): PersistStorage => {
+  const cache = new Map<string, string>();
+
+  return {
+    getItem: (key) => cache.get(key) ?? null,
+    removeItem: (key) => {
+      cache.delete(key);
+    },
+    setItem: (key, value) => {
+      cache.set(key, value);
+    },
+  };
+};
+
+const createMmkvPersistStorage = (): PersistStorage => {
+  try {
+    const storage = new MMKV({ id: 'wanderai-react-query-cache' });
+
+    return {
+      getItem: (key) => storage.getString(key) ?? null,
+      removeItem: (key) => {
+        storage.delete(key);
+      },
+      setItem: (key, value) => {
+        storage.set(key, value);
+      },
+    };
+  } catch {
+    return createMemoryPersistStorage();
+  }
+};
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: queryCacheMaxAgeMs,
+      retry: 1,
+      staleTime: defaultQueryStaleTimeMs,
+    },
+  },
+});
+
+const queryPersister = createSyncStoragePersister({
+  key: 'WANDERAI_REACT_QUERY_CACHE',
+  storage: createMmkvPersistStorage(),
+  throttleTime: 1000,
+});
+
+const [, restoreQueryCache] = persistQueryClient({
+  maxAge: queryCacheMaxAgeMs,
+  persister: queryPersister,
+  queryClient,
+});
+
+const SentryUserSync = (): null => {
+  const { isLoaded, userId } = useAuth();
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    Sentry.setUser(userId ? { id: userId } : null);
+  }, [isLoaded, userId]);
+
+  return null;
+};
+
+const PushNotificationRegistration = (): null => {
+  usePushNotifications();
+  return null;
+};
+
+function RootLayout(): JSX.Element | null {
+  const [queryCacheReady, setQueryCacheReady] = useState(false);
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_600SemiBold,
     Inter_700Bold,
   });
-  const queryClient = useMemo(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: 1,
-            staleTime: 60_000,
-          },
-        },
-      }),
-    [],
-  );
 
   useEffect(() => {
-    if (fontsLoaded) {
+    let mounted = true;
+
+    restoreQueryCache
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted) {
+          setQueryCacheReady(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded && queryCacheReady) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, queryCacheReady]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !queryCacheReady) {
     return null;
   }
 
@@ -55,7 +162,10 @@ export default function RootLayout(): JSX.Element | null {
         tokenCache={tokenCache}
       >
         <QueryClientProvider client={queryClient}>
+          <SentryUserSync />
+          <PushNotificationRegistration />
           <StatusBar style="light" />
+          <OfflineBanner />
           <Stack
             screenOptions={{
               contentStyle: { backgroundColor: theme.colors.background },
@@ -67,3 +177,5 @@ export default function RootLayout(): JSX.Element | null {
     </GestureHandlerRootView>
   );
 }
+
+export default Sentry.wrap(RootLayout);

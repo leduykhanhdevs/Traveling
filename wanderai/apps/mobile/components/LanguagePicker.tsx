@@ -16,10 +16,19 @@ export const LanguagePicker = ({
     (language) => includeAuto || language.code !== 'auto',
   );
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2">
+    <ScrollView
+      accessibilityLabel="Language picker"
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerClassName="gap-2"
+    >
       {languages.map((language) => (
         <TouchableOpacity
           key={language.code}
+          accessibilityHint={`Sets the selected language to ${language.name}.`}
+          accessibilityLabel={`${language.name} language`}
+          accessibilityRole="button"
+          accessibilityState={{ selected: value === language.code }}
           className={`rounded-lg border px-3 py-2 ${
             value === language.code ? 'border-primary bg-primary' : 'border-white/10 bg-white/10'
           }`}

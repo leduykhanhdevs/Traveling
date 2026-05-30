@@ -118,7 +118,7 @@ export default function DiscoverScreen(): JSX.Element {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-5" contentContainerClassName="pb-32 pt-5">
         <View className="mb-5">
           <Text className="font-inter-bold text-4xl text-white">Discover</Text>
@@ -134,6 +134,10 @@ export default function DiscoverScreen(): JSX.Element {
               {queryTypes.map((type) => (
                 <TouchableOpacity
                   key={type}
+                  accessibilityHint={`Sets the discovery query type to ${type}.`}
+                  accessibilityLabel={`${type} discovery type`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedPrompt === type }}
                   className={`flex-1 rounded-lg px-2 py-2 ${
                     selectedPrompt === type ? 'bg-primary' : 'bg-white/10'
                   }`}
@@ -151,6 +155,10 @@ export default function DiscoverScreen(): JSX.Element {
                 placeholder="Search food, places, experiences"
               />
               <TouchableOpacity
+                accessibilityHint="Hold to record a voice search, release to transcribe it."
+                accessibilityLabel="Voice search microphone"
+                accessibilityRole="button"
+                accessibilityState={{ selected: recorder.recording }}
                 className={`h-12 w-12 items-center justify-center rounded-lg ${
                   recorder.recording ? 'bg-accent' : 'bg-white/10'
                 }`}
@@ -173,6 +181,14 @@ export default function DiscoverScreen(): JSX.Element {
                 {[500, 2000, 5000].map((radius) => (
                   <TouchableOpacity
                     key={radius}
+                    accessibilityHint={`Sets the search radius to ${
+                      radius >= 1000 ? `${radius / 1000} kilometers` : `${radius} meters`
+                    }.`}
+                    accessibilityLabel={`Radius ${
+                      radius >= 1000 ? `${radius / 1000} kilometers` : `${radius} meters`
+                    }`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: radiusMeters === radius }}
                     className={`flex-1 rounded-lg px-2 py-2 ${radiusMeters === radius ? 'bg-primary' : 'bg-white/10'}`}
                     onPress={() => setRadiusMeters(radius)}
                   >
@@ -186,6 +202,10 @@ export default function DiscoverScreen(): JSX.Element {
                 {priceOptions.map((price) => (
                   <TouchableOpacity
                     key={price}
+                    accessibilityHint={`Toggles price level ${price}.`}
+                    accessibilityLabel={`Price level ${price}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: priceRange.includes(price) }}
                     className={`rounded-lg px-3 py-2 ${priceRange.includes(price) ? 'bg-accent' : 'bg-white/10'}`}
                     onPress={() => togglePrice(price)}
                   >
@@ -193,6 +213,10 @@ export default function DiscoverScreen(): JSX.Element {
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity
+                  accessibilityHint="Toggles whether results must be open now."
+                  accessibilityLabel="Open now filter"
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: openNow }}
                   className={`ml-auto rounded-lg px-3 py-2 ${openNow ? 'bg-success' : 'bg-white/10'}`}
                   onPress={() => setOpenNow((value) => !value)}
                 >
@@ -205,6 +229,7 @@ export default function DiscoverScreen(): JSX.Element {
                 label="Search"
                 className="flex-1"
                 loading={mutation.isPending}
+                accessibilityHint="Searches nearby places using the current filters."
                 onPress={() => {
                   void haptic();
                   mutation.mutate(false);
@@ -216,6 +241,7 @@ export default function DiscoverScreen(): JSX.Element {
                 variant="accent"
                 className="flex-1"
                 loading={mutation.isPending}
+                accessibilityHint="Finds a surprise recommendation using the current filters."
                 onPress={() => {
                   void haptic();
                   mutation.mutate(true);

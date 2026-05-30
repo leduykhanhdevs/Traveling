@@ -49,7 +49,7 @@ export default function CommunityScreen(): JSX.Element {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-5" contentContainerClassName="gap-4 pb-32 pt-5">
         <View>
           <Text className="font-inter-bold text-4xl text-white">Community</Text>
@@ -74,6 +74,7 @@ export default function CommunityScreen(): JSX.Element {
             <PrimaryButton
               label="Apply filters"
               variant="ghost"
+              accessibilityHint="Refreshes the community feed using the current filters."
               onPress={() => void feed.refetch()}
             />
           </View>
@@ -94,6 +95,10 @@ export default function CommunityScreen(): JSX.Element {
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity
                   key={star}
+                  accessibilityHint={`Sets the review rating to ${star} stars.`}
+                  accessibilityLabel={`${star} star rating`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: rating === star }}
                   className={`h-10 w-10 items-center justify-center rounded-lg ${
                     rating === star ? 'bg-accent' : 'bg-white/10'
                   }`}
@@ -104,12 +109,19 @@ export default function CommunityScreen(): JSX.Element {
               ))}
             </View>
             <View className="flex-row gap-2">
-              <PrimaryButton label="Photo" icon={Camera} variant="ghost" className="flex-1" />
+              <PrimaryButton
+                label="Photo"
+                icon={Camera}
+                variant="ghost"
+                className="flex-1"
+                accessibilityHint="Adds a photo to the review."
+              />
               <PrimaryButton
                 label="Post"
                 icon={Send}
                 className="flex-1"
                 loading={reviewMutation.isPending}
+                accessibilityHint="Posts your community review."
                 onPress={() => reviewMutation.mutate()}
               />
             </View>

@@ -8,6 +8,7 @@ type PlaceMapProps = {
 
 export const PlaceMap = ({ lat, lng, title }: PlaceMapProps): JSX.Element => (
   <MapView
+    accessibilityLabel={`Map preview for ${title} at ${lat.toFixed(5)}, ${lng.toFixed(5)}.`}
     className="h-56 w-full rounded-lg"
     initialRegion={{
       latitude: lat,

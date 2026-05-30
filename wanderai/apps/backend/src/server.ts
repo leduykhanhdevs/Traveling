@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
@@ -9,12 +10,32 @@ import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/request-logger.js';
 import { optionalAuth } from './middleware/auth.js';
 import { apiRouter } from './routes/index.js';
+import { legalRouter } from './routes/legal.routes.js';
 import { sendSuccess } from './utils/http-response.js';
+
+const sentryUserContext: express.RequestHandler = (req, _res, next) => {
+  Sentry.setUser(req.auth?.userId ? { id: req.auth.userId } : null);
+  next();
+};
+
+// [REPLACE_BEFORE_SUBMIT] Replace YOUR_TEAM_ID with the real Apple Developer Team ID.
+const appleAppSiteAssociation = {
+  applinks: {
+    apps: [],
+    details: [
+      {
+        appID: 'YOUR_TEAM_ID.com.wanderai.app',
+        paths: ['/discover/*', '/itinerary/*'],
+      },
+    ],
+  },
+} as const;
 
 export const createServer = (): express.Express => {
   const app = express();
 
   app.disable('x-powered-by');
+  app.use(Sentry.Handlers.requestHandler());
   app.use(helmet());
   app.use(
     cors({
@@ -34,7 +55,14 @@ export const createServer = (): express.Express => {
       timestamp: new Date().toISOString(),
     });
   });
-  app.use('/api/v1', optionalAuth, apiRateLimiter, apiRouter);
+  app.get('/.well-known/apple-app-site-association', (_req, res) => {
+    res
+      .status(200)
+      .type('application/json')
+      .send(JSON.stringify(appleAppSiteAssociation));
+  });
+  app.use('/legal', legalRouter);
+  app.use('/api/v1', optionalAuth, sentryUserContext, apiRateLimiter, apiRouter);
   app.use((_req, res) => {
     res.status(404).json({
       success: false,
@@ -44,6 +72,7 @@ export const createServer = (): express.Express => {
       },
     });
   });
+  app.use(Sentry.Handlers.errorHandler());
   app.use(errorHandler);
 
   return app;

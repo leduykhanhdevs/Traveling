@@ -11,6 +11,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().min(1),
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_WEBHOOK_SECRET: z.string().optional(),
+  SENTRY_DSN: z.string().optional(),
   OPENAI_API_KEY: z.string().min(1),
   DEEPL_API_KEY: z.string().min(1),
   GOOGLE_CLOUD_API_KEY: z.string().min(1),

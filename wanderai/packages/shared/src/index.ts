@@ -1,6 +1,7 @@
 export * from './constants/app.js';
 export * from './constants/languages.js';
 export * from './schemas/api.js';
+export * from './types/budget.js';
 export * from './types/community.js';
 export * from './types/discovery.js';
 export * from './types/itinerary.js';
