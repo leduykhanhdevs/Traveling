@@ -1,0 +1,40 @@
+{
+    "name":  "traveling",
+    "version":  "1.0.0",
+    "private":  true,
+    "packageManager":  "npm@10.8.2",
+    "workspaces":  [
+                       "apps/*",
+                       "packages/*"
+                   ],
+    "scripts":  {
+                    "build":  "turbo build",
+                    "dev":  "turbo dev --parallel",
+                    "lint":  "turbo lint",
+                    "typecheck":  "turbo typecheck",
+                    "format":  "prettier --check .",
+                    "format:write":  "prettier --write .",
+                    "env:audit":  "node scripts/audit-env.mjs",
+                    "env:audit:fix":  "node scripts/audit-env.mjs --fix",
+                    "env:audit:live":  "node scripts/audit-env.mjs --live",
+                    "dev:fix-ios-lan":  "powershell -ExecutionPolicy Bypass -File ./scripts/fix-ios-lan.ps1",
+                    "db:generate":  "npm run prisma:generate --workspace apps/backend",
+                    "db:migrate":  "npm run prisma:migrate --workspace apps/backend"
+                },
+    "devDependencies":  {
+                            "@typescript-eslint/eslint-plugin":  "^7.18.0",
+                            "@typescript-eslint/parser":  "^7.18.0",
+                            "eslint":  "^8.57.0",
+                            "eslint-config-prettier":  "^9.1.0",
+                            "eslint-plugin-react":  "^7.35.0",
+                            "eslint-plugin-react-hooks":  "^4.6.2",
+                            "prettier":  "^3.3.3",
+                            "turbo":  "^2.0.14",
+                            "typescript":  "~5.5.4",
+                            "@types/react":  "~19.1.10"
+                        },
+    "dependencies":  {
+                         "@clerk/nextjs":  "^7.4.2",
+                         "@clerk/ui":  "^1.14.0"
+                     }
+}

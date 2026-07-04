@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "Traveling",
+    "slug": "traveling",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "traveling",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.traveling.app",
+      "associatedDomains": ["applinks:traveling.app"],
+      "infoPlist": {
+        "NSCameraUsageDescription": "Traveling uses the camera to translate menus and signs.",
+        "NSLocationWhenInUseUsageDescription": "Traveling uses your location to find nearby restaurants and attractions.",
+        "NSMicrophoneUsageDescription": "Traveling uses the microphone for voice translation.",
+        "NSSpeechRecognitionUsageDescription": "Traveling transcribes speech for translation."
+      }
+    },
+    "android": {
+      "package": "com.traveling.app",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "RECORD_AUDIO",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-location",
+      "expo-camera",
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          },
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "replace-with-eas-project-id"
+      }
+    }
+  }
+}

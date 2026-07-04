@@ -1,6 +1,51 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+build/
+**/build/
+
+# Expo and Turbo cache
+.expo/
+.turbo/
+.turbo/cache/
+**/.turbo/cache/
+
+# Environment files and secrets
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
-node_modules/
-clerk-out*.txt
-clerk-err*.txt
+!**/.env.example
+
+# Test and runtime output
+coverage/
+*.log
+clerk-*.txt
+backend-dev.err.log
+backend-dev.out.log
+clerk-err.txt
+clerk-out.txt
+clerk-out2.txt
+clerk-err2.txt
+
+# Native build output
+android/
+ios/
+apps/mobile/.eas/
+
+# Service account files
+**/google-services.json
+**/GoogleService-Info.plist
+**/*service-account*.json
+**/*firebase-admin*.json
+
+# Local databases
+apps/backend/src/prisma/dev.db
+
+# Editor/agent tooling
+.claude/

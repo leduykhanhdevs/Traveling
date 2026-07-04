@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Validate monorepo
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: traveling
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d traveling"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/traveling
+      REDIS_URL: redis://localhost:6379
+      CLERK_SECRET_KEY: test_clerk_secret
+      OPENAI_API_KEY: test_openai
+      DEEPL_API_KEY: test_deepl
+      GOOGLE_CLOUD_API_KEY: test_google_cloud
+      GOOGLE_PLACES_API_KEY: test_google_places
+      SERPAPI_KEY: test_serpapi
+      APIFY_API_KEY: test_apify
+      EXCHANGERATE_API_KEY: test_exchange
+      OPENWEATHER_API_KEY: test_weather
+      REVENUECAT_API_KEY: test_revenuecat
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate --workspace @traveling/backend
+
+      - name: Deploy Prisma migrations
+        run: npm run prisma:deploy --workspace @traveling/backend
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
