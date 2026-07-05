@@ -1,7 +1,9 @@
-import { useOAuth } from '@clerk/clerk-expo';
+import { useAuth, useOAuth } from '@clerk/clerk-expo';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
+import { useRouter } from 'expo-router';
 import { Apple, Facebook, Plane, Search } from 'lucide-react-native';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '../../components/GlassCard';
@@ -12,26 +14,41 @@ import { useHapticAction } from '../../hooks/useHapticAction';
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen(): JSX.Element {
+  const { isSignedIn, isLoaded } = useAuth();
   const google = useOAuth({ strategy: 'oauth_google' });
   const apple = useOAuth({ strategy: 'oauth_apple' });
   const facebook = useOAuth({ strategy: 'oauth_facebook' });
   const haptic = useHapticAction();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace('/(tabs)/discover');
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   const authenticate = useCallback(
     async (
-      start: () => Promise<{
+      start: (options?: { redirectUrl?: string }) => Promise<{
         createdSessionId?: string | null;
         setActive?: (options: { session: string }) => Promise<void>;
       }>,
     ) => {
       await haptic();
       try {
-        const result = await start();
+        const redirectUrl = Linking.createURL('/', { scheme: 'traveling' });
+        const result = await start({ redirectUrl });
         if (result.createdSessionId && result.setActive) {
           await result.setActive({ session: result.createdSessionId });
         }
-      } catch {
-        // Clerk surfaces OAuth failures through its own browser/session UI.
+      } catch (error: any) {
+        console.error('Clerk OAuth error message:', error?.message);
+        console.error('Clerk OAuth error keys:', Object.keys(error || {}));
+        try {
+          console.error('Clerk OAuth error stringified:', JSON.stringify(error));
+        } catch (e) {
+          console.error('Clerk OAuth error could not stringify:', e);
+        }
       }
     },
     [haptic],

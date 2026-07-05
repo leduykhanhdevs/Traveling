@@ -47,3 +47,57 @@ export const putProfile = asyncHandler(async (req, res) => {
   });
   sendSuccess(res, user);
 });
+
+export const getProfileStats = asyncHandler(async (req, res) => {
+  if (!req.auth?.userId) {
+    throw new AppError('UNAUTHORIZED', 'Sign in to load stats.', 401);
+  }
+  
+  const user = await prisma.user.findUnique({
+    where: { clerkId: req.auth.userId },
+  });
+  if (!user) {
+    throw new AppError('NOT_FOUND', 'User profile not found.', 404);
+  }
+
+  const tripsPlanned = await prisma.itinerary.count({
+    where: { userId: user.id },
+  });
+
+  const placesSaved = await prisma.savedPlace.count({
+    where: { userId: user.id },
+  });
+
+  const itineraries = await prisma.itinerary.findMany({
+    where: { userId: user.id },
+    select: { destination: true },
+  });
+  
+  const savedPlaces = await prisma.savedPlace.findMany({
+    where: { userId: user.id },
+    select: { address: true },
+  });
+
+  const locations = new Set<string>();
+  if (user.nationality) {
+    locations.add(user.nationality.toLowerCase());
+  }
+  itineraries.forEach((it) => {
+    locations.add(it.destination.toLowerCase().trim());
+  });
+  savedPlaces.forEach((pl) => {
+    const parts = pl.address.split(',');
+    const lastPart = parts[parts.length - 1]?.trim().toLowerCase();
+    if (lastPart) {
+      locations.add(lastPart);
+    }
+  });
+
+  const countriesVisited = Math.max(1, locations.size);
+
+  sendSuccess(res, {
+    countriesVisited,
+    tripsPlanned,
+    placesSaved,
+  });
+});

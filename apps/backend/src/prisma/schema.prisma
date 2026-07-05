@@ -31,6 +31,8 @@ model User {
   reviews             Review[]
   savedPlaces         SavedPlace[]
   searchHistory       SearchHistory[]
+  activityLogs        ActivityLog[]
+  viewedPlaces        ViewedPlace[]
 }
 
 model Budget {
@@ -203,4 +205,31 @@ model Like {
   @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // e.g. "search", "translate", "save_place", "create_post"
+  details   Json?    // any additional structured log info
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model ViewedPlace {
+  id        String   @id @default(cuid())
+  userId    String
+  placeId   String
+  name      String
+  address   String
+  lat       Float
+  lng       Float
+  emoji     String   @default("📍")
+  viewedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, placeId])
+  @@index([userId, viewedAt])
 }

@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { CalendarDays, Pencil, Plus, Sparkles, Wallet, X } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
+import DraggableFlatList, { type RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityCard,
@@ -14,13 +14,12 @@ import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { TextField } from '../../../components/TextField';
 import { theme } from '../../../constants/theme';
-
-const itineraryDays = [
-  { id: 'day-1', label: 'Day 1', subtitle: 'May 25' },
-  { id: 'day-2', label: 'Day 2', subtitle: 'May 26' },
-  { id: 'day-3', label: 'Day 3', subtitle: 'May 27' },
-  { id: 'day-4', label: 'Day 4', subtitle: 'May 28' },
-] as const satisfies readonly ItineraryDayOption[];
+import { useAuth } from '@clerk/clerk-expo';
+import {
+  useItinerariesList,
+  useGenerateItineraryMutation,
+  useUpdateItineraryMutation,
+} from '../../../services/itinerary';
 
 const categories: readonly ActivityCategory[] = [
   'culture',
@@ -163,34 +162,134 @@ const buildGeneratedActivity = (dayId: string): TimelineActivity => ({
 });
 
 export default function ItineraryScreen(): JSX.Element {
+  const { getToken, userId } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getToken().then(setToken).catch(() => {});
+  }, [getToken]);
+
+  const { data: itineraries, refetch: refetchItineraries } = useItinerariesList(token, { enabled: !!token });
+
+  const activeItinerary = useMemo(() => {
+    if (itineraries && itineraries.length > 0) {
+      return itineraries[0];
+    }
+    return null;
+  }, [itineraries]);
+
   const [tripName, setTripName] = useState('Saigon Long Weekend');
   const [editingTripName, setEditingTripName] = useState(false);
   const [activeDayId, setActiveDayId] = useState('day-1');
-  const [activitiesByDay, setActivitiesByDay] = useState<Record<string, TimelineActivity[]>>(
-    initialActivitiesByDay,
-  );
+  const [activitiesByDay, setActivitiesByDay] = useState<Record<string, TimelineActivity[]>>({});
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [newPlace, setNewPlace] = useState('');
   const [newTime, setNewTime] = useState('14:00');
   const [newCategory, setNewCategory] = useState<ActivityCategory>('culture');
 
+  useEffect(() => {
+    if (activeItinerary?.content?.days) {
+      setTripName(activeItinerary.destination || 'Saigon Trip');
+      const mapped: Record<string, TimelineActivity[]> = {};
+      activeItinerary.content.days.forEach((d: any) => {
+        mapped[`day-${d.day}`] = d.slots.map((s: any) => ({
+          id: s.id,
+          dayId: `day-${d.day}`,
+          time: s.startTime,
+          title: s.title,
+          duration: s.duration || '1h',
+          category: s.category || 'other',
+          aiMatchScore: s.estimatedSpend ? 92 : 96,
+          notes: s.description,
+          address: s.place?.address || 'Address to be confirmed',
+          weatherNote: s.place?.openNow ? 'Open Now' : 'Check hours',
+        }));
+      });
+      setActivitiesByDay(mapped);
+    } else {
+      setActivitiesByDay(initialActivitiesByDay);
+    }
+  }, [activeItinerary]);
+
+  const itineraryDays = useMemo<ItineraryDayOption[]>(() => {
+    if (activeItinerary?.content?.days) {
+      return activeItinerary.content.days.map((d: any) => ({
+        id: `day-${d.day}`,
+        label: `Day ${d.day}`,
+        subtitle: d.title || `Day ${d.day}`,
+      }));
+    }
+    return [
+      { id: 'day-1', label: 'Day 1', subtitle: 'May 25' },
+      { id: 'day-2', label: 'Day 2', subtitle: 'May 26' },
+      { id: 'day-3', label: 'Day 3', subtitle: 'May 27' },
+      { id: 'day-4', label: 'Day 4', subtitle: 'May 28' },
+    ];
+  }, [activeItinerary]);
+
+  const updateMutation = useUpdateItineraryMutation(token);
+  const generateMutation = useGenerateItineraryMutation(token);
+
+  const syncItineraryChanges = (newActivities: Record<string, TimelineActivity[]>) => {
+    if (!activeItinerary) {
+      return;
+    }
+
+    const updatedDays = activeItinerary.content.days.map((d: any) => {
+      const dayKey = `day-${d.day}`;
+      const daySlots = newActivities[dayKey] || [];
+      return {
+        ...d,
+        slots: daySlots.map((s) => ({
+          id: s.id,
+          day: d.day,
+          startTime: s.time,
+          endTime: s.time,
+          title: s.title,
+          description: s.notes,
+          estimatedSpend: s.aiMatchScore ? 10 : 0,
+          duration: s.duration,
+          category: s.category,
+        })),
+      };
+    });
+
+    const updatedContent = {
+      ...activeItinerary.content,
+      days: updatedDays,
+    };
+
+    updateMutation.mutate({
+      id: activeItinerary.id,
+      content: updatedContent,
+    });
+  };
+
   const activeActivities = activitiesByDay[activeDayId] ?? [];
   const totalActivities = useMemo(
     () => Object.values(activitiesByDay).reduce((sum, dayActivities) => sum + dayActivities.length, 0),
     [activitiesByDay],
   );
-  const activeDay = itineraryDays.find((day) => day.id === activeDayId) ?? itineraryDays[0];
+  const activeDay = itineraryDays.find((day) => day.id === activeDayId) ?? itineraryDays[0] ?? { id: 'day-1', label: 'Day 1', subtitle: 'May 25' };
 
   const updateActiveDay = (nextActivities: TimelineActivity[]): void => {
-    setActivitiesByDay((current) => ({
-      ...current,
+    const updated = {
+      ...activitiesByDay,
       [activeDayId]: nextActivities,
-    }));
+    };
+    setActivitiesByDay(updated);
+    syncItineraryChanges(updated);
   };
 
   const deleteActivity = (activityId: string): void => {
-    updateActiveDay(activeActivities.filter((activity) => activity.id !== activityId));
+    const nextActivities = activeActivities.filter((activity) => activity.id !== activityId);
+    const updated = {
+      ...activitiesByDay,
+      [activeDayId]: nextActivities,
+    };
+    setActivitiesByDay(updated);
+    syncItineraryChanges(updated);
     if (expandedActivityId === activityId) {
       setExpandedActivityId(null);
     }
@@ -206,20 +305,39 @@ export default function ItineraryScreen(): JSX.Element {
       duration: '1h 30m',
       category: newCategory,
       aiMatchScore: 90,
-      notes: 'Added manually. Traveling can refine this stop once live planning is connected.',
+      notes: 'Added manually.',
       address: 'Address to be confirmed',
       weatherNote: 'Check live weather before departure.',
     };
 
-    updateActiveDay([...activeActivities, nextActivity].sort((left, right) => left.time.localeCompare(right.time)));
+    const nextActivities = [...activeActivities, nextActivity].sort((left, right) => left.time.localeCompare(right.time));
+    const updated = {
+      ...activitiesByDay,
+      [activeDayId]: nextActivities,
+    };
+    setActivitiesByDay(updated);
+    syncItineraryChanges(updated);
     setNewPlace('');
     setNewTime('14:00');
     setNewCategory('culture');
     setSheetVisible(false);
   };
 
-  const generateEmptyDay = (): void => {
-    updateActiveDay([buildGeneratedActivity(activeDayId)]);
+  const handleGenerateItinerary = (): void => {
+    if (!token) {
+      return;
+    }
+    
+    generateMutation.mutate({
+      destination: 'Ho Chi Minh City',
+      days: 3,
+      budgetRange: 'midrange',
+      travelStyle: 'culture',
+    }, {
+      onSuccess: () => {
+        refetchItineraries();
+      }
+    });
   };
 
   const renderActivity = ({
@@ -230,16 +348,18 @@ export default function ItineraryScreen(): JSX.Element {
   }: RenderItemParams<TimelineActivity>): JSX.Element => {
     const index = getIndex() ?? 0;
     return (
-      <ActivityCard
-        activity={item}
-        expanded={expandedActivityId === item.id}
-        isActive={isActive}
-        isFirst={index === 0}
-        isLast={index === activeActivities.length - 1}
-        onDelete={() => deleteActivity(item.id)}
-        onLongPress={drag}
-        onPress={() => setExpandedActivityId((current) => (current === item.id ? null : item.id))}
-      />
+      <ScaleDecorator>
+        <ActivityCard
+          activity={item}
+          expanded={expandedActivityId === item.id}
+          isActive={isActive}
+          isFirst={index === 0}
+          isLast={index === activeActivities.length - 1}
+          onDelete={() => deleteActivity(item.id)}
+          onLongPress={drag}
+          onPress={() => setExpandedActivityId((current) => (current === item.id ? null : item.id))}
+        />
+      </ScaleDecorator>
     );
   };
 
@@ -349,10 +469,11 @@ export default function ItineraryScreen(): JSX.Element {
                         Fill this day with a balanced route using your pace, interests, meal timing, and nearby gems.
                       </Text>
                       <PrimaryButton
-                        accessibilityHint="Generates a mock AI activity for the selected day."
+                        accessibilityHint="Generates an AI itinerary for this trip."
                         icon={Sparkles}
-                        label="Generate"
-                        onPress={generateEmptyDay}
+                        label={generateMutation.isPending ? "Generating..." : "Generate"}
+                        onPress={handleGenerateItinerary}
+                        disabled={generateMutation.isPending}
                       />
                     </View>
                   </GlassCard>

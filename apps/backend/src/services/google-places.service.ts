@@ -110,6 +110,106 @@ const normalizePriceLevel = (priceLevel: number | undefined): PriceRange | undef
   return priceLevel as PriceRange;
 };
 
+const fallbackPhotos: Record<string, string[]> = {
+  cafe: [
+    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&auto=format&fit=crop&q=80',
+  ],
+  restaurant: [
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&auto=format&fit=crop&q=80',
+  ],
+  bar: [
+    'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop&q=80',
+  ],
+  hotel: [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&auto=format&fit=crop&q=80',
+  ],
+  tourist: [
+    'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1528127269322-539801943592?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+  ],
+  general: [
+    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop&q=80',
+  ],
+};
+
+const getDeterministicIndex = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+};
+
+const getFallbackPhoto = (types: readonly string[], name: string): string => {
+  const lowercaseName = name.toLowerCase();
+  
+  if (
+    types.includes('cafe') ||
+    types.includes('coffee') ||
+    lowercaseName.includes('cafe') ||
+    lowercaseName.includes('coffee')
+  ) {
+    const list = fallbackPhotos.cafe!;
+    return list[getDeterministicIndex(name) % list.length]!;
+  }
+  if (
+    types.includes('restaurant') ||
+    types.includes('food') ||
+    lowercaseName.includes('restaurant') ||
+    lowercaseName.includes('food') ||
+    lowercaseName.includes('quán') ||
+    lowercaseName.includes('phở') ||
+    lowercaseName.includes('bánh')
+  ) {
+    const list = fallbackPhotos.restaurant!;
+    return list[getDeterministicIndex(name) % list.length]!;
+  }
+  if (
+    types.includes('bar') ||
+    types.includes('night_club') ||
+    lowercaseName.includes('bar') ||
+    lowercaseName.includes('pub') ||
+    lowercaseName.includes('club')
+  ) {
+    const list = fallbackPhotos.bar!;
+    return list[getDeterministicIndex(name) % list.length]!;
+  }
+  if (
+    types.includes('lodging') ||
+    types.includes('hotel') ||
+    lowercaseName.includes('hotel') ||
+    lowercaseName.includes('stay') ||
+    lowercaseName.includes('homestay')
+  ) {
+    const list = fallbackPhotos.hotel!;
+    return list[getDeterministicIndex(name) % list.length]!;
+  }
+  if (
+    types.includes('tourist_attraction') ||
+    types.includes('museum') ||
+    lowercaseName.includes('museum') ||
+    lowercaseName.includes('church') ||
+    lowercaseName.includes('pagoda') ||
+    lowercaseName.includes('temple') ||
+    lowercaseName.includes('chùa')
+  ) {
+    const list = fallbackPhotos.tourist!;
+    return list[getDeterministicIndex(name) % list.length]!;
+  }
+
+  const list = fallbackPhotos.general!;
+  return list[getDeterministicIndex(name) % list.length]!;
+};
+
 const buildPhotoUrl = (photoReference: string | undefined): string | undefined => {
   if (!photoReference) {
     return undefined;
@@ -122,19 +222,22 @@ const buildPhotoUrl = (photoReference: string | undefined): string | undefined =
   return url.toString();
 };
 
-const toCandidate = (place: GooglePlaceResult, origin: GooglePlaceLocation): PlaceCandidate => ({
-  googlePlaceId: place.place_id,
-  name: place.name,
-  address: place.vicinity ?? place.formatted_address ?? 'Address unavailable',
-  coordinates: place.geometry.location,
-  distanceMeters: distanceMeters(origin, place.geometry.location),
-  rating: place.rating,
-  reviewCount: place.user_ratings_total,
-  priceLevel: normalizePriceLevel(place.price_level),
-  types: place.types ?? [],
-  photoUrl: buildPhotoUrl(place.photos?.[0]?.photo_reference),
-  openNow: place.opening_hours?.open_now,
-});
+const toCandidate = (place: GooglePlaceResult, origin: GooglePlaceLocation): PlaceCandidate => {
+  const rawPhoto = buildPhotoUrl(place.photos?.[0]?.photo_reference);
+  return {
+    googlePlaceId: place.place_id,
+    name: place.name,
+    address: place.vicinity ?? place.formatted_address ?? 'Address unavailable',
+    coordinates: place.geometry.location,
+    distanceMeters: distanceMeters(origin, place.geometry.location),
+    rating: place.rating,
+    reviewCount: place.user_ratings_total,
+    priceLevel: normalizePriceLevel(place.price_level),
+    types: place.types ?? [],
+    photoUrl: rawPhoto || getFallbackPhoto(place.types ?? [], place.name),
+    openNow: place.opening_hours?.open_now,
+  };
+};
 
 const buildNearbyUrl = (input: SearchInput, radiusMeters: number): URL => {
   const url = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');

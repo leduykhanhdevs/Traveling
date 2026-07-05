@@ -14,6 +14,14 @@ import {
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { Skeleton } from '../../../components/Skeleton';
 import { TextField } from '../../../components/TextField';
+import { useAuth } from '@clerk/clerk-expo';
+import {
+  useCommunityPosts,
+  useCreatePostMutation,
+  usePostComments,
+  useAddCommentMutation,
+  useToggleLikeMutation,
+} from '../../../services/community';
 
 type FeedFilter = 'All' | 'Following' | 'Nearby';
 type StoryTraveler = {
@@ -74,97 +82,6 @@ const authors = {
   },
 } as const satisfies Record<string, CommunityFeedAuthor>;
 
-const initialPosts: readonly MockPost[] = [
-  {
-    id: 'post-market-breakfast',
-    author: authors.maya,
-    content:
-      'Ben Thanh before 9am is a completely different place. Start with banh cuon, then walk the dry goods aisle before the big tour groups arrive. I used the side entrance near Le Thanh Ton and it felt calmer.',
-    imageUrl: 'placeholder://ben-thanh',
-    placeName: 'Ben Thanh Morning Market',
-    location: 'Ho Chi Minh City',
-    timeAgo: '18 min ago',
-    likeCount: 128,
-    commentCount: 12,
-    likedByMe: false,
-    following: true,
-    nearby: true,
-  },
-  {
-    id: 'post-lantern-walk',
-    author: authors.leo,
-    content:
-      'If you are doing a photo walk, save Nguyen Hue for the blue hour. The street performers came out around 6:30 and the skyline looked fantastic after the rain.',
-    imageUrl: 'placeholder://nguyen-hue',
-    placeName: 'Nguyen Hue Walking Street',
-    location: 'Ho Chi Minh City',
-    timeAgo: '42 min ago',
-    likeCount: 94,
-    commentCount: 7,
-    likedByMe: true,
-    following: false,
-    nearby: true,
-  },
-  {
-    id: 'post-soup-tip',
-    author: authors.an,
-    content:
-      'For bun bo, ask for extra herbs instead of extra noodles. The broth stays balanced and you still leave full. This little shop only has six tables, so go before noon.',
-    placeName: 'Vo Van Tan Noodle Corner',
-    location: 'District 3',
-    timeAgo: '1 hr ago',
-    likeCount: 211,
-    commentCount: 26,
-    likedByMe: false,
-    following: true,
-    nearby: true,
-  },
-  {
-    id: 'post-rain-plan',
-    author: authors.sara,
-    content:
-      'Rainy afternoon plan that actually worked: museum, coconut coffee, then a covered market snack loop. Zero stress, still felt like a full day.',
-    imageUrl: 'placeholder://rainy-saigon',
-    placeName: 'Rainy Day Route',
-    location: 'Ho Chi Minh City',
-    timeAgo: '2 hrs ago',
-    likeCount: 76,
-    commentCount: 9,
-    likedByMe: false,
-    following: false,
-    nearby: false,
-  },
-  {
-    id: 'post-family-route',
-    author: authors.noah,
-    content:
-      'Traveling with kids: the river walk plus a short cafe stop was better than another museum. Lots of space, easy bathrooms, and no taxi needed.',
-    imageUrl: 'placeholder://river-walk',
-    placeName: 'Saigon River Walk',
-    location: 'District 1',
-    timeAgo: '3 hrs ago',
-    likeCount: 53,
-    commentCount: 5,
-    likedByMe: false,
-    following: true,
-    nearby: true,
-  },
-  {
-    id: 'post-solo-evening',
-    author: authors.lina,
-    content:
-      'Solo traveler note: the rooftop cafes around Pasteur felt friendly without being too loud. Bring a light jacket if you sit outside after sunset.',
-    placeName: 'Pasteur Rooftop Cafes',
-    location: 'District 1',
-    timeAgo: 'Yesterday',
-    likeCount: 139,
-    commentCount: 18,
-    likedByMe: true,
-    following: false,
-    nearby: true,
-  },
-] as const;
-
 const initialComments: Record<string, CommunityFeedComment[]> = {
   'post-market-breakfast': [
     {
@@ -208,22 +125,77 @@ const stories: readonly StoryTraveler[] = [
 ];
 
 export default function CommunityScreen(): JSX.Element {
+  const { getToken } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getToken().then(setToken).catch(() => {});
+  }, [getToken]);
+
+  const { data: postsData, isLoading: postsLoading, refetch: refetchPosts } = useCommunityPosts(token, { enabled: !!token });
+
+  const posts = useMemo(() => {
+    if (postsData?.posts) {
+      return postsData.posts.map((post) => {
+        const author = post.author as any;
+        return {
+          id: post.id,
+          author: {
+            id: author.id,
+            name: author.name,
+            username: author.username || 'wanderer',
+            initials: author.initials || 'TR',
+            location: author.location || 'Vietnam',
+          },
+          content: post.content,
+          imageUrl: post.imageUrl || undefined,
+          placeName: post.placeId ? 'Tagged location' : undefined,
+          location: author.location || 'Vietnam',
+          timeAgo: new Date(post.createdAt).toLocaleDateString(),
+          likeCount: post.likeCount,
+          commentCount: post.commentCount,
+          likedByMe: post.likedByMe,
+          following: true,
+          nearby: true,
+        };
+      });
+    }
+    return [];
+  }, [postsData]);
+
   const [activeFilter, setActiveFilter] = useState<FeedFilter>('All');
-  const [posts, setPosts] = useState<readonly MockPost[]>(initialPosts);
-  const [commentsByPost, setCommentsByPost] = useState<Record<string, CommunityFeedComment[]>>(initialComments);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [createPostVisible, setCreatePostVisible] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostPlace, setNewPostPlace] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  useEffect(() => {
-    const loadingTimer = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(loadingTimer);
-  }, []);
+  const { data: commentsData, refetch: refetchComments } = usePostComments(selectedPostId, token, { enabled: !!selectedPostId });
+
+  const selectedComments = useMemo(() => {
+    if (commentsData?.comments) {
+      return commentsData.comments.map((comment) => {
+        const author = comment.author as any;
+        return {
+          id: comment.id,
+          author: {
+            id: author.id,
+            name: author.name,
+            username: author.username || 'wanderer',
+            initials: author.initials || 'TR',
+            location: author.location || 'Traveler',
+          },
+          content: comment.content,
+          timeAgo: new Date(comment.createdAt).toLocaleDateString(),
+        };
+      });
+    }
+    return [];
+  }, [commentsData]);
+
+  const loading = postsLoading;
+  const refreshing = false;
 
   const visiblePosts = useMemo(() => {
     if (activeFilter === 'Following') {
@@ -240,27 +212,18 @@ export default function CommunityScreen(): JSX.Element {
     [posts, selectedPostId],
   );
 
-  const selectedComments = selectedPostId ? commentsByPost[selectedPostId] ?? [] : [];
-
   const refreshFeed = (): void => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 650);
+    refetchPosts();
   };
 
+  const toggleLikeMutation = useToggleLikeMutation(token);
+
   const toggleLike = (postId: string): void => {
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              likedByMe: !post.likedByMe,
-              likeCount: post.likedByMe ? Math.max(0, post.likeCount - 1) : post.likeCount + 1,
-            }
-          : post,
-      ),
-    );
+    toggleLikeMutation.mutate(postId, {
+      onSuccess: () => {
+        refetchPosts();
+      },
+    });
   };
 
   const sharePost = (postId: string): void => {
@@ -274,6 +237,8 @@ export default function CommunityScreen(): JSX.Element {
     });
   };
 
+  const addCommentMutation = useAddCommentMutation(token);
+
   const submitComment = (): void => {
     const trimmed = commentText.trim();
     if (!selectedPostId || !trimmed) {
@@ -281,31 +246,20 @@ export default function CommunityScreen(): JSX.Element {
     }
 
     setSubmittingComment(true);
-    const nextComment: CommunityFeedComment = {
-      id: `${selectedPostId}-comment-${Date.now()}`,
-      author: {
-        id: 'current-user',
-        name: 'You',
-        username: 'you',
-        initials: 'YO',
-        location: 'Traveler',
+    addCommentMutation.mutate({ postId: selectedPostId, content: trimmed }, {
+      onSuccess: () => {
+        setCommentText('');
+        refetchComments();
+        refetchPosts();
+        setSubmittingComment(false);
       },
-      content: trimmed,
-      timeAgo: 'Just now',
-    };
-
-    setCommentsByPost((current) => ({
-      ...current,
-      [selectedPostId]: [...(current[selectedPostId] ?? []), nextComment],
-    }));
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === selectedPostId ? { ...post, commentCount: post.commentCount + 1 } : post,
-      ),
-    );
-    setCommentText('');
-    setTimeout(() => setSubmittingComment(false), 250);
+      onError: () => {
+        setSubmittingComment(false);
+      }
+    });
   };
+
+  const createPostMutation = useCreatePostMutation(token);
 
   const createPost = (): void => {
     const trimmed = newPostContent.trim();
@@ -313,33 +267,17 @@ export default function CommunityScreen(): JSX.Element {
       return;
     }
 
-    const place = newPostPlace.trim();
-    const nextPost: MockPost = {
-      id: `post-created-${Date.now()}`,
-      author: {
-        id: 'current-user',
-        name: 'You',
-        username: 'you',
-        initials: 'YO',
-        location: 'Traveler',
-      },
+    createPostMutation.mutate({
       content: trimmed,
-      imageUrl: place ? 'placeholder://created-post' : undefined,
-      placeName: place || undefined,
-      location: place || 'Your trip',
-      timeAgo: 'Just now',
-      likeCount: 0,
-      commentCount: 0,
-      likedByMe: false,
-      following: true,
-      nearby: true,
-    };
-
-    setPosts((current) => [nextPost, ...current]);
-    setCommentsByPost((current) => ({ ...current, [nextPost.id]: [] }));
-    setNewPostContent('');
-    setNewPostPlace('');
-    setCreatePostVisible(false);
+      placeId: newPostPlace.trim() || undefined,
+    }, {
+      onSuccess: () => {
+        setNewPostContent('');
+        setNewPostPlace('');
+        setCreatePostVisible(false);
+        refetchPosts();
+      }
+    });
   };
 
   return (

@@ -1,4 +1,4 @@
-import type { RankedPlace } from '@traveling/shared';
+import type { RankedPlace, DiscoverRequest } from '@traveling/shared';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { Bookmark, Compass, List, Map, MapPin, Search, Sparkles } from 'lucide-react-native';
@@ -164,12 +164,22 @@ const openDirections = (place: RankedPlace): void => {
   void Linking.openURL(url);
 };
 
+import { useAuth } from '@clerk/clerk-expo';
+import { useDiscover, useSavePlaceMutation, useViewedPlaces } from '../../../services/discovery';
+
 export default function DiscoverScreen(): JSX.Element {
+  const { userId, getToken } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getToken().then(setToken).catch(() => {});
+  }, [getToken]);
+
   const [activeCategory, setActiveCategory] = useState<DiscoverCategory>('All');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [apiQuery, setApiQuery] = useState('attractions');
   const [savedPlaceIds, setSavedPlaceIds] = useState<readonly string[]>([]);
-  const [isDemoLoading, setIsDemoLoading] = useState(true);
   const { location, loading: locating, error: locationError, refreshLocation } = useCurrentLocation();
   const haptic = useHapticAction();
   const reducedMotion = useReducedMotion();
@@ -178,14 +188,11 @@ export default function DiscoverScreen(): JSX.Element {
   const categoryIndicatorX = useSharedValue(0);
   const waveX = useSharedValue(0);
 
+  const savePlaceMutation = useSavePlaceMutation(token);
+
   useEffect(() => {
     void refreshLocation();
   }, [refreshLocation]);
-
-  useEffect(() => {
-    const loadingTimer = setTimeout(() => setIsDemoLoading(false), 650);
-    return () => clearTimeout(loadingTimer);
-  }, []);
 
   useEffect(() => {
     categoryIndicatorX.value = withTiming(activeCategoryIndex * (categoryChipWidth + categoryChipGap), {
@@ -232,7 +239,36 @@ export default function DiscoverScreen(): JSX.Element {
     return locationError ? 'Near Ho Chi Minh City' : 'Near Ho Chi Minh City';
   }, [locating, location, locationError]);
 
+  const discoverParams = useMemo<DiscoverRequest | null>(() => {
+    if (!location) {
+      return null;
+    }
+    return {
+      query: apiQuery,
+      lat: location.lat,
+      lng: location.lng,
+      filters: {
+        radiusMeters: 5000,
+        priceRange: [],
+        dietaryRestrictions: [],
+        openNow: false,
+      },
+      userId: userId ?? undefined,
+    };
+  }, [apiQuery, location, userId]);
+
+  const { data: discoverData, isLoading: isDiscoverLoading } = useDiscover(
+    discoverParams,
+    token,
+    { enabled: !!location }
+  );
+
+  const { data: viewedHistoryData } = useViewedPlaces(token, { enabled: !!token });
+
   const visiblePlaces = useMemo(() => {
+    if (discoverData?.places && discoverData.places.length > 0) {
+      return discoverData.places;
+    }
     if (activeCategory === 'All') {
       return demoPlaces;
     }
@@ -245,25 +281,55 @@ export default function DiscoverScreen(): JSX.Element {
       return demoPlaces.filter((place) => place.cuisineTags.some((tag) => tag === 'Scenic'));
     }
     return demoPlaces;
-  }, [activeCategory]);
+  }, [discoverData, activeCategory]);
+
+  const recentlyViewedPlaces = useMemo(() => {
+    if (viewedHistoryData && viewedHistoryData.length > 0) {
+      return viewedHistoryData.map((item: any) => ({
+        placeId: item.placeId,
+        name: item.name,
+        address: item.address,
+        emoji: item.emoji || '📍',
+      }));
+    }
+    return recentlyViewed.map((item) => ({
+      placeId: item.id,
+      name: item.title,
+      address: item.subtitle,
+      emoji: item.emoji,
+    }));
+  }, [viewedHistoryData]);
 
   const mapPlace = visiblePlaces[0] ?? demoPlaces[0];
 
-  const toggleSave = (placeId: string): void => {
+  const toggleSave = (place: RankedPlace): void => {
+    const isSaved = savedPlaceIds.includes(place.id);
     setSavedPlaceIds((current) =>
-      current.includes(placeId) ? current.filter((id) => id !== placeId) : [...current, placeId],
+      isSaved ? current.filter((id) => id !== place.id) : [...current, place.id],
     );
+    if (!isSaved) {
+      savePlaceMutation.mutate({
+        placeId: place.googlePlaceId,
+        name: place.name,
+        address: place.address,
+        lat: place.coordinates.lat,
+        lng: place.coordinates.lng,
+      });
+    }
   };
 
   const selectCategory = (category: DiscoverCategory): void => {
     void haptic();
     setActiveCategory(category);
+    setApiQuery(category === 'All' ? 'attractions' : category);
   };
 
   const switchViewMode = (): void => {
     void haptic();
     setViewMode((current) => (current === 'list' ? 'map' : 'list'));
   };
+
+  const isDemoLoading = isDiscoverLoading || locating;
 
   return (
     <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
@@ -356,6 +422,11 @@ export default function DiscoverScreen(): JSX.Element {
                       placeholderTextColor="#64748b"
                       returnKeyType="search"
                       value={searchQuery}
+                      onSubmitEditing={() => {
+                        if (searchQuery.trim()) {
+                          setApiQuery(searchQuery);
+                        }
+                      }}
                     />
                     <Sparkles size={18} color="#6C63FF" />
                   </View>
@@ -513,7 +584,7 @@ export default function DiscoverScreen(): JSX.Element {
                               place={place}
                               onNavigate={() => openDirections(place)}
                               onOpen={() => router.push(`/discover/${place.googlePlaceId}`)}
-                              onSave={() => toggleSave(place.id)}
+                              onSave={() => toggleSave(place)}
                             />
                           ))}
                       </View>
@@ -526,7 +597,7 @@ export default function DiscoverScreen(): JSX.Element {
                               place={place}
                               onNavigate={() => openDirections(place)}
                               onOpen={() => router.push(`/discover/${place.googlePlaceId}`)}
-                              onSave={() => toggleSave(place.id)}
+                              onSave={() => toggleSave(place)}
                             />
                           ))}
                       </View>
@@ -576,28 +647,29 @@ export default function DiscoverScreen(): JSX.Element {
                       </Text>
                       <FlatList
                         accessibilityLabel="Recently viewed places"
-                        data={recentlyViewed}
+                        data={recentlyViewedPlaces}
                         horizontal
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => item.placeId}
                         renderItem={({ item }) => (
                           <TouchableOpacity
-                            accessibilityHint={`Opens ${item.title}.`}
-                            accessibilityLabel={`Recently viewed ${item.title}. ${item.subtitle}.`}
+                            accessibilityHint={`Opens ${item.name}.`}
+                            accessibilityLabel={`Recently viewed ${item.name}. ${item.address}.`}
                             accessibilityRole="button"
                             className="mr-3 w-56 flex-row items-center gap-3 rounded-lg bg-white/10 p-3"
+                            onPress={() => router.push(`/discover/${item.placeId}`)}
                           >
                             <View
-                              accessibilityLabel={`${item.title} image placeholder`}
+                              accessibilityLabel={`${item.name} image placeholder`}
                               className="h-12 w-12 items-center justify-center rounded-lg bg-white/10"
                             >
                               <Text className="text-2xl">{item.emoji}</Text>
                             </View>
                             <View className="flex-1">
                               <Text className="font-inter-semibold text-white" numberOfLines={1}>
-                                {item.title}
+                                {item.name}
                               </Text>
                               <Text className="mt-1 font-inter text-xs text-zinc-400" numberOfLines={1}>
-                                {item.subtitle}
+                                {item.address}
                               </Text>
                             </View>
                           </TouchableOpacity>

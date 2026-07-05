@@ -18,6 +18,9 @@ import { PrimaryButton } from '../../../components/PrimaryButton';
 import { StatCard } from '../../../components/StatCard';
 import { theme } from '../../../constants/theme';
 import { useSubscriptionStore } from '../../../stores/subscriptionStore';
+import { useState, useEffect, useMemo } from 'react';
+import { useProfileStats } from '../../../services/profile';
+import { useItinerariesList } from '../../../services/itinerary';
 
 type TripCard = {
   id: string;
@@ -35,71 +38,6 @@ type SettingRow = {
   danger?: boolean;
   onPress: () => void;
 };
-
-const travelerStats = [
-  { label: 'Countries visited', value: 12, emoji: '🌍' },
-  { label: 'Trips planned', value: 8, emoji: '✈️' },
-  { label: 'Places saved', value: 47, emoji: '📍' },
-] as const;
-
-const badges: readonly TravelerBadge[] = [
-  {
-    id: 'first-itinerary',
-    icon: '🗺',
-    name: 'First Itinerary',
-    description: 'Built your first AI-powered trip plan.',
-    earned: true,
-  },
-  {
-    id: 'world-explorer',
-    icon: '🌏',
-    name: 'World Explorer',
-    description: 'Saved places across multiple countries.',
-    earned: true,
-  },
-  {
-    id: 'foodie',
-    icon: '🍜',
-    name: 'Foodie',
-    description: 'Found local food gems with Traveling.',
-    earned: true,
-  },
-  {
-    id: 'mountain-lover',
-    icon: '🏔',
-    name: 'Mountain Lover',
-    description: 'Planned high-altitude adventures.',
-    earned: true,
-  },
-  {
-    id: 'solo-traveler',
-    icon: '🔒',
-    name: 'Solo Traveler',
-    description: 'Unlock after your first solo route.',
-    earned: false,
-  },
-];
-
-const recentTrips: readonly TripCard[] = [
-  {
-    id: 'trip-saigon',
-    destination: 'Ho Chi Minh City',
-    dates: 'May 25 - May 28',
-    colorClass: 'bg-primary',
-  },
-  {
-    id: 'trip-kyoto',
-    destination: 'Kyoto',
-    dates: 'Apr 11 - Apr 16',
-    colorClass: 'bg-accent',
-  },
-  {
-    id: 'trip-lisbon',
-    destination: 'Lisbon',
-    dates: 'Mar 2 - Mar 7',
-    colorClass: 'bg-teal-500',
-  },
-];
 
 const getInitials = (name: string, email?: string): string => {
   const source = name.trim() || email?.split('@')[0] || 'Traveler';
@@ -120,7 +58,79 @@ const getHandle = (username: string | null | undefined, email?: string): string 
 };
 
 export default function ProfileScreen(): JSX.Element {
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getToken().then(setToken).catch(() => {});
+  }, [getToken]);
+
+  const { data: stats } = useProfileStats(token, { enabled: !!token });
+  const { data: itineraries } = useItinerariesList(token, { enabled: !!token });
+
+  const travelerStats = useMemo(() => [
+    { label: 'Countries visited', value: stats?.countriesVisited ?? 1, emoji: '🌍' },
+    { label: 'Trips planned', value: stats?.tripsPlanned ?? 0, emoji: '✈️' },
+    { label: 'Places saved', value: stats?.placesSaved ?? 0, emoji: '📍' },
+  ], [stats]);
+
+  const recentTrips = useMemo(() => {
+    if (itineraries && itineraries.length > 0) {
+      return itineraries.slice(0, 3).map((it, idx) => ({
+        id: it.id,
+        destination: it.destination,
+        dates: `Day 1 - Day ${it.days}`,
+        colorClass: idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-accent' : 'bg-teal-500',
+      }));
+    }
+    return [
+      {
+        id: 'trip-saigon',
+        destination: 'Ho Chi Minh City',
+        dates: 'May 25 - May 28',
+        colorClass: 'bg-primary',
+      },
+    ];
+  }, [itineraries]);
+
+  const badges = useMemo(() => [
+    {
+      id: 'first-itinerary',
+      icon: '🗺',
+      name: 'First Itinerary',
+      description: 'Built your first AI-powered trip plan.',
+      earned: (stats?.tripsPlanned ?? 0) > 0,
+    },
+    {
+      id: 'world-explorer',
+      icon: '🌏',
+      name: 'World Explorer',
+      description: 'Saved places across multiple countries.',
+      earned: (stats?.countriesVisited ?? 0) > 1,
+    },
+    {
+      id: 'foodie',
+      icon: '🍜',
+      name: 'Foodie',
+      description: 'Found local food gems with Traveling.',
+      earned: (stats?.placesSaved ?? 0) > 0,
+    },
+    {
+      id: 'mountain-lover',
+      icon: '🏔',
+      name: 'Mountain Lover',
+      description: 'Planned high-altitude adventures.',
+      earned: false,
+    },
+    {
+      id: 'solo-traveler',
+      icon: '🔒',
+      name: 'Solo Traveler',
+      description: 'Unlock after your first solo route.',
+      earned: (stats?.tripsPlanned ?? 0) >= 3,
+    },
+  ], [stats]);
+
   const { user } = useUser();
   const tier = useSubscriptionStore((state) => state.tier);
   const isPro = tier === 'premium';

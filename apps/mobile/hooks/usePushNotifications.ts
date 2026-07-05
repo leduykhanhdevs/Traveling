@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { PermissionStatus } from 'expo-modules-core';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import { apiRequest } from '../services/api';
 
@@ -60,6 +60,11 @@ export const usePushNotifications = (): PushNotificationState & {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [state, setState] = useState<PushNotificationState>(initialState);
 
+  const getTokenRef = useRef(getToken);
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
+
   const registerForPushNotifications = useCallback(async () => {
     if (!isLoaded || !isSignedIn) {
       return null;
@@ -85,7 +90,7 @@ export const usePushNotifications = (): PushNotificationState & {
       const projectId = getProjectId();
       const pushTokenOptions: ExpoPushTokenOptions = projectId ? { projectId } : undefined;
       const expoPushToken = await Notifications.getExpoPushTokenAsync(pushTokenOptions);
-      const clerkToken = await getToken();
+      const clerkToken = await getTokenRef.current();
 
       if (!clerkToken) {
         throw new Error('A Clerk session token is required to register this device.');
@@ -118,7 +123,7 @@ export const usePushNotifications = (): PushNotificationState & {
       }));
       return null;
     }
-  }, [getToken, isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
     void registerForPushNotifications();

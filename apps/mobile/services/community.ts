@@ -158,3 +158,36 @@ export const useCommunityPosts = (
     queryKey: ['community', 'posts'] as const,
     staleTime: communityStaleTimeMs,
   });
+
+export const useCreatePostMutation = (token?: string | null) =>
+  useMutation({
+    mutationFn: (post: CreateCommunityPostInput) => createCommunityPost(post, token),
+  });
+
+export const usePostComments = (
+  postId: string | null,
+  token?: string | null,
+  options: { enabled?: boolean } = {},
+) =>
+  useQuery({
+    enabled: Boolean(postId) && (options.enabled ?? true),
+    queryFn: () => {
+      if (!postId) {
+        throw new Error('Post id is required.');
+      }
+      return getPostComments(postId, token);
+    },
+    queryKey: ['community', 'comments', postId] as const,
+    staleTime: communityStaleTimeMs,
+  });
+
+export const useAddCommentMutation = (token?: string | null) =>
+  useMutation({
+    mutationFn: ({ postId, content }: { postId: string; content: string }) =>
+      addPostComment(postId, content, token),
+  });
+
+export const useToggleLikeMutation = (token?: string | null) =>
+  useMutation({
+    mutationFn: (postId: string) => togglePostLike(postId, token),
+  });

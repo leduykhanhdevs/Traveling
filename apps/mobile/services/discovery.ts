@@ -100,3 +100,29 @@ export const useSavePlaceMutation = (token?: string | null) =>
     mutationFn: (body: { placeId: string; name: string; address: string; lat: number; lng: number }) =>
       savePlace(body, token),
   });
+
+export const trackViewedPlace = (
+  body: { placeId: string; name: string; address: string; lat: number; lng: number; emoji?: string },
+  token?: string | null,
+): Promise<unknown> =>
+  apiRequest('/api/v1/activity/viewed', {
+    method: 'POST',
+    body,
+    token,
+  });
+
+export const getViewedPlaces = (token?: string | null): Promise<any[]> =>
+  apiRequest<any[]>('/api/v1/activity/viewed/history', { token });
+
+export const useViewedPlaces = (token?: string | null, options: { enabled?: boolean } = {}) =>
+  useQuery({
+    enabled: options.enabled ?? true,
+    queryFn: () => getViewedPlaces(token),
+    queryKey: ['viewedPlaces'],
+  });
+
+export const useTrackViewedMutation = (token?: string | null) =>
+  useMutation({
+    mutationFn: (body: { placeId: string; name: string; address: string; lat: number; lng: number; emoji?: string }) =>
+      trackViewedPlace(body, token),
+  });

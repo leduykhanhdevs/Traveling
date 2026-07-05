@@ -49,3 +49,29 @@ apps/backend/src/prisma/dev.db
 
 # Editor/agent tooling
 .claude/
+.agents/
+.codeartsdoer/
+.codebuddy/
+.codestudio/
+.commandcode/
+.continue/
+.hermes/
+.jazz/
+.lingma/
+.qwen/
+.terramind/
+skills/
+skills-lock.json
+**/skills/
+**/skills-lock.json
+**/.agents/
+**/.codeartsdoer/
+**/.codebuddy/
+**/.codestudio/
+**/.commandcode/
+**/.continue/
+**/.hermes/
+**/.jazz/
+**/.lingma/
+**/.qwen/
+**/.terramind/

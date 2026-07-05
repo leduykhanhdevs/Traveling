@@ -67,3 +67,41 @@ export const useGenerateItineraryMutation = (token?: string | null) =>
   useMutation({
     mutationFn: (request: ItineraryRequest) => generateItinerary(request, token),
   });
+
+export const getItineraries = (token?: string | null): Promise<any[]> =>
+  apiRequest<any[]>('/api/v1/itineraries', { token });
+
+export const updateItinerary = (
+  id: string,
+  content: ItineraryPlan,
+  token?: string | null,
+): Promise<any> =>
+  apiRequest<any>(`/api/v1/itineraries/${id}`, {
+    method: 'PUT',
+    body: { content },
+    token,
+  });
+
+export const deleteItinerary = (id: string, token?: string | null): Promise<any> =>
+  apiRequest<any>(`/api/v1/itineraries/${id}`, {
+    method: 'DELETE',
+    token,
+  });
+
+export const useItinerariesList = (token?: string | null, options: { enabled?: boolean } = {}) =>
+  useQuery({
+    enabled: options.enabled ?? true,
+    queryFn: () => getItineraries(token),
+    queryKey: ['itinerariesList'],
+  });
+
+export const useUpdateItineraryMutation = (token?: string | null) =>
+  useMutation({
+    mutationFn: ({ id, content }: { id: string; content: ItineraryPlan }) =>
+      updateItinerary(id, content, token),
+  });
+
+export const useDeleteItineraryMutation = (token?: string | null) =>
+  useMutation({
+    mutationFn: (id: string) => deleteItinerary(id, token),
+  });

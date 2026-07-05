@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { activityRouter } from './activity.routes.js';
 import { budgetRouter } from './budget.routes.js';
 import { communityRouter } from './community.routes.js';
 import { discoverRouter } from './discover.routes.js';
@@ -20,3 +21,4 @@ apiRouter.use('/itineraries', itineraryRouter);
 apiRouter.use('/community', communityRouter);
 apiRouter.use('/profile', profileRouter);
 apiRouter.use('/utilities', utilityRouter);
+apiRouter.use('/activity', activityRouter);

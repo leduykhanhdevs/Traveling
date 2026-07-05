@@ -1,7 +1,7 @@
 import { SUPPORTED_LANGUAGES, type LanguageCode } from '@traveling/shared';
-import { ArrowLeftRight, BookOpen, Mic, Send, Volume2 } from 'lucide-react-native';
+import { ArrowLeftRight, BookOpen, Mic, Send, Volume2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Text, TouchableOpacity, View, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -23,6 +23,8 @@ import { theme } from '../../../constants/theme';
 import { useVoiceRecorder } from '../../../hooks/useVoiceRecorder';
 import { useOfflinePhrasesStore } from '../../../stores/offlinePhrasesStore';
 import { usePreferencesStore } from '../../../stores/preferencesStore';
+import { useAuth } from '@clerk/clerk-expo';
+import { translateText, transcribeAudio } from '../../../services/translation';
 
 type ClipboardLike = {
   clipboard?: {
@@ -74,22 +76,19 @@ const initialMessages: readonly TranslationBubbleMessage[] = [
 const getLanguageLabel = (language: LanguageCode): string =>
   SUPPORTED_LANGUAGES.find((item) => item.code === language)?.name ?? language.toUpperCase();
 
-const mockTranslate = (text: string, targetLanguage: LanguageCode): string => {
-  if (targetLanguage === 'vi') {
-    return `Ban dich: ${text}`;
-  }
-  if (targetLanguage === 'en') {
-    return `Translation: ${text}`;
-  }
-  return `${getLanguageLabel(targetLanguage)} translation: ${text}`;
-};
-
 const copyToClipboard = async (text: string): Promise<void> => {
   const maybeNavigator = (globalThis as typeof globalThis & { navigator?: ClipboardLike }).navigator;
   await maybeNavigator?.clipboard?.writeText(text);
 };
 
 export default function TranslateScreen(): JSX.Element {
+  const { getToken } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getToken().then(setToken).catch(() => {});
+  }, [getToken]);
+
   const preferredLanguage = usePreferencesStore((state) => state.preferredLanguage);
   const packs = useOfflinePhrasesStore((state) => state.packs);
   const recorder = useVoiceRecorder();
@@ -99,6 +98,8 @@ export default function TranslateScreen(): JSX.Element {
     preferredLanguage === 'en' ? 'vi' : preferredLanguage,
   );
   const [messages, setMessages] = useState<readonly TranslationBubbleMessage[]>(initialMessages);
+  const [pickerModalVisible, setPickerModalVisible] = useState(false);
+  const [activePicker, setActivePicker] = useState<'source' | 'target'>('source');
   const [inputText, setInputText] = useState('');
   const [phrasebookVisible, setPhrasebookVisible] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -137,32 +138,55 @@ export default function TranslateScreen(): JSX.Element {
     transform: [{ scale: pulseScale.value }],
   }));
 
-  const appendTranslationPair = (text: string): void => {
+  const appendTranslationPair = async (text: string): Promise<void> => {
     const trimmed = text.trim();
     if (!trimmed) {
       return;
     }
 
     const timestamp = Date.now();
-    const translatedText = mockTranslate(trimmed, targetLanguage);
-    const nextMessages: readonly TranslationBubbleMessage[] = [
-      {
-        id: `message-${timestamp}-source`,
-        languageLabel: sourceLabel,
-        role: 'source',
-        text: trimmed,
-      },
-      {
+    
+    // Add source message immediately for UI responsiveness
+    const sourceMessage: TranslationBubbleMessage = {
+      id: `message-${timestamp}-source`,
+      languageLabel: sourceLabel,
+      role: 'source',
+      text: trimmed,
+    };
+    
+    setMessages((current) => [...current, sourceMessage]);
+    setInputText('');
+
+    try {
+      const response = await translateText(
+        {
+          sourceText: trimmed,
+          sourceLang: sourceLanguage === 'auto' ? undefined : sourceLanguage,
+          targetLang: targetLanguage,
+        },
+        token
+      );
+      
+      const translationMessage: TranslationBubbleMessage = {
         flag: languageFlags[targetLanguage] ?? '🌐',
         id: `message-${timestamp}-translation`,
         languageLabel: targetLabel,
         role: 'translation',
-        text: translatedText,
-      },
-    ];
+        text: response.translatedText,
+      };
 
-    setMessages((current) => [...current, ...nextMessages]);
-    setInputText('');
+      setMessages((current) => [...current, translationMessage]);
+    } catch (error) {
+      console.error('Translation failed', error);
+      const errorMessage: TranslationBubbleMessage = {
+        flag: '⚠️',
+        id: `message-${timestamp}-error`,
+        languageLabel: targetLabel,
+        role: 'translation',
+        text: 'Translation failed. Please check connection.',
+      };
+      setMessages((current) => [...current, errorMessage]);
+    }
   };
 
   const swapLanguages = (): void => {
@@ -176,8 +200,20 @@ export default function TranslateScreen(): JSX.Element {
   };
 
   const stopVoiceInput = async (): Promise<void> => {
-    await recorder.stopRecording();
-    appendTranslationPair('Could you help me find the nearest pharmacy?');
+    const audio = await recorder.stopRecording();
+    if (audio?.base64) {
+      try {
+        const result = await transcribeAudio(audio.base64, sourceLanguage, token);
+        if (result?.transcript) {
+          await appendTranslationPair(result.transcript);
+        }
+      } catch (err) {
+        console.error('Audio transcription failed', err);
+        await appendTranslationPair('Speech transcription failed.');
+      }
+    } else {
+      await appendTranslationPair('No speech detected.');
+    }
   };
 
   const handleCopy = (message: TranslationBubbleMessage): void => {
@@ -198,141 +234,166 @@ export default function TranslateScreen(): JSX.Element {
 
   return (
     <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
-      <View className="flex-1 px-5 pb-4 pt-5">
-        <View className="mb-5">
-          <Text accessibilityLabel="Translate" className="font-inter-bold text-4xl text-white">
-            Translate
-          </Text>
-          <Text className="mt-2 font-inter text-base text-zinc-300">
-            A bilingual conversation space for the road.
-          </Text>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <View className="flex-1 px-5 pb-4 pt-5">
+          <View className="mb-4">
+            <Text accessibilityLabel="Translate" className="font-inter-bold text-4xl text-white">
+              Translate
+            </Text>
+            <Text className="mt-2 font-inter text-base text-zinc-300">
+              A bilingual conversation space for the road.
+            </Text>
+          </View>
 
-        <View className="mb-4 rounded-2xl border border-white/10 bg-white/10 p-4">
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="font-inter-bold text-lg text-white">Languages</Text>
+          <View className="mb-4 rounded-2xl border border-white/10 bg-white/10 p-3 flex-row items-center justify-between">
+            <TouchableOpacity
+              className="flex-1 items-center justify-center py-2.5 bg-white/5 rounded-xl border border-white/5"
+              onPress={() => {
+                setActivePicker('source');
+                setPickerModalVisible(true);
+              }}
+            >
+              <Text className="font-inter-semibold text-[10px] text-zinc-400 uppercase">From</Text>
+              <Text className="mt-1 font-inter-bold text-sm text-white" numberOfLines={1}>
+                {languageFlags[sourceLanguage] ?? '🌐'} {sourceLabel}
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               accessibilityHint="Swaps source and target languages."
               accessibilityLabel="Swap translation languages"
               accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-full bg-primary"
+              className="mx-3 h-9 w-9 items-center justify-center rounded-full bg-primary"
               onPress={swapLanguages}
             >
               <Animated.View style={swapStyle}>
-                <ArrowLeftRight color="#FFFFFF" size={20} />
+                <ArrowLeftRight color="#FFFFFF" size={16} />
               </Animated.View>
             </TouchableOpacity>
-          </View>
-          <Text className="mb-2 font-inter-semibold text-sm text-zinc-300">Source language</Text>
-          <LanguagePicker value={sourceLanguage} onChange={setSourceLanguage} />
-          <Text className="mb-2 mt-4 font-inter-semibold text-sm text-zinc-300">Target language</Text>
-          <LanguagePicker value={targetLanguage} onChange={setTargetLanguage} />
-        </View>
 
-        <FlatList
-          ref={listRef}
-          accessibilityLabel="Translation conversation"
-          className="flex-1"
-          contentContainerClassName="pb-5"
-          data={messages}
-          inverted={false}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TranslationBubble
-              copied={copiedMessageId === item.id}
-              message={item}
-              onCopy={handleCopy}
-              onPlay={playMessage}
-            />
-          )}
-        />
-
-        <View className="rounded-3xl border border-white/10 bg-surface p-4">
-          <View className="mb-3 flex-row items-center justify-between">
             <TouchableOpacity
-              accessibilityHint="Opens the quick offline phrasebook panel."
-              accessibilityLabel="Open phrasebook"
-              accessibilityRole="button"
-              className="flex-row items-center gap-2 rounded-full bg-white/10 px-4 py-2"
-              onPress={() => setPhrasebookVisible(true)}
+              className="flex-1 items-center justify-center py-2.5 bg-white/5 rounded-xl border border-white/5"
+              onPress={() => {
+                setActivePicker('target');
+                setPickerModalVisible(true);
+              }}
             >
-              <BookOpen color="#FFFFFF" size={18} />
-              <Text className="font-inter-semibold text-sm text-white">Phrasebook</Text>
-            </TouchableOpacity>
-            <View className="flex-row items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2">
-              <Text className="font-inter-semibold text-xs text-emerald-300">
-                ✓ {offlinePhraseCount > 0 ? 'Available offline' : 'Offline ready'}
+              <Text className="font-inter-semibold text-[10px] text-zinc-400 uppercase">To</Text>
+              <Text className="mt-1 font-inter-bold text-sm text-white" numberOfLines={1}>
+                {languageFlags[targetLanguage] ?? '🌐'} {targetLabel}
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
 
-          <TextField
-            accessibilityLabel="Translation input"
-            className="min-h-24 text-top"
-            multiline
-            onChangeText={setInputText}
-            placeholder="Type a message to translate..."
-            value={inputText}
+          <FlatList
+            ref={listRef}
+            accessibilityLabel="Translation conversation"
+            className="flex-1"
+            contentContainerClassName="pb-5"
+            data={messages}
+            inverted={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TranslationBubble
+                copied={copiedMessageId === item.id}
+                message={item}
+                onCopy={handleCopy}
+                onPlay={playMessage}
+              />
+            )}
           />
 
-          <View className="mt-3 flex-row items-center gap-3">
-            <View className="relative h-14 w-14 items-center justify-center">
-              <Animated.View
-                className="absolute h-14 w-14 rounded-full bg-accent"
-                pointerEvents="none"
-                style={pulseStyle}
-              />
+          <View className="rounded-3xl border border-white/10 bg-surface p-4">
+            <View className="mb-3 flex-row items-center justify-between">
               <TouchableOpacity
-                accessibilityHint="Hold to record voice input, release to mock translate it."
-                accessibilityLabel="Voice input microphone"
+                accessibilityHint="Opens the quick offline phrasebook panel."
+                accessibilityLabel="Open phrasebook"
                 accessibilityRole="button"
-                accessibilityState={{ selected: recorder.recording }}
+                className="flex-row items-center gap-2 rounded-full bg-white/10 px-4 py-2"
+                onPress={() => setPhrasebookVisible(true)}
+              >
+                <BookOpen color="#FFFFFF" size={18} />
+                <Text className="font-inter-semibold text-sm text-white">Phrasebook</Text>
+              </TouchableOpacity>
+              <View className="flex-row items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2">
+                <Text className="font-inter-semibold text-xs text-emerald-300">
+                  ✓ {offlinePhraseCount > 0 ? 'Available offline' : 'Offline ready'}
+                </Text>
+              </View>
+            </View>
+
+            <TextField
+              accessibilityLabel="Translation input"
+              className="min-h-20 text-top"
+              multiline
+              onChangeText={setInputText}
+              placeholder="Type a message to translate..."
+              value={inputText}
+            />
+
+            <View className="mt-3 flex-row items-center gap-3">
+              <View className="relative h-14 w-14 items-center justify-center">
+                <Animated.View
+                  className="absolute h-14 w-14 rounded-full bg-accent"
+                  pointerEvents="none"
+                  style={pulseStyle}
+                />
+                <TouchableOpacity
+                  accessibilityHint="Hold to record voice input, release to mock translate it."
+                  accessibilityLabel="Voice input microphone"
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: recorder.recording }}
+                  className={`h-12 w-12 items-center justify-center rounded-full ${
+                    recorder.recording ? 'bg-accent' : 'bg-white/10'
+                  }`}
+                  onPressIn={() => {
+                    void startVoiceInput();
+                  }}
+                  onPressOut={() => {
+                    void stopVoiceInput();
+                  }}
+                >
+                  <Mic color="#FFFFFF" size={22} />
+                </TouchableOpacity>
+              </View>
+
+              <PrimaryButton
+                accessibilityHint="Adds a mock translated response to the conversation."
+                className="flex-1"
+                disabled={!inputText.trim()}
+                icon={Send}
+                label="Translate"
+                onPress={() => appendTranslationPair(inputText)}
+              />
+
+              <TouchableOpacity
+                accessibilityHint="Replays the most recent mock spoken translation."
+                accessibilityLabel="Play latest translation"
+                accessibilityRole="button"
                 className={`h-12 w-12 items-center justify-center rounded-full ${
-                  recorder.recording ? 'bg-accent' : 'bg-white/10'
+                  lastPlayedId ? 'bg-primary' : 'bg-white/10'
                 }`}
-                onPressIn={() => {
-                  void startVoiceInput();
-                }}
-                onPressOut={() => {
-                  void stopVoiceInput();
+                onPress={() => {
+                  const latest = [...messages].reverse().find((message) => message.role === 'translation');
+                  if (latest) {
+                    playMessage(latest);
+                  }
                 }}
               >
-                <Mic color="#FFFFFF" size={22} />
+                <Volume2 color={theme.colors.text} size={20} />
               </TouchableOpacity>
             </View>
 
-            <PrimaryButton
-              accessibilityHint="Adds a mock translated response to the conversation."
-              className="flex-1"
-              disabled={!inputText.trim()}
-              icon={Send}
-              label="Translate"
-              onPress={() => appendTranslationPair(inputText)}
-            />
-
-            <TouchableOpacity
-              accessibilityHint="Replays the most recent mock spoken translation."
-              accessibilityLabel="Play latest translation"
-              accessibilityRole="button"
-              className={`h-12 w-12 items-center justify-center rounded-full ${
-                lastPlayedId ? 'bg-primary' : 'bg-white/10'
-              }`}
-              onPress={() => {
-                const latest = [...messages].reverse().find((message) => message.role === 'translation');
-                if (latest) {
-                  playMessage(latest);
-                }
-              }}
-            >
-              <Volume2 color={theme.colors.text} size={20} />
-            </TouchableOpacity>
+            {recorder.error ? (
+              <Text className="mt-2 font-inter-semibold text-xs text-accent">{recorder.error}</Text>
+            ) : null}
           </View>
-
-          {recorder.error ? (
-            <Text className="mt-2 font-inter-semibold text-xs text-accent">{recorder.error}</Text>
-          ) : null}
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       <PhrasebookSheet
         offlineAvailable
@@ -340,6 +401,58 @@ export default function TranslateScreen(): JSX.Element {
         onPlayPhrase={playPhrase}
         visible={phrasebookVisible}
       />
+
+      <Modal
+        visible={pickerModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPickerModalVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/60">
+          <View className="bg-[#18181b] rounded-t-3xl p-6 border-t border-white/10 max-h-[70%]">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="font-inter-bold text-xl text-white">
+                Select {activePicker === 'source' ? 'Source' : 'Target'} Language
+              </Text>
+              <TouchableOpacity
+                className="h-8 w-8 items-center justify-center rounded-full bg-white/10"
+                onPress={() => setPickerModalVisible(false)}
+              >
+                <X color="#FFFFFF" size={18} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={SUPPORTED_LANGUAGES}
+              keyExtractor={(item) => item.code}
+              renderItem={({ item }) => {
+                const isSelected = activePicker === 'source' ? sourceLanguage === item.code : targetLanguage === item.code;
+                return (
+                  <TouchableOpacity
+                    className={`py-3.5 px-4 rounded-xl mb-2 flex-row justify-between items-center ${
+                      isSelected ? 'bg-primary' : 'bg-white/5'
+                    }`}
+                    onPress={() => {
+                      if (activePicker === 'source') {
+                        setSourceLanguage(item.code);
+                      } else {
+                        setTargetLanguage(item.code);
+                      }
+                      setPickerModalVisible(false);
+                    }}
+                  >
+                    <Text className="font-inter-semibold text-base text-white">
+                      {languageFlags[item.code] ?? '🌐'} {item.name}
+                    </Text>
+                    <Text className="font-inter text-sm text-zinc-300">
+                      {item.nativeName}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -13,6 +13,7 @@ import {
 import { AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
+import { logUserActivity } from '../services/activity.service.js';
 
 const filtersSchema = z.object({
   nationality: z.string().optional(),
@@ -62,6 +63,7 @@ export const postCommunityReview = asyncHandler(async (req, res) => {
     tags: body.tags,
     nationality: body.nationality,
   });
+  await logUserActivity(req.auth.userId, 'post_review', { placeId: body.placeId });
   sendSuccess(res, review, 201);
 });
 
@@ -71,6 +73,7 @@ export const postFollowTraveler = asyncHandler(async (req, res) => {
   }
   const body = z.object({ userId: z.string().min(1) }).parse(req.body);
   const result = await followTraveler(req.auth.userId, body.userId);
+  await logUserActivity(req.auth.userId, 'follow_user', { followedUserId: body.userId });
   sendSuccess(res, result);
 });
 
@@ -83,6 +86,7 @@ export const postCommunityPost = asyncHandler(async (req, res) => {
     imageUrl: body.imageUrl,
     placeId: body.placeId,
   });
+  await logUserActivity(clerkUserId, 'create_post', { contentSummary: body.content.slice(0, 50) });
   sendSuccess(res, post, 201);
 });
 
@@ -102,6 +106,7 @@ export const postPostComment = asyncHandler(async (req, res) => {
     postId: params.id,
     content: body.content,
   });
+  await logUserActivity(clerkUserId, 'add_comment', { postId: params.id });
   sendSuccess(res, comment, 201);
 });
 
@@ -109,6 +114,7 @@ export const postTogglePostLike = asyncHandler(async (req, res) => {
   const clerkUserId = requireUserId(req.auth?.userId, 'Sign in to react to community posts.');
   const params = postIdParamSchema.parse(req.params);
   const result = await togglePostLike(clerkUserId, params.id);
+  await logUserActivity(clerkUserId, 'toggle_like', { postId: params.id });
   sendSuccess(res, result);
 });
 

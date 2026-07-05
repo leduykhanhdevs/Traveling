@@ -9,8 +9,9 @@ import { GlassCard } from '../../../components/GlassCard';
 import { PlaceMap } from '../../../components/PlaceMap';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { Skeleton } from '../../../components/Skeleton';
-import { getPlaceDetail } from '../../../services/discovery';
+import { getPlaceDetail, useTrackViewedMutation } from '../../../services/discovery';
 import { createDeepLink } from '../../../utils/deeplink';
+import { useEffect } from 'react';
 
 export default function PlaceDetailScreen(): JSX.Element {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
@@ -23,6 +24,25 @@ export default function PlaceDetailScreen(): JSX.Element {
     },
     enabled: Boolean(placeId),
   });
+
+  const trackViewed = useTrackViewedMutation();
+
+  useEffect(() => {
+    if (query.data && placeId) {
+      getToken()
+        .then((token) => {
+          trackViewed.mutate({
+            placeId,
+            name: query.data.name,
+            address: query.data.address,
+            lat: query.data.coordinates.lat,
+            lng: query.data.coordinates.lng,
+            emoji: '📍',
+          });
+        })
+        .catch(() => {});
+    }
+  }, [query.data, placeId, getToken]);
 
   const sharePlace = async (): Promise<void> => {
     if (!placeId || !query.data) {

@@ -1,22 +1,26 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { Redirect } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { usePreferencesStore } from '../stores/preferencesStore';
 
 export default function Index(): JSX.Element {
   const { isLoaded, isSignedIn } = useAuth();
   const onboardingComplete = usePreferencesStore((state) => state.onboardingComplete);
+  const router = useRouter();
 
-  if (!isLoaded) {
-    return <Redirect href="/(auth)/login" />;
-  }
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
 
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/login" />;
-  }
+    if (!isSignedIn) {
+      router.replace('/(auth)/login');
+    } else if (!onboardingComplete) {
+      router.replace('/(auth)/onboarding');
+    } else {
+      router.replace('/(tabs)/discover');
+    }
+  }, [isLoaded, isSignedIn, onboardingComplete, router]);
 
-  if (!onboardingComplete) {
-    return <Redirect href="/(auth)/onboarding" />;
-  }
-
-  return <Redirect href="/(tabs)/discover" />;
+  return <></>;
 }

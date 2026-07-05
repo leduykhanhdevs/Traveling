@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import { getProfile, putProfile } from '../controllers/profile.controller.js';
+import { getProfile, getProfileStats, putProfile } from '../controllers/profile.controller.js';
+import { requireAuth } from '../middleware/auth.js';
 
 export const profileRouter = Router();
 
+profileRouter.use(requireAuth);
 profileRouter.get('/', getProfile);
 profileRouter.put('/', putProfile);
+profileRouter.get('/stats', getProfileStats);

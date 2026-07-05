@@ -20,3 +20,20 @@ export const updateProfile = (
     body: profile,
     token,
   });
+
+import { useQuery } from '@tanstack/react-query';
+
+export const getProfileStats = (
+  token?: string | null,
+): Promise<{
+  countriesVisited: number;
+  tripsPlanned: number;
+  placesSaved: number;
+}> => apiRequest('/api/v1/profile/stats', { token });
+
+export const useProfileStats = (token?: string | null, options: { enabled?: boolean } = {}) =>
+  useQuery({
+    enabled: options.enabled ?? true,
+    queryFn: () => getProfileStats(token),
+    queryKey: ['profileStats'],
+  });
