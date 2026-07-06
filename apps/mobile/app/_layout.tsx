@@ -155,16 +155,19 @@ const BiometricGate = ({ children }: { children: React.ReactNode }) => {
         
         const result = await LocalAuthentication.authenticateAsync({
           promptMessage: 'Unlock Traveling',
-          fallbackLabel: 'Use Passcode',
+          disableDeviceFallback: true,
+          cancelLabel: 'Cancel',
         });
         if (result.success) {
           setLocked(false);
         } else if (__DEV__) {
+          await SecureStore.deleteItemAsync('biometrics'); // Auto-disable to stop annoying the dev
           setLocked(false); // Bypass if canceled in dev mode
         }
       } catch (error) {
         console.error('Biometric auth error:', error);
         if (__DEV__) {
+          await SecureStore.deleteItemAsync('biometrics');
           setLocked(false);
         }
       }
@@ -187,18 +190,21 @@ const BiometricGate = ({ children }: { children: React.ReactNode }) => {
   const handleManualUnlock = () => {
     LocalAuthentication.authenticateAsync({
       promptMessage: 'Unlock Traveling',
-      fallbackLabel: 'Use Passcode',
+      disableDeviceFallback: true,
+      cancelLabel: 'Cancel',
     })
       .then(result => {
         if (result.success) {
           setLocked(false);
         } else if (__DEV__) {
+          void SecureStore.deleteItemAsync('biometrics');
           setLocked(false); // Bypass if canceled in dev mode
         }
       })
       .catch(error => {
         console.error('Manual unlock error:', error);
         if (__DEV__) {
+          void SecureStore.deleteItemAsync('biometrics');
           setLocked(false);
         }
       });
