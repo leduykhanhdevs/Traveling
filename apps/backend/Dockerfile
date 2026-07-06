@@ -26,4 +26,5 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 WORKDIR /app/apps/backend
 EXPOSE 4000
+USER node
 CMD ["node", "dist/index.js"]

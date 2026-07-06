@@ -82,10 +82,10 @@ export const getProfileStats = asyncHandler(async (req, res) => {
   if (user.nationality) {
     locations.add(user.nationality.toLowerCase());
   }
-  itineraries.forEach((it) => {
+  itineraries.forEach((it: { destination: string }) => {
     locations.add(it.destination.toLowerCase().trim());
   });
-  savedPlaces.forEach((pl) => {
+  savedPlaces.forEach((pl: { address: string }) => {
     const parts = pl.address.split(',');
     const lastPart = parts[parts.length - 1]?.trim().toLowerCase();
     if (lastPart) {

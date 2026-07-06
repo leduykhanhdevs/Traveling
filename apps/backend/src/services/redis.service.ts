@@ -2,7 +2,7 @@ import { Redis } from 'ioredis';
 import { env } from '../config/env.js';
 import { logUnknownError } from '../utils/logger.js';
 
-const redis = new Redis(env.REDIS_URL, {
+export const redis = new Redis(env.REDIS_URL, {
   lazyConnect: true,
   maxRetriesPerRequest: 1,
 });

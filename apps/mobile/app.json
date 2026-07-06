@@ -7,26 +7,46 @@
     "scheme": "traveling",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "assetBundlePatterns": ["**/*"],
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f0f1a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.traveling.app",
-      "associatedDomains": ["applinks:traveling.app"],
+      "associatedDomains": [
+        "applinks:traveling.app"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "Traveling uses the camera to translate menus and signs.",
         "NSLocationWhenInUseUsageDescription": "Traveling uses your location to find nearby restaurants and attractions.",
         "NSMicrophoneUsageDescription": "Traveling uses the microphone for voice translation.",
-        "NSSpeechRecognitionUsageDescription": "Traveling transcribes speech for translation."
+        "NSSpeechRecognitionUsageDescription": "Traveling transcribes speech for translation.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.traveling.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0f0f1a"
+      },
       "permissions": [
         "CAMERA",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "RECORD_AUDIO",
-        "VIBRATE"
+        "VIBRATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
     "plugins": [
@@ -46,14 +66,16 @@
             "targetSdkVersion": 35
           }
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "eas": {
-        "projectId": "replace-with-eas-project-id"
+        "projectId": "11283d14-951d-4d7b-a9cc-86f6b5228f78"
       }
     }
   }

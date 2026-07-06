@@ -7,8 +7,6 @@ import { GlassCard } from '../../../components/GlassCard';
 import {
   PostCard,
   type CommunityFeedAuthor,
-  type CommunityFeedComment,
-  type CommunityFeedPost,
   getAvatarColorClass,
 } from '../../../components/PostCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
@@ -30,10 +28,6 @@ type StoryTraveler = {
   seen: boolean;
 };
 
-type MockPost = CommunityFeedPost & {
-  following: boolean;
-  nearby: boolean;
-};
 
 const filters = ['All', 'Following', 'Nearby'] as const satisfies readonly FeedFilter[];
 
@@ -82,38 +76,6 @@ const authors = {
   },
 } as const satisfies Record<string, CommunityFeedAuthor>;
 
-const initialComments: Record<string, CommunityFeedComment[]> = {
-  'post-market-breakfast': [
-    {
-      id: 'comment-market-1',
-      author: authors.an,
-      content: 'The side entrance tip is real. It saves at least ten minutes in the morning.',
-      timeAgo: '10 min ago',
-    },
-    {
-      id: 'comment-market-2',
-      author: authors.noah,
-      content: 'Adding this to tomorrow. Did you pay cash only?',
-      timeAgo: '4 min ago',
-    },
-  ],
-  'post-lantern-walk': [
-    {
-      id: 'comment-lantern-1',
-      author: authors.sara,
-      content: 'Blue hour there is so good after rain. The reflections make every photo better.',
-      timeAgo: '30 min ago',
-    },
-  ],
-  'post-soup-tip': [
-    {
-      id: 'comment-soup-1',
-      author: authors.maya,
-      content: 'Extra herbs over extra noodles is excellent advice.',
-      timeAgo: '48 min ago',
-    },
-  ],
-};
 
 const stories: readonly StoryTraveler[] = [
   { id: 'story-maya', author: authors.maya, seen: false },
@@ -137,7 +99,7 @@ export default function CommunityScreen(): JSX.Element {
   const posts = useMemo(() => {
     if (postsData?.posts) {
       return postsData.posts.map((post) => {
-        const author = post.author as any;
+        const author = post.author as { id: string; name: string; username?: string; initials?: string; location?: string };
         return {
           id: post.id,
           author: {
@@ -176,7 +138,7 @@ export default function CommunityScreen(): JSX.Element {
   const selectedComments = useMemo(() => {
     if (commentsData?.comments) {
       return commentsData.comments.map((comment) => {
-        const author = comment.author as any;
+        const author = comment.author as { id: string; name: string; username?: string; initials?: string; location?: string };
         return {
           id: comment.id,
           author: {
@@ -280,6 +242,24 @@ export default function CommunityScreen(): JSX.Element {
     });
   };
 
+  const [localStories, setLocalStories] = useState<StoryTraveler[]>([...stories]);
+
+  const handleAddStory = () => {
+    // Basic mock behavior
+    const newStory: StoryTraveler = {
+      id: `story-${Date.now()}`,
+      author: {
+        id: 'my-story',
+        name: 'You',
+        username: 'you',
+        initials: 'YOU',
+        location: 'Current Location',
+      },
+      seen: false,
+    };
+    setLocalStories([newStory, ...localStories]);
+  };
+
   return (
     <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
       <FlatList
@@ -321,7 +301,7 @@ export default function CommunityScreen(): JSX.Element {
 
             <FlatList
               accessibilityLabel="Traveler stories"
-              data={stories}
+              data={localStories}
               horizontal
               keyExtractor={(item) => item.id}
               ListHeaderComponent={
@@ -330,6 +310,7 @@ export default function CommunityScreen(): JSX.Element {
                   accessibilityLabel="Add story"
                   accessibilityRole="button"
                   className="mr-4 items-center"
+                  onPress={handleAddStory}
                 >
                   <View className="h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-white/40 bg-white/10">
                     <Plus color="#FFFFFF" size={24} />

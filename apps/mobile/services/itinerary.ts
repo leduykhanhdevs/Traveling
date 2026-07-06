@@ -68,21 +68,27 @@ export const useGenerateItineraryMutation = (token?: string | null) =>
     mutationFn: (request: ItineraryRequest) => generateItinerary(request, token),
   });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getItineraries = (token?: string | null): Promise<any[]> =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiRequest<any[]>('/api/v1/itineraries', { token });
 
 export const updateItinerary = (
   id: string,
   content: ItineraryPlan,
   token?: string | null,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiRequest<any>(`/api/v1/itineraries/${id}`, {
     method: 'PUT',
     body: { content },
     token,
   });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const deleteItinerary = (id: string, token?: string | null): Promise<any> =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiRequest<any>(`/api/v1/itineraries/${id}`, {
     method: 'DELETE',
     token,

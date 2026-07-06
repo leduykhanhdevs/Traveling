@@ -10,8 +10,8 @@ describe('useHapticAction', () => {
     jest.clearAllMocks();
   });
 
-  it('returns a stable async action function', () => {
-    const { result, rerender } = renderHook(() => useHapticAction());
+  it('returns a stable async action function', async () => {
+    const { result, rerender } = await renderHook(() => useHapticAction());
     const firstAction = result.current;
 
     rerender({});
@@ -21,7 +21,7 @@ describe('useHapticAction', () => {
 
   it('runs medium haptic feedback by default', async () => {
     impactMock.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useHapticAction());
+    const { result } = await renderHook(() => useHapticAction());
 
     await act(async () => {
       await result.current();
@@ -32,7 +32,7 @@ describe('useHapticAction', () => {
 
   it('runs a custom haptic feedback style', async () => {
     impactMock.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useHapticAction());
+    const { result } = await renderHook(() => useHapticAction());
 
     await act(async () => {
       await result.current(Haptics.ImpactFeedbackStyle.Light);
@@ -43,7 +43,7 @@ describe('useHapticAction', () => {
 
   it('swallows haptic errors so primary actions can continue', async () => {
     impactMock.mockRejectedValue(new Error('Haptics unavailable'));
-    const { result } = renderHook(() => useHapticAction());
+    const { result } = await renderHook(() => useHapticAction());
 
     await expect(result.current()).resolves.toBeUndefined();
     expect(impactMock).toHaveBeenCalledTimes(1);

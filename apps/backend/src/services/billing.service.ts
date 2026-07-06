@@ -1,6 +1,8 @@
 import { QUERY_TIERS } from '@traveling/shared';
 import { env } from '../config/env.js';
 import { fetchJson } from './http-client.js';
+import { redis } from './redis.service.js';
+import { AppError } from '../utils/errors.js';
 
 type RevenueCatSubscriberResponse = {
   subscriber?: {
@@ -45,5 +47,34 @@ export const getEntitlementStatus = async (appUserId: string): Promise<Entitleme
       tier: 'free',
       freeLimits: QUERY_TIERS,
     };
+  }
+};
+
+export const checkAndIncrementUsage = async (
+  userId: string,
+  feature: 'itinerary' | 'translation' | 'discover' | 'transcribe',
+): Promise<void> => {
+  const status = await getEntitlementStatus(userId);
+  if (status.tier === 'premium') return;
+
+  const limit =
+    feature === 'translation'
+      ? status.freeLimits.freeTranslationsPerDay
+      : status.freeLimits.freeAiQueriesPerDay;
+
+  const dateStr = new Date().toISOString().split('T')[0];
+  const key = `usage:${userId}:${feature}:${dateStr}`;
+
+  const current = await redis.incr(key);
+  if (current === 1) {
+    await redis.expire(key, 86400); // 24 hours
+  }
+
+  if (current > limit) {
+    throw new AppError(
+      'PAYMENT_REQUIRED',
+      `You have exceeded your daily free limit for ${feature}s. Please upgrade to premium.`,
+      402,
+    );
   }
 };

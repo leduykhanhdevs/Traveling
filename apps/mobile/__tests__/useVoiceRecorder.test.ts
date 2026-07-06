@@ -1,44 +1,53 @@
 import { act, renderHook } from './render-hook';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system/legacy';
-import type { PermissionStatus } from 'expo-modules-core';
+import * as expoAudio from 'expo-audio';
+import { File } from 'expo-file-system';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 
-const recording = {
-  getURI: jest.fn(() => 'file:///recording.m4a'),
-  stopAndUnloadAsync: jest.fn(),
+jest.mock('expo-audio', () => ({
+  useAudioRecorder: jest.fn(),
+  RecordingPresets: { HIGH_QUALITY: {} },
+  requestRecordingPermissionsAsync: jest.fn(),
+}));
+
+jest.mock('expo-file-system', () => {
+  return {
+    File: jest.fn(),
+  };
+});
+
+const mockRecorder = {
+  prepareToRecordAsync: jest.fn(),
+  record: jest.fn(),
+  stop: jest.fn(),
+  uri: 'file:///recording.m4a',
 };
 
 describe('useVoiceRecorder', () => {
-  const requestPermissionsMock = jest.mocked(Audio.requestPermissionsAsync);
-  const setAudioModeMock = jest.mocked(Audio.setAudioModeAsync);
-  const createRecordingMock = jest.mocked(Audio.Recording.createAsync);
-  const readAsStringMock = jest.mocked(FileSystem.readAsStringAsync);
+  const requestPermissionsMock = jest.mocked(expoAudio.requestRecordingPermissionsAsync);
+  const useAudioRecorderMock = jest.mocked(expoAudio.useAudioRecorder);
+  const fileMock = jest.mocked(File);
+  const base64Mock = jest.fn<() => Promise<string>>();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    recording.getURI.mockReturnValue('file:///recording.m4a');
-    recording.stopAndUnloadAsync.mockResolvedValue(undefined as never);
+    useAudioRecorderMock.mockReturnValue(mockRecorder as any);
+    mockRecorder.uri = 'file:///recording.m4a';
+    mockRecorder.stop.mockResolvedValue(undefined as never);
+    fileMock.mockImplementation(() => ({ base64: base64Mock }) as any);
   });
 
-  it('starts with idle recording state', () => {
-    const { result } = renderHook(() => useVoiceRecorder());
-
+  it('starts with idle recording state', async () => {
+    const { result } = await renderHook(() => useVoiceRecorder());
     expect(result.current.recording).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
   it('starts a high-quality recording after microphone permission is granted', async () => {
-    requestPermissionsMock.mockResolvedValue({
-      canAskAgain: true,
-      expires: 'never',
-      granted: true,
-      status: 'granted' as PermissionStatus,
-    });
-    setAudioModeMock.mockResolvedValue(undefined as never);
-    createRecordingMock.mockResolvedValue({ recording } as never);
-    const { result } = renderHook(() => useVoiceRecorder());
+    requestPermissionsMock.mockResolvedValue({ granted: true } as any);
+    mockRecorder.prepareToRecordAsync.mockResolvedValue(undefined as never);
+    
+    const { result } = await renderHook(() => useVoiceRecorder());
 
     await act(async () => {
       await result.current.startRecording();
@@ -46,21 +55,13 @@ describe('useVoiceRecorder', () => {
 
     expect(result.current.recording).toBe(true);
     expect(result.current.error).toBeNull();
-    expect(setAudioModeMock).toHaveBeenCalledWith({
-      allowsRecordingIOS: true,
-      playsInSilentModeIOS: true,
-    });
-    expect(createRecordingMock).toHaveBeenCalledWith(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+    expect(mockRecorder.prepareToRecordAsync).toHaveBeenCalled();
+    expect(mockRecorder.record).toHaveBeenCalled();
   });
 
   it('sets an error when microphone permission is denied', async () => {
-    requestPermissionsMock.mockResolvedValue({
-      canAskAgain: true,
-      expires: 'never',
-      granted: false,
-      status: 'denied' as PermissionStatus,
-    });
-    const { result } = renderHook(() => useVoiceRecorder());
+    requestPermissionsMock.mockResolvedValue({ granted: false } as any);
+    const { result } = await renderHook(() => useVoiceRecorder());
 
     await act(async () => {
       await result.current.startRecording();
@@ -68,18 +69,13 @@ describe('useVoiceRecorder', () => {
 
     expect(result.current.recording).toBe(false);
     expect(result.current.error).toBe('Microphone permission is required for voice translation.');
-    expect(createRecordingMock).not.toHaveBeenCalled();
+    expect(mockRecorder.record).not.toHaveBeenCalled();
   });
 
   it('sets an error when recording fails to start', async () => {
-    requestPermissionsMock.mockResolvedValue({
-      canAskAgain: true,
-      expires: 'never',
-      granted: true,
-      status: 'granted' as PermissionStatus,
-    });
-    setAudioModeMock.mockRejectedValue(new Error('Audio mode unavailable'));
-    const { result } = renderHook(() => useVoiceRecorder());
+    requestPermissionsMock.mockResolvedValue({ granted: true } as any);
+    mockRecorder.prepareToRecordAsync.mockRejectedValue(new Error('Audio mode unavailable') as never);
+    const { result } = await renderHook(() => useVoiceRecorder());
 
     await act(async () => {
       await result.current.startRecording();
@@ -90,16 +86,10 @@ describe('useVoiceRecorder', () => {
   });
 
   it('stops recording and returns base64 audio', async () => {
-    requestPermissionsMock.mockResolvedValue({
-      canAskAgain: true,
-      expires: 'never',
-      granted: true,
-      status: 'granted' as PermissionStatus,
-    });
-    setAudioModeMock.mockResolvedValue(undefined as never);
-    createRecordingMock.mockResolvedValue({ recording } as never);
-    readAsStringMock.mockResolvedValue('base64-audio');
-    const { result } = renderHook(() => useVoiceRecorder());
+    requestPermissionsMock.mockResolvedValue({ granted: true } as any);
+    mockRecorder.prepareToRecordAsync.mockResolvedValue(undefined as never);
+    base64Mock.mockResolvedValue('base64-audio');
+    const { result } = await renderHook(() => useVoiceRecorder());
 
     await act(async () => {
       await result.current.startRecording();
@@ -112,14 +102,13 @@ describe('useVoiceRecorder', () => {
 
     expect(audio).toEqual({ uri: 'file:///recording.m4a', base64: 'base64-audio' });
     expect(result.current.recording).toBe(false);
-    expect(recording.stopAndUnloadAsync).toHaveBeenCalled();
-    expect(readAsStringMock).toHaveBeenCalledWith('file:///recording.m4a', {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    expect(mockRecorder.stop).toHaveBeenCalled();
+    expect(fileMock).toHaveBeenCalledWith('file:///recording.m4a');
+    expect(base64Mock).toHaveBeenCalled();
   });
 
   it('returns null when stopping without an active recording', async () => {
-    const { result } = renderHook(() => useVoiceRecorder());
+    const { result } = await renderHook(() => useVoiceRecorder());
 
     let audio = null;
     await act(async () => {
@@ -127,20 +116,14 @@ describe('useVoiceRecorder', () => {
     });
 
     expect(audio).toBeNull();
-    expect(readAsStringMock).not.toHaveBeenCalled();
+    expect(base64Mock).not.toHaveBeenCalled();
   });
 
   it('sets an error when the recorded file URI is unavailable', async () => {
-    requestPermissionsMock.mockResolvedValue({
-      canAskAgain: true,
-      expires: 'never',
-      granted: true,
-      status: 'granted' as PermissionStatus,
-    });
-    setAudioModeMock.mockResolvedValue(undefined as never);
-    createRecordingMock.mockResolvedValue({ recording } as never);
-    recording.getURI.mockReturnValue(null as unknown as string);
-    const { result } = renderHook(() => useVoiceRecorder());
+    requestPermissionsMock.mockResolvedValue({ granted: true } as any);
+    mockRecorder.prepareToRecordAsync.mockResolvedValue(undefined as never);
+    mockRecorder.uri = null as any;
+    const { result } = await renderHook(() => useVoiceRecorder());
 
     await act(async () => {
       await result.current.startRecording();
@@ -150,6 +133,6 @@ describe('useVoiceRecorder', () => {
     });
 
     expect(result.current.error).toBe('Recorded audio file was unavailable.');
-    expect(readAsStringMock).not.toHaveBeenCalled();
+    expect(base64Mock).not.toHaveBeenCalled();
   });
 });

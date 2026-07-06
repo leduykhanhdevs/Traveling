@@ -41,9 +41,10 @@ export default function LoginScreen(): JSX.Element {
         if (result.createdSessionId && result.setActive) {
           await result.setActive({ session: result.createdSessionId });
         }
-      } catch (error: any) {
-        console.error('Clerk OAuth error message:', error?.message);
-        console.error('Clerk OAuth error keys:', Object.keys(error || {}));
+      } catch (error: unknown) {
+        const err = error as Record<string, unknown>;
+        console.error('Clerk OAuth error message:', err?.message);
+        console.error('Clerk OAuth error keys:', Object.keys(err || {}));
         try {
           console.error('Clerk OAuth error stringified:', JSON.stringify(error));
         } catch (e) {

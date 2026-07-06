@@ -1,11 +1,16 @@
 import { act, renderHook } from './render-hook';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import type { PermissionStatus } from 'expo-modules-core';
 import * as SecureStore from 'expo-secure-store';
 import { useDocumentVault } from '../hooks/useDocumentVault';
 
+jest.mock('expo-file-system', () => ({
+  Paths: { document: { uri: 'file:///documents/' } },
+  makeDirectoryAsync: jest.fn(),
+  copyAsync: jest.fn(),
+}));
 describe('useDocumentVault', () => {
   const getItemMock = jest.mocked(SecureStore.getItemAsync);
   const setItemMock = jest.mocked(SecureStore.setItemAsync);
@@ -24,7 +29,7 @@ describe('useDocumentVault', () => {
 
   it('starts with an empty document list when secure storage is empty', async () => {
     getItemMock.mockResolvedValue(null);
-    const { result } = renderHook(() => useDocumentVault());
+    const { result } = await renderHook(() => useDocumentVault());
 
     await act(async () => {
       await result.current.reload();
@@ -43,7 +48,7 @@ describe('useDocumentVault', () => {
       },
     ];
     getItemMock.mockResolvedValue(JSON.stringify(storedDocuments));
-    const { result } = renderHook(() => useDocumentVault());
+    const { result } = await renderHook(() => useDocumentVault());
 
     await act(async () => {
       await result.current.reload();
@@ -69,7 +74,7 @@ describe('useDocumentVault', () => {
     makeDirectoryMock.mockResolvedValue(undefined);
     copyMock.mockResolvedValue(undefined);
     setItemMock.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useDocumentVault());
+    const { result } = await renderHook(() => useDocumentVault());
 
     await act(async () => {
       await result.current.addDocument('Passport');
@@ -101,7 +106,7 @@ describe('useDocumentVault', () => {
       granted: false,
       status: 'denied' as PermissionStatus,
     });
-    const { result } = renderHook(() => useDocumentVault());
+    const { result } = await renderHook(() => useDocumentVault());
 
     await act(async () => {
       await result.current.addDocument('Passport');
@@ -124,7 +129,7 @@ describe('useDocumentVault', () => {
       canceled: true,
       assets: null,
     });
-    const { result } = renderHook(() => useDocumentVault());
+    const { result } = await renderHook(() => useDocumentVault());
 
     await act(async () => {
       await result.current.addDocument('Passport');
@@ -148,7 +153,7 @@ describe('useDocumentVault', () => {
       assets: [{ height: 100, uri: 'file:///camera/passport.jpg', width: 100 }],
     });
     makeDirectoryMock.mockRejectedValue(new Error('file system unavailable'));
-    const { result } = renderHook(() => useDocumentVault());
+    const { result } = await renderHook(() => useDocumentVault());
 
     await act(async () => {
       await result.current.addDocument('Passport');

@@ -1,22 +1,33 @@
 import { itineraryRequestSchema } from '@traveling/shared';
 import { z } from 'zod';
 import { exportItineraryPdf, generateItinerary } from '../services/itinerary.service.js';
+import { checkAndIncrementUsage } from '../services/billing.service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { AppError } from '../utils/errors.js';
 import { prisma } from '../services/prisma.service.js';
 
 export const postGenerateItinerary = asyncHandler(async (req, res) => {
+  const userId = req.auth!.userId;
+  await checkAndIncrementUsage(userId, 'itinerary');
+  
   const body = itineraryRequestSchema.parse(req.body);
   const plan = await generateItinerary({
     ...body,
-    userId: req.auth?.userId ?? body.userId,
+    userId,
   });
   sendSuccess(res, plan);
 });
 
 export const postExportItinerary = asyncHandler(async (req, res) => {
   const itineraryId = z.string().trim().min(1).parse(req.params.id);
+  if (!req.auth?.userId) throw new AppError('UNAUTHORIZED', 'Sign in to export itineraries.', 401);
+  const user = await prisma.user.findUnique({ where: { clerkId: req.auth.userId } });
+  if (!user) throw new AppError('NOT_FOUND', 'User profile not found.', 404);
+
+  const existing = await prisma.itinerary.findFirst({ where: { id: itineraryId, userId: user.id } });
+  if (!existing) throw new AppError('NOT_FOUND', 'Itinerary not found.', 404);
+
   const pdf = await exportItineraryPdf(itineraryId, req.body as unknown);
   const filename = `traveling-itinerary-${itineraryId.replace(/[^a-zA-Z0-9_-]/g, '-')}.pdf`;
 
@@ -47,8 +58,12 @@ export const getItineraries = asyncHandler(async (req, res) => {
 
 export const getItineraryById = asyncHandler(async (req, res) => {
   const itineraryId = z.string().trim().min(1).parse(req.params.id);
-  const itinerary = await prisma.itinerary.findUnique({
-    where: { id: itineraryId },
+  if (!req.auth?.userId) throw new AppError('UNAUTHORIZED', 'Sign in to access itineraries.', 401);
+  const user = await prisma.user.findUnique({ where: { clerkId: req.auth.userId } });
+  if (!user) throw new AppError('NOT_FOUND', 'User profile not found.', 404);
+
+  const itinerary = await prisma.itinerary.findFirst({
+    where: { id: itineraryId, userId: user.id },
   });
   if (!itinerary) {
     throw new AppError('NOT_FOUND', 'Itinerary not found.', 404);
@@ -62,6 +77,12 @@ export const putItinerary = asyncHandler(async (req, res) => {
   if (!content) {
     throw new AppError('BAD_REQUEST', 'Content payload is required.', 400);
   }
+  if (!req.auth?.userId) throw new AppError('UNAUTHORIZED', 'Sign in to modify itineraries.', 401);
+  const user = await prisma.user.findUnique({ where: { clerkId: req.auth.userId } });
+  if (!user) throw new AppError('NOT_FOUND', 'User profile not found.', 404);
+
+  const existing = await prisma.itinerary.findFirst({ where: { id: itineraryId, userId: user.id } });
+  if (!existing) throw new AppError('NOT_FOUND', 'Itinerary not found.', 404);
   
   const itinerary = await prisma.itinerary.update({
     where: { id: itineraryId },
@@ -72,6 +93,13 @@ export const putItinerary = asyncHandler(async (req, res) => {
 
 export const deleteItinerary = asyncHandler(async (req, res) => {
   const itineraryId = z.string().trim().min(1).parse(req.params.id);
+  if (!req.auth?.userId) throw new AppError('UNAUTHORIZED', 'Sign in to delete itineraries.', 401);
+  const user = await prisma.user.findUnique({ where: { clerkId: req.auth.userId } });
+  if (!user) throw new AppError('NOT_FOUND', 'User profile not found.', 404);
+
+  const existing = await prisma.itinerary.findFirst({ where: { id: itineraryId, userId: user.id } });
+  if (!existing) throw new AppError('NOT_FOUND', 'Itinerary not found.', 404);
+
   await prisma.itinerary.delete({
     where: { id: itineraryId },
   });

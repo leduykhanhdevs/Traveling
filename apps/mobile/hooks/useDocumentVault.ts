@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
@@ -10,14 +10,17 @@ export type VaultDocument = {
   createdAt: string;
 };
 
-const vaultKey = 'traveling-document-vault';
+import { Paths } from 'expo-file-system';
+const vaultFolder = `${Paths.document.uri}vault/`;
 
 const readVault = async (): Promise<readonly VaultDocument[]> => {
-  const raw = await SecureStore.getItemAsync(vaultKey);
-  if (!raw) {
+  try {
+    const raw = await SecureStore.getItemAsync('traveling-document-vault');
+    if (!raw) return [];
+    return JSON.parse(raw) as readonly VaultDocument[];
+  } catch {
     return [];
   }
-  return JSON.parse(raw) as readonly VaultDocument[];
 };
 
 export const useDocumentVault = (): {
@@ -49,10 +52,9 @@ export const useDocumentVault = (): {
         if (result.canceled || !result.assets[0]) {
           return;
         }
-        const folder = `${FileSystem.documentDirectory ?? ''}vault/`;
-        await FileSystem.makeDirectoryAsync(folder, { intermediates: true });
+        await FileSystem.makeDirectoryAsync(vaultFolder, { intermediates: true });
         const id = `${Date.now()}`;
-        const localUri = `${folder}${id}.jpg`;
+        const localUri = `${vaultFolder}${id}.jpg`;
         await FileSystem.copyAsync({
           from: result.assets[0].uri,
           to: localUri,
@@ -66,7 +68,7 @@ export const useDocumentVault = (): {
             createdAt: new Date().toISOString(),
           },
         ];
-        await SecureStore.setItemAsync(vaultKey, JSON.stringify(next));
+        await SecureStore.setItemAsync('traveling-document-vault', JSON.stringify(next));
         setDocuments(next);
       } catch {
         await reload();

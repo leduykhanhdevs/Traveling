@@ -111,7 +111,9 @@ export const trackViewedPlace = (
     token,
   });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getViewedPlaces = (token?: string | null): Promise<any[]> =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiRequest<any[]>('/api/v1/activity/viewed/history', { token });
 
 export const useViewedPlaces = (token?: string | null, options: { enabled?: boolean } = {}) =>

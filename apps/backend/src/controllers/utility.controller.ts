@@ -110,6 +110,14 @@ export const postSOS = asyncHandler(async (req, res) => {
     lng: body.lng,
     message: body.message,
   });
+  
+  const { logUserActivity } = await import('../services/activity.service.js');
+  await logUserActivity(clerkUserId, 'sos_alert', {
+    lat: body.lat,
+    lng: body.lng,
+    recipientsCount: data.recipients.length,
+  });
+  
   sendSuccess(res, data);
 });
 
@@ -127,6 +135,9 @@ export const postDeviceToken = asyncHandler(async (req, res) => {
 export const postPushNotification = asyncHandler(async (req, res) => {
   requireUserId(req.auth?.userId, 'Sign in to send push notifications.');
   const body = pushNotificationSchema.parse(req.body);
+  if (body.userId !== req.auth?.userId) {
+    throw new AppError('FORBIDDEN', 'You can only send push notifications to yourself.', 403);
+  }
   const data = await sendPushNotification(body.userId, body.title, body.body);
   sendSuccess(res, data);
 });

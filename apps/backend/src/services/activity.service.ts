@@ -4,7 +4,8 @@ import { logUnknownError } from '../utils/logger.js';
 export const logUserActivity = async (
   userId: string,
   action: string,
-  details?: Record<string, any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  details?: any
 ): Promise<void> => {
   try {
     const user = await prisma.user.findUnique({

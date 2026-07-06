@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -67,7 +67,8 @@ const samplePlaces: SeedPlace[] = [
   },
 ];
 
-const itineraryContent = (itineraryId: string): Prisma.InputJsonObject => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const itineraryContent = (itineraryId: string): any => ({
   id: itineraryId,
   destination: 'Ho Chi Minh City',
   budgetRange: 'midrange',

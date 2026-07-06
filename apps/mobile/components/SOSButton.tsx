@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { ShieldAlert } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Modal, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { theme } from '../constants/theme';
 import { useCurrentLocation, type CurrentLocation } from '../hooks/useCurrentLocation';
 import { apiRequest } from '../services/api';
@@ -94,7 +94,17 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
           message: 'Traveling SOS: I need help.',
         },
       });
-      setConfirmation(`SOS alert queued for ${data.recipients.length} emergency contact(s).`);
+      
+      const phones = data.recipients.map((r) => r.phone).join(',');
+      const separator = Platform.OS === 'ios' ? '&' : '?';
+      const body = encodeURIComponent(data.message);
+      
+      if (phones) {
+        await Linking.openURL(`sms:${phones}${separator}body=${body}`);
+        setConfirmation(`SOS drafted for ${data.recipients.length} contact(s). Please press send in your messaging app.`);
+      } else {
+        setError('No emergency contacts found to notify.');
+      }
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Unable to send SOS alert.';
       setError(message);

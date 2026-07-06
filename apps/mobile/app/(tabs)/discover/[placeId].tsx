@@ -30,7 +30,7 @@ export default function PlaceDetailScreen(): JSX.Element {
   useEffect(() => {
     if (query.data && placeId) {
       getToken()
-        .then((token) => {
+        .then(() => {
           trackViewed.mutate({
             placeId,
             name: query.data.name,
@@ -42,7 +42,8 @@ export default function PlaceDetailScreen(): JSX.Element {
         })
         .catch(() => {});
     }
-  }, [query.data, placeId, getToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.data, placeId, getToken, trackViewed.mutate]);
 
   const sharePlace = async (): Promise<void> => {
     if (!placeId || !query.data) {

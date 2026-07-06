@@ -148,21 +148,9 @@ const initialActivitiesByDay: Record<string, TimelineActivity[]> = {
   'day-4': [],
 };
 
-const buildGeneratedActivity = (dayId: string): TimelineActivity => ({
-  id: `${dayId}-ai-generated`,
-  dayId,
-  time: '10:00',
-  title: 'AI Hidden Gem Discovery',
-  duration: '2h',
-  category: 'other',
-  aiMatchScore: 93,
-  notes: 'Traveling balances review quality, walking distance, and your pace for this slot.',
-  address: 'Generated route near your hotel area',
-  weatherNote: 'Flexible indoor/outdoor option depending on the morning forecast.',
-});
 
 export default function ItineraryScreen(): JSX.Element {
-  const { getToken, userId } = useAuth();
+  const { getToken } = useAuth();
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -192,7 +180,9 @@ export default function ItineraryScreen(): JSX.Element {
     if (activeItinerary?.content?.days) {
       setTripName(activeItinerary.destination || 'Saigon Trip');
       const mapped: Record<string, TimelineActivity[]> = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       activeItinerary.content.days.forEach((d: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mapped[`day-${d.day}`] = d.slots.map((s: any) => ({
           id: s.id,
           dayId: `day-${d.day}`,
@@ -201,7 +191,7 @@ export default function ItineraryScreen(): JSX.Element {
           duration: s.duration || '1h',
           category: s.category || 'other',
           aiMatchScore: s.estimatedSpend ? 92 : 96,
-          notes: s.description,
+          notes: s.description || '',
           address: s.place?.address || 'Address to be confirmed',
           weatherNote: s.place?.openNow ? 'Open Now' : 'Check hours',
         }));
@@ -214,6 +204,7 @@ export default function ItineraryScreen(): JSX.Element {
 
   const itineraryDays = useMemo<ItineraryDayOption[]>(() => {
     if (activeItinerary?.content?.days) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return activeItinerary.content.days.map((d: any) => ({
         id: `day-${d.day}`,
         label: `Day ${d.day}`,
@@ -236,6 +227,7 @@ export default function ItineraryScreen(): JSX.Element {
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updatedDays = activeItinerary.content.days.map((d: any) => {
       const dayKey = `day-${d.day}`;
       const daySlots = newActivities[dayKey] || [];

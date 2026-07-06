@@ -411,7 +411,7 @@ export const sendSOSAlert = async (input: SOSAlertInput): Promise<SOSAlertConfir
 
   console.info('[WIRE_UP_TWILIO_LATER] SOS alert queued', {
     userId: user.id,
-    recipients: recipients.map((recipient) => ({
+    recipients: recipients.map((recipient: EmergencyContactSummary) => ({
       name: recipient.name,
       phone: recipient.phone,
       relationship: recipient.relationship,
@@ -508,7 +508,7 @@ export const sendPushNotification = async (
         'content-type': 'application/json',
       },
       body: JSON.stringify(
-        user.deviceTokens.map((deviceToken) => ({
+        user.deviceTokens.map((deviceToken: { token: string }) => ({
           to: deviceToken.token,
           sound: 'default',
           title,

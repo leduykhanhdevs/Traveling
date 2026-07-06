@@ -11,7 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LanguagePicker } from '../../../components/LanguagePicker';
+
 import { PhrasebookSheet, type PhrasebookPhrase } from '../../../components/PhrasebookSheet';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { TextField } from '../../../components/TextField';

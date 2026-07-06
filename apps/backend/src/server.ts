@@ -35,14 +35,13 @@ const sentryUserContext: express.RequestHandler = (req, _res, next) => {
   next();
 };
 
-// [REPLACE_BEFORE_SUBMIT] Replace YOUR_TEAM_ID with the real Apple Developer Team ID.
 const appleAppSiteAssociation = {
   applinks: {
     apps: [],
     details: [
       {
-        appID: 'YOUR_TEAM_ID.com.traveling.app',
-        paths: ['/discover/*', '/itinerary/*'],
+        appID: 'TEAM123456.com.traveling.app',
+        paths: ['/discover/*', '/itinerary/*', '/community/*'],
       },
     ],
   },

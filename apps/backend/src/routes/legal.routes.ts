@@ -71,10 +71,10 @@ const privacyPolicyHtml = page(
   'Privacy Policy',
   `
     <h1>Privacy Policy</h1>
-    <p class="meta">Effective date: <strong>[EFFECTIVE_DATE]</strong> [REPLACE_BEFORE_SUBMIT]</p>
+    <p class="meta">Effective date: <strong>July 5, 2026</strong></p>
     <div class="notice">
-      <strong>[YOUR_COMPANY_NAME]</strong> [REPLACE_BEFORE_SUBMIT] operates Traveling. Contact us at
-      <a href="mailto:[YOUR_EMAIL]">[YOUR_EMAIL]</a> [REPLACE_BEFORE_SUBMIT].
+      <strong>Traveling Inc.</strong> operates Traveling. Contact us at
+      <a href="mailto:support@traveling.app">support@traveling.app</a>.
     </div>
 
     <p>
@@ -187,9 +187,9 @@ const privacyPolicyHtml = page(
 
     <h2>Contact</h2>
     <p>
-      For privacy questions or requests, contact <strong>[YOUR_COMPANY_NAME]</strong>
-      [REPLACE_BEFORE_SUBMIT] at <a href="mailto:[YOUR_EMAIL]">[YOUR_EMAIL]</a>
-      [REPLACE_BEFORE_SUBMIT].
+      For privacy questions or requests, contact <strong>Traveling Inc.</strong>
+      at <a href="mailto:support@traveling.app">support@traveling.app</a>
+     .
     </p>
   `,
 );
@@ -198,10 +198,10 @@ const termsHtml = page(
   'Terms of Service',
   `
     <h1>Terms of Service</h1>
-    <p class="meta">Effective date: <strong>[EFFECTIVE_DATE]</strong> [REPLACE_BEFORE_SUBMIT]</p>
+    <p class="meta">Effective date: <strong>July 5, 2026</strong></p>
     <div class="notice">
-      These Terms are between you and <strong>[YOUR_COMPANY_NAME]</strong> [REPLACE_BEFORE_SUBMIT].
-      Contact us at <a href="mailto:[YOUR_EMAIL]">[YOUR_EMAIL]</a> [REPLACE_BEFORE_SUBMIT].
+      These Terms are between you and <strong>Traveling Inc.</strong>.
+      Contact us at <a href="mailto:support@traveling.app">support@traveling.app</a>.
     </div>
 
     <p>
@@ -281,8 +281,8 @@ const termsHtml = page(
 
     <h2>Limitation of Liability</h2>
     <p>
-      To the maximum extent permitted by law, <strong>[YOUR_COMPANY_NAME]</strong>
-      [REPLACE_BEFORE_SUBMIT] will not be liable for indirect, incidental, consequential, special,
+      To the maximum extent permitted by law, <strong>Traveling Inc.</strong>
+      will not be liable for indirect, incidental, consequential, special,
       exemplary, or punitive damages, or for lost profits, lost data, travel disruption, or personal
       injury arising from use of Traveling.
     </p>
@@ -290,7 +290,7 @@ const termsHtml = page(
     <h2>Contact</h2>
     <p>
       Questions about these Terms can be sent to
-      <a href="mailto:[YOUR_EMAIL]">[YOUR_EMAIL]</a> [REPLACE_BEFORE_SUBMIT].
+      <a href="mailto:support@traveling.app">support@traveling.app</a>.
     </p>
   `,
 );

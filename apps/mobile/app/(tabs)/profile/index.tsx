@@ -12,7 +12,7 @@ import {
 } from 'lucide-react-native';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BadgeCard, type TravelerBadge } from '../../../components/BadgeCard';
+import { BadgeCard } from '../../../components/BadgeCard';
 import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { StatCard } from '../../../components/StatCard';
@@ -22,12 +22,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useProfileStats } from '../../../services/profile';
 import { useItinerariesList } from '../../../services/itinerary';
 
-type TripCard = {
-  id: string;
-  destination: string;
-  dates: string;
-  colorClass: string;
-};
 
 type SettingRow = {
   id: string;
@@ -131,6 +125,14 @@ export default function ProfileScreen(): JSX.Element {
     },
   ], [stats]);
 
+  const travelerTitle = useMemo(() => {
+    if (!stats) return 'Adventure Seeker';
+    if (stats.countriesVisited > 2) return 'World Explorer';
+    if (stats.tripsPlanned > 0) return 'Adventure Seeker';
+    if (stats.placesSaved > 0) return 'Local Guide';
+    return 'Travel Planner';
+  }, [stats]);
+
   const { user } = useUser();
   const tier = useSubscriptionStore((state) => state.tier);
   const isPro = tier === 'premium';
@@ -218,8 +220,8 @@ export default function ProfileScreen(): JSX.Element {
               {handle}
             </Text>
             <View className="mt-4 rounded-full bg-white/10 px-4 py-2">
-              <Text accessibilityLabel="Travel Personality Adventure Seeker" className="font-inter-semibold text-sm text-white">
-                Adventure Seeker
+              <Text accessibilityLabel={`Travel Personality ${travelerTitle}`} className="font-inter-semibold text-sm text-white">
+                {travelerTitle}
               </Text>
             </View>
             <PrimaryButton

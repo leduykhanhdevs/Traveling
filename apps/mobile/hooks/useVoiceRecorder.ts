@@ -1,5 +1,5 @@
-import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system/legacy';
+import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
+import { File } from 'expo-file-system';
 import { useCallback, useState } from 'react';
 
 export type RecordedAudio = {
@@ -13,27 +13,26 @@ export const useVoiceRecorder = (): {
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<RecordedAudio | null>;
 } => {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const [recording, setRecording] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const startRecording = useCallback(async () => {
     setError(null);
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (permission.status !== 'granted') {
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
         setError('Microphone permission is required for voice translation.');
         return;
       }
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-      const created = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      setRecording(created.recording);
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      setRecording(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Recording failed to start.');
+      setRecording(false);
     }
-  }, []);
+  }, [recorder]);
 
   const stopRecording = useCallback(async () => {
     if (!recording) {
@@ -41,25 +40,26 @@ export const useVoiceRecorder = (): {
     }
 
     try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      setRecording(null);
+      await recorder.stop();
+      setRecording(false);
+
+      const uri = recorder.uri;
       if (!uri) {
         setError('Recorded audio file was unavailable.');
         return null;
       }
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const file = new File(uri);
+      const base64 = await file.base64();
       return { uri, base64 };
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Recording failed to stop.');
+      setRecording(false);
       return null;
     }
-  }, [recording]);
+  }, [recording, recorder]);
 
   return {
-    recording: Boolean(recording),
+    recording,
     error,
     startRecording,
     stopRecording,

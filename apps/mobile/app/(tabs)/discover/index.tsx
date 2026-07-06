@@ -285,6 +285,7 @@ export default function DiscoverScreen(): JSX.Element {
 
   const recentlyViewedPlaces = useMemo(() => {
     if (viewedHistoryData && viewedHistoryData.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return viewedHistoryData.map((item: any) => ({
         placeId: item.placeId,
         name: item.name,

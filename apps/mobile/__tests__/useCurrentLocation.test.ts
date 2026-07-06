@@ -11,8 +11,8 @@ describe('useCurrentLocation', () => {
     jest.clearAllMocks();
   });
 
-  it('starts with empty location state', () => {
-    const { result } = renderHook(() => useCurrentLocation());
+  it('starts with empty location state', async () => {
+    const { result } = await renderHook(() => useCurrentLocation());
 
     expect(result.current.location).toBeNull();
     expect(result.current.loading).toBe(false);
@@ -38,7 +38,7 @@ describe('useCurrentLocation', () => {
       },
       timestamp: 1,
     });
-    const { result } = renderHook(() => useCurrentLocation());
+    const { result } = await renderHook(() => useCurrentLocation());
 
     let location = null;
     await act(async () => {
@@ -58,7 +58,7 @@ describe('useCurrentLocation', () => {
       canAskAgain: true,
       expires: 'never',
     });
-    const { result } = renderHook(() => useCurrentLocation());
+    const { result } = await renderHook(() => useCurrentLocation());
 
     let location = null;
     await act(async () => {
@@ -79,7 +79,7 @@ describe('useCurrentLocation', () => {
       expires: 'never',
     });
     getCurrentPositionMock.mockRejectedValue(new Error('GPS unavailable'));
-    const { result } = renderHook(() => useCurrentLocation());
+    const { result } = await renderHook(() => useCurrentLocation());
 
     let location = null;
     await act(async () => {
@@ -99,7 +99,7 @@ describe('useCurrentLocation', () => {
       expires: 'never',
     });
     getCurrentPositionMock.mockRejectedValue('no gps');
-    const { result } = renderHook(() => useCurrentLocation());
+    const { result } = await renderHook(() => useCurrentLocation());
 
     await act(async () => {
       await result.current.refreshLocation();
