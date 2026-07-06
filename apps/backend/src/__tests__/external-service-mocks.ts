@@ -19,6 +19,7 @@ jest.mock('../services/prisma.service.js', () => ({
     itinerary: {
       create: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
     },
     review: {
       create: jest.fn(),
@@ -54,6 +55,10 @@ jest.mock('../services/redis.service.js', () => ({
   closeRedis: jest.fn(),
   getCacheJson: jest.fn(),
   setCacheJson: jest.fn(),
+  redis: {
+    incr: jest.fn().mockResolvedValue(1),
+    expire: jest.fn().mockResolvedValue(1),
+  },
 }));
 
 export {};

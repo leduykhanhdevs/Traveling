@@ -13,6 +13,7 @@ import { DayPicker, type ItineraryDayOption } from '../../../components/DayPicke
 import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { TextField } from '../../../components/TextField';
+import { PremiumModal } from '../../../components/PremiumModal';
 import { theme } from '../../../constants/theme';
 import { useAuth } from '@clerk/clerk-expo';
 import {
@@ -315,6 +316,8 @@ export default function ItineraryScreen(): JSX.Element {
     setSheetVisible(false);
   };
 
+  const [premiumModalVisible, setPremiumModalVisible] = useState(false);
+
   const handleGenerateItinerary = (): void => {
     if (!token) {
       return;
@@ -328,6 +331,14 @@ export default function ItineraryScreen(): JSX.Element {
     }, {
       onSuccess: () => {
         refetchItineraries();
+      },
+      onError: (error: unknown) => {
+        const err = error as { status?: number; message?: string };
+        if (err?.status === 429 || err?.status === 402 || err?.message?.includes('429') || err?.message?.includes('402') || err?.message?.includes('limit')) {
+          setPremiumModalVisible(true);
+        } else {
+          console.error(err);
+        }
       }
     });
   };
@@ -489,7 +500,7 @@ export default function ItineraryScreen(): JSX.Element {
             </View>
           }
           activationDistance={12}
-          contentContainerClassName="pb-32"
+          contentContainerStyle={{ paddingBottom: 128 }}
           data={activeActivities}
           key={activeDayId}
           keyExtractor={(item) => item.id}
@@ -582,6 +593,16 @@ export default function ItineraryScreen(): JSX.Element {
           </View>
         </View>
       </Modal>
+
+      <PremiumModal 
+        visible={premiumModalVisible} 
+        onClose={() => setPremiumModalVisible(false)}
+        onSuccess={() => {
+          setPremiumModalVisible(false);
+          // Optional: automatically retry the generation here
+          handleGenerateItinerary();
+        }}
+      />
     </SafeAreaView>
   );
 }

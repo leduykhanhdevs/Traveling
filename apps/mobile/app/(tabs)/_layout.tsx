@@ -26,7 +26,7 @@ export default function TabsLayout(): JSX.Element {
         }}
       />
       <Tabs.Screen
-        name="translate"
+        name="translate/index"
         options={{
           title: 'Translate',
           tabBarIcon: ({ color }) => <Languages size={22} color={color} />,
@@ -40,7 +40,7 @@ export default function TabsLayout(): JSX.Element {
         }}
       />
       <Tabs.Screen
-        name="community"
+        name="community/index"
         options={{
           title: 'Community',
           tabBarIcon: ({ color }) => <Users size={22} color={color} />,

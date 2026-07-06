@@ -8,11 +8,9 @@ import * as SecureStore from 'expo-secure-store';
 
 export default function AccountScreen(): JSX.Element {
   const [biometrics, setBiometrics] = useState(false);
-  const [twoFactor, setTwoFactor] = useState(false);
 
   useEffect(() => {
     SecureStore.getItemAsync('biometrics').then((v) => { if (v) setBiometrics(v === 'true'); });
-    SecureStore.getItemAsync('twoFactor').then((v) => { if (v) setTwoFactor(v === 'true'); });
   }, []);
 
   const toggle = (key: string, value: boolean, setter: (v: boolean) => void) => {
@@ -42,14 +40,6 @@ export default function AccountScreen(): JSX.Element {
                 <Text className="font-inter text-sm text-zinc-400">Use FaceID or Fingerprint.</Text>
               </View>
               <Switch value={biometrics} onValueChange={(v) => toggle('biometrics', v, setBiometrics)} />
-            </View>
-            <View className="h-px bg-white/10" />
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Text className="font-inter-semibold text-lg text-white">Two-Factor Auth</Text>
-                <Text className="font-inter text-sm text-zinc-400">Require 2FA for this device.</Text>
-              </View>
-              <Switch value={twoFactor} onValueChange={(v) => toggle('twoFactor', v, setTwoFactor)} />
             </View>
             <View className="h-px bg-white/10" />
             <Text className="font-inter text-sm text-zinc-300">

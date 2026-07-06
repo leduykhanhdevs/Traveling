@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { discoverPlaces } from '../services/recommendation.service.js';
 import { logUserActivity } from '../services/activity.service.js';
+import { checkAndIncrementUsage } from '../services/billing.service.js';
 
 export const postDiscover = asyncHandler(async (req, res) => {
   const userId = req.auth!.userId;

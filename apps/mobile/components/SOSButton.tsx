@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { ShieldAlert } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Linking, Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, Text, TouchableOpacity, View } from 'react-native';
 import { theme } from '../constants/theme';
 import { useCurrentLocation, type CurrentLocation } from '../hooks/useCurrentLocation';
 import { apiRequest } from '../services/api';
@@ -26,6 +26,7 @@ type SOSConfirmation = {
     name: string;
     phone: string;
     relationship: string;
+    status?: 'success' | 'failed';
   }[];
   message: string;
   location: CurrentLocation;
@@ -95,15 +96,15 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
         },
       });
       
-      const phones = data.recipients.map((r) => r.phone).join(',');
-      const separator = Platform.OS === 'ios' ? '&' : '?';
-      const body = encodeURIComponent(data.message);
+      const failed = data.recipients.filter(r => r.status === 'failed');
+      const succeeded = data.recipients.filter(r => r.status === 'success');
       
-      if (phones) {
-        await Linking.openURL(`sms:${phones}${separator}body=${body}`);
-        setConfirmation(`SOS drafted for ${data.recipients.length} contact(s). Please press send in your messaging app.`);
+      if (failed.length === 0) {
+        setConfirmation(`SOS sent successfully to ${succeeded.length} contact(s).`);
+      } else if (succeeded.length > 0) {
+        setError(`SOS partially failed. Sent to ${succeeded.length}, failed for ${failed.length}.`);
       } else {
-        setError('No emergency contacts found to notify.');
+        setError(`Failed to send SOS to any of your ${failed.length} contact(s).`);
       }
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Unable to send SOS alert.';

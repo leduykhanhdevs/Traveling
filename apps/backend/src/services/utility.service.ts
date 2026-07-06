@@ -1,5 +1,6 @@
 import { env } from '../config/env.js';
 import { AppError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 import { fetchJson } from './http-client.js';
 import { prisma } from './prisma.service.js';
 
@@ -97,7 +98,7 @@ export type SOSAlertInput = {
 
 export type SOSAlertConfirmation = {
   sent: boolean;
-  recipients: readonly EmergencyContactSummary[];
+  recipients: Array<EmergencyContactSummary & { status?: 'success' | 'failed' }>;
   message: string;
   location: {
     lat: number;
@@ -387,6 +388,10 @@ export const createPersonalEmergencyContact = async (
   return toEmergencyContactSummary(contact);
 };
 
+import twilio from 'twilio';
+
+const twilioClient = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
+
 export const sendSOSAlert = async (input: SOSAlertInput): Promise<SOSAlertConfirmation> => {
   const user = await prisma.user.findUnique({
     where: {
@@ -408,25 +413,26 @@ export const sendSOSAlert = async (input: SOSAlertInput): Promise<SOSAlertConfir
 
   const message = `${input.message} Location: https://maps.google.com/?q=${input.lat},${input.lng}`;
   const dispatchedAt = new Date().toISOString();
-
-  console.info('[WIRE_UP_TWILIO_LATER] SOS alert queued', {
-    userId: user.id,
-    recipients: recipients.map((recipient: EmergencyContactSummary) => ({
-      name: recipient.name,
-      phone: recipient.phone,
-      relationship: recipient.relationship,
-    })),
-    message,
-    location: {
-      lat: input.lat,
-      lng: input.lng,
-    },
-    dispatchedAt,
-  });
+  
+  const results = await Promise.all(
+    recipients.map(async (contact) => {
+      try {
+        await twilioClient.messages.create({
+          body: message,
+          from: env.TWILIO_FROM_NUMBER,
+          to: contact.phone,
+        });
+        return { ...contact, status: 'success' as const };
+      } catch (error) {
+        logger.error(`Failed to send SOS SMS to ${contact.phone}`, { error });
+        return { ...contact, status: 'failed' as const };
+      }
+    })
+  );
 
   return {
     sent: true,
-    recipients,
+    recipients: results,
     message,
     location: {
       lat: input.lat,

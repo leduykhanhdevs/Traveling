@@ -6,7 +6,6 @@ import { CommentSheet } from '../../../components/CommentSheet';
 import { GlassCard } from '../../../components/GlassCard';
 import {
   PostCard,
-  type CommunityFeedAuthor,
   getAvatarColorClass,
 } from '../../../components/PostCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
@@ -22,69 +21,11 @@ import {
 } from '../../../services/community';
 
 type FeedFilter = 'All' | 'Following' | 'Nearby';
-type StoryTraveler = {
-  id: string;
-  author: CommunityFeedAuthor;
-  seen: boolean;
-};
 
 
 const filters = ['All', 'Following', 'Nearby'] as const satisfies readonly FeedFilter[];
 
-const authors = {
-  maya: {
-    id: 'author-maya',
-    name: 'Maya Chen',
-    username: 'maya',
-    initials: 'MC',
-    location: 'Singapore',
-  },
-  leo: {
-    id: 'author-leo',
-    name: 'Leo Martin',
-    username: 'leo',
-    initials: 'LM',
-    location: 'France',
-  },
-  an: {
-    id: 'author-an',
-    name: 'An Nguyen',
-    username: 'annguyen',
-    initials: 'AN',
-    location: 'Vietnam',
-  },
-  sara: {
-    id: 'author-sara',
-    name: 'Sara Kim',
-    username: 'sarak',
-    initials: 'SK',
-    location: 'Korea',
-  },
-  noah: {
-    id: 'author-noah',
-    name: 'Noah Wells',
-    username: 'noahw',
-    initials: 'NW',
-    location: 'United States',
-  },
-  lina: {
-    id: 'author-lina',
-    name: 'Lina Ortiz',
-    username: 'linao',
-    initials: 'LO',
-    location: 'Mexico',
-  },
-} as const satisfies Record<string, CommunityFeedAuthor>;
-
-
-const stories: readonly StoryTraveler[] = [
-  { id: 'story-maya', author: authors.maya, seen: false },
-  { id: 'story-leo', author: authors.leo, seen: false },
-  { id: 'story-an', author: authors.an, seen: true },
-  { id: 'story-sara', author: authors.sara, seen: false },
-  { id: 'story-noah', author: authors.noah, seen: true },
-  { id: 'story-lina', author: authors.lina, seen: false },
-];
+// Removed hardcoded authors and stories
 
 export default function CommunityScreen(): JSX.Element {
   const { getToken } = useAuth();
@@ -242,23 +183,13 @@ export default function CommunityScreen(): JSX.Element {
     });
   };
 
-  const [localStories, setLocalStories] = useState<StoryTraveler[]>([...stories]);
-
-  const handleAddStory = () => {
-    // Basic mock behavior
-    const newStory: StoryTraveler = {
-      id: `story-${Date.now()}`,
-      author: {
-        id: 'my-story',
-        name: 'You',
-        username: 'you',
-        initials: 'YOU',
-        location: 'Current Location',
-      },
+  const storyPosts = useMemo(() => {
+    return posts.filter(p => !!p.imageUrl).slice(0, 5).map(p => ({
+      id: `story-${p.id}`,
+      author: p.author,
       seen: false,
-    };
-    setLocalStories([newStory, ...localStories]);
-  };
+    }));
+  }, [posts]);
 
   return (
     <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">
@@ -291,7 +222,7 @@ export default function CommunityScreen(): JSX.Element {
                       onPress={() => setActiveFilter(filter)}
                     >
                       <Text className={`font-inter-semibold text-xs ${selected ? 'text-slate-950' : 'text-white'}`}>
-                        {filter}
+                         {filter}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -301,23 +232,9 @@ export default function CommunityScreen(): JSX.Element {
 
             <FlatList
               accessibilityLabel="Traveler stories"
-              data={localStories}
+              data={storyPosts}
               horizontal
               keyExtractor={(item) => item.id}
-              ListHeaderComponent={
-                <TouchableOpacity
-                  accessibilityHint="Starts the add story flow."
-                  accessibilityLabel="Add story"
-                  accessibilityRole="button"
-                  className="mr-4 items-center"
-                  onPress={handleAddStory}
-                >
-                  <View className="h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-white/40 bg-white/10">
-                    <Plus color="#FFFFFF" size={24} />
-                  </View>
-                  <Text className="mt-2 font-inter-semibold text-xs text-white">Add Story</Text>
-                </TouchableOpacity>
-              }
               renderItem={({ item }) => (
                 <TouchableOpacity
                   accessibilityHint={`Opens ${item.author.name}'s travel story.`}
@@ -376,7 +293,7 @@ export default function CommunityScreen(): JSX.Element {
             onRefresh={refreshFeed}
           />
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View className="px-5">
             <PostCard
               post={item}
@@ -384,6 +301,23 @@ export default function CommunityScreen(): JSX.Element {
               onShare={sharePost}
               onToggleLike={toggleLike}
             />
+            {index === 0 && (
+              <View className="my-2 rounded-xl bg-accent p-4 shadow-lg border border-white/20">
+                <Text className="font-inter-bold text-xs uppercase tracking-wider text-white/80 mb-2">Sponsored</Text>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 mr-4">
+                    <Text className="font-inter-bold text-lg text-white mb-1">Explore Japan with Japan Airlines</Text>
+                    <Text className="font-inter text-sm text-white/90">Experience the magic of Tokyo and beyond.</Text>
+                  </View>
+                  <View className="bg-white/20 rounded-full h-12 w-12 items-center justify-center">
+                    <Text className="text-2xl">✈️</Text>
+                  </View>
+                </View>
+                <TouchableOpacity className="mt-4 bg-white py-2 rounded-lg items-center" activeOpacity={0.8}>
+                  <Text className="font-inter-bold text-accent">Book Now</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       />

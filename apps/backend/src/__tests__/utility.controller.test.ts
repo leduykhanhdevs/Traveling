@@ -252,7 +252,7 @@ describe('utility.controller', () => {
       });
     });
 
-    it('sends a push notification to a target user', async () => {
+    it('sends a push notification to the authenticated user', async () => {
       const result = {
         sent: 1,
         tickets: [{ status: 'ok' as const, id: 'ticket_1' }],
@@ -268,7 +268,7 @@ describe('utility.controller', () => {
       ]);
 
       const response = await request(app).post('/push/send').send({
-        userId: 'clerk_user_2',
+        userId: 'admin_user',
         title: 'Trip reminder',
         body: 'Leave for the museum soon.',
       });
@@ -276,10 +276,31 @@ describe('utility.controller', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ success: true, data: result });
       expect(sendPushNotificationMock).toHaveBeenCalledWith(
-        'clerk_user_2',
+        'admin_user',
         'Trip reminder',
         'Leave for the museum soon.',
       );
+    });
+
+    it('rejects sending a push notification to a different user', async () => {
+      const sendPushNotificationMock = jest.mocked(sendPushNotification);
+      const app = buildTestApp([
+        {
+          method: 'post',
+          path: '/push/send',
+          handlers: [authenticated('admin_user'), postPushNotification],
+        },
+      ]);
+
+      const response = await request(app).post('/push/send').send({
+        userId: 'clerk_user_2',
+        title: 'Trip reminder',
+        body: 'Leave for the museum soon.',
+      });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error.code).toBe('FORBIDDEN');
+      expect(sendPushNotificationMock).not.toHaveBeenCalled();
     });
   });
 

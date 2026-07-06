@@ -26,14 +26,23 @@ const envSchema = z.object({
   OPENWEATHER_API_KEY: requiredString,
   REVENUECAT_API_KEY: requiredString,
   FCM_SERVER_KEY: z.string().optional(),
+  TWILIO_ACCOUNT_SID: requiredString,
+  TWILIO_AUTH_TOKEN: requiredString,
+  TWILIO_FROM_NUMBER: requiredString,
 });
 
 const parseEnv = (): z.infer<typeof envSchema> => {
   const apifyApiKey =
     process.env.APIFY_API_KEY?.trim() ? process.env.APIFY_API_KEY : process.env.APIFY_TOKEN;
+  
+  const isTest = process.env.NODE_ENV === 'test';
+
   const result = envSchema.safeParse({
     ...process.env,
     APIFY_API_KEY: apifyApiKey,
+    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || (isTest ? 'test' : undefined),
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || (isTest ? 'test' : undefined),
+    TWILIO_FROM_NUMBER: process.env.TWILIO_FROM_NUMBER || (isTest ? 'test' : undefined),
   });
 
   if (result.success) {

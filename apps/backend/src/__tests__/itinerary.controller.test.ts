@@ -66,6 +66,11 @@ describe('itinerary.controller', () => {
       const pdf = Buffer.from('%PDF test');
       const exportItineraryPdfMock = jest.mocked(exportItineraryPdf);
       exportItineraryPdfMock.mockResolvedValue(pdf);
+      
+      const { prisma } = await import('../services/prisma.service.js');
+      jest.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'user_1' } as never);
+      jest.mocked(prisma.itinerary.findFirst).mockResolvedValue({ id: 'itinerary_1' } as never);
+      
       const exportApp = buildTestApp([
         {
           method: 'post',

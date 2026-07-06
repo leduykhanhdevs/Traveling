@@ -13,6 +13,9 @@ const requiredTestEnv: Record<string, string> = {
   EXCHANGERATE_API_KEY: 'test_exchange_rate_key',
   OPENWEATHER_API_KEY: 'test_openweather_key',
   REVENUECAT_API_KEY: 'test_revenuecat_key',
+  TWILIO_ACCOUNT_SID: 'test_twilio_sid',
+  TWILIO_AUTH_TOKEN: 'test_twilio_token',
+  TWILIO_FROM_NUMBER: '+15551234567',
 };
 
 for (const [key, value] of Object.entries(requiredTestEnv)) {
