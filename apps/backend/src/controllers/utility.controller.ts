@@ -141,3 +141,51 @@ export const postPushNotification = asyncHandler(async (req, res) => {
   const data = await sendPushNotification(body.userId, body.title, body.body);
   sendSuccess(res, data);
 });
+
+export const postSOSPush = asyncHandler(async (req, res) => {
+  const clerkUserId = requireUserId(req.auth?.userId, 'Sign in to send SOS alerts.');
+  const body = sosSchema.parse(req.body);
+
+  const { prisma } = await import('../services/prisma.service.js');
+  const user = await prisma.user.findUnique({ 
+    where: { clerkId: clerkUserId }, 
+    include: { emergencyContacts: true } 
+  });
+  
+  if (!user) {
+    throw new AppError('NOT_FOUND', 'User not found', 404);
+  }
+
+  const contactPhonesAndEmails = user.emergencyContacts.map(c => c.phone).concat(
+    user.emergencyContacts.map(c => c.name.includes('@') ? c.name : '')
+  ).filter(Boolean);
+
+  const contactUsers = await prisma.user.findMany({
+    where: {
+      email: { in: contactPhonesAndEmails },
+    }
+  });
+
+  let sentCount = 0;
+  for (const contactUser of contactUsers) {
+    try {
+      await sendPushNotification(
+        contactUser.clerkId, 
+        'EMERGENCY SOS', 
+        `Your contact ${user.email} sent an SOS from ${body.lat.toFixed(4)}, ${body.lng.toFixed(4)}: ${body.message}`
+      );
+      sentCount++;
+    } catch (e) {
+      // Ignore failures for individual pushes
+    }
+  }
+
+  const { logUserActivity } = await import('../services/activity.service.js');
+  await logUserActivity(clerkUserId, 'sos_push', {
+    lat: body.lat,
+    lng: body.lng,
+    recipientsCount: sentCount,
+  });
+
+  sendSuccess(res, { success: true, sentCount });
+});

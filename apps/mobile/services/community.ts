@@ -44,6 +44,23 @@ export type CommunityComment = {
   createdAt: string;
 };
 
+export type CommunityStory = {
+  id: string;
+  userId: string;
+  author: CommunityAuthor;
+  imageUrl: string;
+  caption?: string;
+  placeId?: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
+export type CreateCommunityStoryInput = {
+  imageUrl: string;
+  caption?: string;
+  placeId?: string;
+};
+
 export type CreateCommunityPostInput = {
   content: string;
   imageUrl?: string;
@@ -157,6 +174,37 @@ export const useCommunityPosts = (
     queryFn: () => getCommunityPosts(token),
     queryKey: ['community', 'posts'] as const,
     staleTime: communityStaleTimeMs,
+  });
+
+export const getCommunityStories = (
+  token?: string | null,
+): Promise<{ stories: readonly CommunityStory[] }> =>
+  apiRequest('/api/v1/community/stories', { token });
+
+export const useCommunityStories = (
+  token?: string | null,
+  options: { enabled?: boolean } = {},
+) =>
+  useQuery({
+    enabled: options.enabled ?? true,
+    queryFn: () => getCommunityStories(token),
+    queryKey: ['community', 'stories'] as const,
+    staleTime: communityStaleTimeMs,
+  });
+
+export const createCommunityStory = (
+  story: CreateCommunityStoryInput,
+  token?: string | null,
+): Promise<CommunityStory> =>
+  apiRequest('/api/v1/community/stories', {
+    method: 'POST',
+    body: story,
+    token,
+  });
+
+export const useCreateStoryMutation = (token?: string | null) =>
+  useMutation({
+    mutationFn: (story: CreateCommunityStoryInput) => createCommunityStory(story, token),
   });
 
 export const useCreatePostMutation = (token?: string | null) =>

@@ -15,6 +15,7 @@ export const APP_COLORS = {
 export const QUERY_TIERS = {
   freeAiQueriesPerDay: 20,
   freeTranslationsPerDay: 50,
+  freeSavedPlaces: 10,
 } as const;
 
 export const CACHE_TTL_SECONDS = {

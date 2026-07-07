@@ -415,7 +415,7 @@ export const sendSOSAlert = async (input: SOSAlertInput): Promise<SOSAlertConfir
   const dispatchedAt = new Date().toISOString();
   
   const results = await Promise.all(
-    recipients.map(async (contact) => {
+    recipients.map(async (contact: EmergencyContactSummary) => {
       try {
         await twilioClient.messages.create({
           body: message,

@@ -9,6 +9,8 @@ import {
   listCommunityReviews,
   listCommunityPosts,
   togglePostLike,
+  createCommunityStory,
+  listCommunityStories,
 } from '../services/community.service.js';
 import { AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/async-handler.js';
@@ -29,6 +31,12 @@ const postCreateSchema = z.object({
 
 const commentCreateSchema = z.object({
   content: z.string().trim().min(1).max(1000),
+});
+
+const storyCreateSchema = z.object({
+  imageUrl: z.string().trim().url(),
+  caption: z.string().trim().max(500).optional(),
+  placeId: z.string().trim().min(1).optional(),
 });
 
 const postIdParamSchema = z.object({
@@ -121,4 +129,22 @@ export const postTogglePostLike = asyncHandler(async (req, res) => {
 export const getCommunityPosts = asyncHandler(async (req, res) => {
   const posts = await listCommunityPosts(req.auth?.userId);
   sendSuccess(res, { posts });
+});
+
+export const getCommunityStories = asyncHandler(async (req, res) => {
+  const stories = await listCommunityStories();
+  sendSuccess(res, { stories });
+});
+
+export const postCommunityStory = asyncHandler(async (req, res) => {
+  const clerkUserId = requireUserId(req.auth?.userId, 'Sign in to create a story.');
+  const body = storyCreateSchema.parse(req.body);
+  const story = await createCommunityStory({
+    clerkUserId,
+    imageUrl: body.imageUrl,
+    caption: body.caption,
+    placeId: body.placeId,
+  });
+  await logUserActivity(clerkUserId, 'create_story', { placeId: body.placeId });
+  sendSuccess(res, story, 201);
 });

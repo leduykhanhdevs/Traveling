@@ -14,6 +14,7 @@ import { TextField } from '../../../components/TextField';
 import { useAuth } from '@clerk/clerk-expo';
 import {
   useCommunityPosts,
+  useCommunityStories,
   useCreatePostMutation,
   usePostComments,
   useAddCommentMutation,
@@ -36,6 +37,7 @@ export default function CommunityScreen(): JSX.Element {
   }, [getToken]);
 
   const { data: postsData, isLoading: postsLoading, refetch: refetchPosts } = useCommunityPosts(token, { enabled: !!token });
+  const { data: storiesData, refetch: refetchStories } = useCommunityStories(token, { enabled: !!token });
 
   const posts = useMemo(() => {
     if (postsData?.posts) {
@@ -117,6 +119,7 @@ export default function CommunityScreen(): JSX.Element {
 
   const refreshFeed = (): void => {
     refetchPosts();
+    refetchStories();
   };
 
   const toggleLikeMutation = useToggleLikeMutation(token);
@@ -184,12 +187,22 @@ export default function CommunityScreen(): JSX.Element {
   };
 
   const storyPosts = useMemo(() => {
-    return posts.filter(p => !!p.imageUrl).slice(0, 5).map(p => ({
-      id: `story-${p.id}`,
-      author: p.author,
-      seen: false,
-    }));
-  }, [posts]);
+    if (storiesData?.stories) {
+      return storiesData.stories.map((s) => ({
+        id: s.id,
+        author: {
+          id: s.author.id,
+          name: s.author.name,
+          username: s.author.name,
+          initials: s.author.initials,
+          location: 'Vietnam',
+        },
+        imageUrl: s.imageUrl,
+        seen: false,
+      }));
+    }
+    return [];
+  }, [storiesData]);
 
   return (
     <SafeAreaView accessibilityViewIsModal={false} className="flex-1 bg-background">

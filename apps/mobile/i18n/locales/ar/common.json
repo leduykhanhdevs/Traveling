@@ -1,0 +1,144 @@
+{
+  "greeting": "مرحبًا",
+  "welcome": "مرحبا بكم في السفر",
+  "paywall": {
+    "title": "قسط السفر",
+    "subtitle": "اكتشاف غير محدود، وترجمة بالكاميرا، وعبارات دون اتصال بالإنترنت، ومسارات كاملة.",
+    "perMonth": "كل شهر",
+    "features": {
+      "aiDiscovery": "اكتشاف الذكاء الاصطناعي",
+      "translations": "ترجمات",
+      "cameraTranslate": "ترجمة الكاميرا",
+      "offlinePacks": "حزم غير متصل",
+      "itineraryPlanner": "مخطط الرحلة",
+      "unlimited": "غير محدود",
+      "yes": "نعم",
+      "no": "لا"
+    },
+    "subscribeNow": "اشترك الآن",
+    "bankTransfer": "ثانه تون كوا تشوين خوان (VN)",
+    "notAvailable": "غير متوفر",
+    "noPackages": "لا تتوفر حزم الشراء في الوقت الحالي.",
+    "success": "نجاح",
+    "purchaseError": "خطأ في الشراء",
+    "error": "خطأ",
+    "bankModal": {
+      "title": "التحويل البنكي",
+      "instruction": "Quét mão QR qua ứng dụng ngân hàng hoặc Momo đểthanh toán.",
+      "bank": "بنك",
+      "account": "حساب",
+      "name": "اسم",
+      "amount": "كمية",
+      "content": "محتوى",
+      "note": "(يُرجى تضمين محتوى النقل الدقيق أعلاه. سيتم تنشيط قسط التأمين الخاص بك تلقائيًا خلال بضع دقائق).",
+      "close": "يغلق"
+    }
+  },
+  "sos": {
+    "title": "مساعدة طارئة",
+    "subtitle": "تعتمد الأرقام المحلية على موقعك الحالي عبر نظام تحديد المواقع العالمي (GPS).",
+    "loading": "جارٍ البحث عن أرقام الطوارئ المحلية...",
+    "police": "شرطة",
+    "fire": "نار",
+    "ambulance": "سيارة إسعاف",
+    "sendAlert": "إرسال تنبيه SOS",
+    "close": "يغلق",
+    "button": "SOS",
+    "buttonLoading": "استغاثة...",
+    "errorGps": "غير قادر على العثور على موقع GPS الحالي الخاص بك.",
+    "errorLoad": "غير قادر على تحميل أرقام الطوارئ.",
+    "errorSendGps": "مطلوب موقع GPS قبل إرسال تنبيه SOS.",
+    "errorSend": "غير قادر على إرسال تنبيه SOS.",
+    "successPartially": "فشل SOS جزئيًا. أرسلت إلى{{succeeded}}، فشل ل{{failed}}.",
+    "successFull": "تم إرسال SOS بنجاح إلى{{succeeded}}جهة الاتصال (جهات الاتصال).",
+    "errorFull": "فشل في إرسال SOS إلى أي من{{failed}}جهة الاتصال (جهات الاتصال)."
+  },
+  "tabs": {
+    "discover": "يكتشف",
+    "translate": "يترجم",
+    "itinerary": "خط سير الرحلة",
+    "community": "مجتمع",
+    "profile": "حساب تعريفي"
+  },
+  "onboarding": {
+    "skip": "يتخطى",
+    "next": "التالي",
+    "heroTitle": "اكتشف العالم باستخدام الذكاء الاصطناعي",
+    "heroSubtitle": "خطط السفر لرحلتك المثالية في ثوانٍ",
+    "featuresTitle": "كل ما تحتاجه على الطريق",
+    "features": {
+      "aiItineraries": "مسارات الذكاء الاصطناعي",
+      "aiItinerariesDesc": "تتشكل المسارات اليومية وفقًا لمزاجك وسرعتك وميزانيتك.",
+      "liveTranslation": "الترجمة الحية",
+      "liveTranslationDesc": "تحدث واقرأ وافهم اللحظات المحلية بأقل احتكاك.",
+      "smartDiscovery": "الاكتشاف الذكي",
+      "smartDiscoveryDesc": "ابحث عن الطعام والأماكن والتجارب بثقة مصنفة حسب الذكاء الاصطناعي."
+    },
+    "styleTitle": "أي نوع من المسافرين أنت؟",
+    "styleSubtitle": "اختر واحدًا أو أكثر. السفر سوف يضبط مزاج الرحلة من حولك.",
+    "styleRequired": "حدد نمط سفر واحدًا على الأقل للمتابعة.",
+    "styles": {
+      "adventure": "مفامرة",
+      "foodie": "عشاق الطعام",
+      "culture": "ثقافة",
+      "beach": "شاطئ",
+      "city": "مستكشف المدينة",
+      "eco": "السفر البيئي"
+    },
+    "finalTitle": "هناك تقريبا!",
+    "finalSubtitle": "ستبدأ توصياتك الأولى بإشارات السفر هذه.",
+    "terms1": "من خلال الاستمرار فإنك توافق على لدينا",
+    "termsLink": "شروط الخدمة",
+    "terms2": "و",
+    "privacyLink": "سياسة الخصوصية",
+    "terms3": ".",
+    "getStarted": "ابدأ",
+    "signIn": "هل لديك حساب بالفعل؟ تسجيل الدخول",
+    "languageTitle": "اختر لغتك",
+    "languageSubtitle": "يمكنك تغيير هذا لاحقًا في الإعدادات."
+  },
+  "profile": {
+    "countriesVisited": "البلدان التي تمت زيارتها",
+    "tripsPlanned": "الرحلات المخططة",
+    "placesSaved": "تم حفظ الأماكن",
+    "badges": {
+      "firstItinerary": "خط سير الرحلة الأول",
+      "firstItineraryDesc": "صمم أول خطة لرحلتك مدعومة بالذكاء الاصطناعي.",
+      "worldExplorer": "مستكشف العالم",
+      "worldExplorerDesc": "الأماكن المحفوظة في بلدان متعددة.",
+      "foodie": "عشاق الطعام",
+      "foodieDesc": "العثور على جواهر الطعام المحلية أثناء السفر.",
+      "mountainLover": "عاشق الجبل",
+      "mountainLoverDesc": "مغامرات على ارتفاعات عالية مخطط لها.",
+      "soloTraveler": "مسافر منفرد",
+      "soloTravelerDesc": "افتح القفل بعد أول طريق منفرد لك.",
+      "proTraveler": "المسافر المحترف",
+      "proTravelerDesc": "الاشتراك المميز النشط."
+    },
+    "titles": {
+      "adventureSeeker": "الباحث عن المغامرة",
+      "worldExplorer": "مستكشف العالم",
+      "localGuide": "الدليل المحلي",
+      "travelPlanner": "مخطط السفر"
+    },
+    "settings": {
+      "account": "حساب",
+      "notifications": "إشعارات",
+      "subscription": "الاشتراك",
+      "privacy": "سياسة الخصوصية",
+      "terms": "شروط الخدمة",
+      "signOut": "تسجيل الخروج"
+    },
+    "editProfile": "تحرير الملف الشخصي",
+    "yourBadges": "شاراتك",
+    "seeAll": "شاهد الكل",
+    "recentTrips": "الرحلات الأخيرة"
+  },
+  "legal": {
+    "privacyPolicy": "سياسة الخصوصية",
+    "openPrivacyPolicy": "افتح سياسة الخصوصية",
+    "termsOfService": "شروط الخدمة",
+    "openTerms": "شروط مفتوحة",
+    "back": "خلف"
+  }
+}

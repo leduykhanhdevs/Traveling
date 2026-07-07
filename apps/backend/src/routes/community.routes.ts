@@ -8,6 +8,8 @@ import {
   postFollowTraveler,
   postPostComment,
   postTogglePostLike,
+  getCommunityStories,
+  postCommunityStory,
 } from '../controllers/community.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -21,3 +23,5 @@ communityRouter.post('/posts/:id/comments', requireAuth, postPostComment);
 communityRouter.post('/posts/:id/like', requireAuth, postTogglePostLike);
 communityRouter.post('/reviews', postCommunityReview);
 communityRouter.post('/follow', postFollowTraveler);
+communityRouter.get('/stories', getCommunityStories);
+communityRouter.post('/stories', requireAuth, postCommunityStory);

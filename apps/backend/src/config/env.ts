@@ -26,6 +26,8 @@ const envSchema = z.object({
   OPENWEATHER_API_KEY: requiredString,
   REVENUECAT_API_KEY: requiredString,
   FCM_SERVER_KEY: z.string().optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_KEY: z.string().min(1).optional(),
   TWILIO_ACCOUNT_SID: requiredString,
   TWILIO_AUTH_TOKEN: requiredString,
   TWILIO_FROM_NUMBER: requiredString,

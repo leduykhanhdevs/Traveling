@@ -1,6 +1,6 @@
 import '../global.css';
 import 'react-native-gesture-handler';
-
+import '../i18n';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import {
@@ -17,17 +17,14 @@ import * as Sentry from '@sentry/react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, Modal, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MMKV } from 'react-native-mmkv';
 import { OfflineBanner } from '../components/OfflineBanner';
-import { PrimaryButton } from '../components/PrimaryButton';
+import { usePreferencesStore } from '../stores/preferencesStore';
 import { theme } from '../constants/theme';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import * as LocalAuthentication from 'expo-local-authentication';
-import * as SecureStore from 'expo-secure-store';
-import { Lock } from 'lucide-react-native';
+// imports removed
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 const queryCacheMaxAgeMs = 1000 * 60 * 60 * 24 * 7;
@@ -130,100 +127,38 @@ const PushNotificationRegistration = (): null => {
   return null;
 };
 
-const BiometricGate = ({ children }: { children: React.ReactNode }) => {
-  const [locked, setLocked] = useState(false);
+const ProfileSyncer = (): null => {
+  const { isLoaded, getToken } = useAuth();
+  const preferences = usePreferencesStore();
 
   useEffect(() => {
-    let appState = AppState.currentState;
-
-    const checkLock = async () => {
-      const enabled = await SecureStore.getItemAsync('biometrics');
-      if (enabled === 'true') {
-        setLocked(true);
-        authenticate();
-      }
-    };
-
-    const authenticate = async () => {
+    if (!isLoaded) return;
+    
+    const sync = async () => {
+      const token = await getToken();
+      if (!token) return;
+      
+      const { updateProfile } = await import('../services/profile');
       try {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        if (!hasHardware || !isEnrolled) {
-          setLocked(false);
-          return;
-        }
-        
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: 'Unlock Traveling',
-          disableDeviceFallback: true,
-          cancelLabel: 'Cancel',
-        });
-        if (result.success) {
-          setLocked(false);
-        } else if (__DEV__) {
-          await SecureStore.deleteItemAsync('biometrics'); // Auto-disable to stop annoying the dev
-          setLocked(false); // Bypass if canceled in dev mode
-        }
-      } catch (error) {
-        console.error('Biometric auth error:', error);
-        if (__DEV__) {
-          await SecureStore.deleteItemAsync('biometrics');
-          setLocked(false);
-        }
+        await updateProfile({
+          email: 'synced-from-mobile@example.com', // Dummy email, the backend upsert actually uses clerkId anyway, but schema requires it. Better to get real email if possible.
+          preferredLanguage: preferences.preferredLanguage,
+          travelStyle: preferences.travelStyle,
+          dietaryRestrictions: preferences.dietaryRestrictions,
+          spicyPreference: preferences.spicyPreference,
+          sweetPreference: preferences.sweetPreference,
+          savoryPreference: preferences.savoryPreference,
+          appLocale: preferences.appLocale,
+        }, token);
+      } catch (e) {
+        console.error('Failed to sync profile', e);
       }
     };
+    
+    void sync();
+  }, [isLoaded, getToken, preferences]);
 
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        void checkLock();
-      }
-      appState = nextAppState;
-    });
-
-    void checkLock();
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-  const handleManualUnlock = () => {
-    LocalAuthentication.authenticateAsync({
-      promptMessage: 'Unlock Traveling',
-      disableDeviceFallback: true,
-      cancelLabel: 'Cancel',
-    })
-      .then(result => {
-        if (result.success) {
-          setLocked(false);
-        } else if (__DEV__) {
-          void SecureStore.deleteItemAsync('biometrics');
-          setLocked(false); // Bypass if canceled in dev mode
-        }
-      })
-      .catch(error => {
-        console.error('Manual unlock error:', error);
-        if (__DEV__) {
-          void SecureStore.deleteItemAsync('biometrics');
-          setLocked(false);
-        }
-      });
-  };
-
-  return (
-    <>
-      {children}
-      <Modal visible={locked} transparent={false} animationType="fade">
-        <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
-          <Lock color="white" size={48} />
-          <Text style={{ color: 'white', marginTop: 16, fontSize: 18, fontFamily: 'Inter_600SemiBold' }}>Traveling is locked</Text>
-          <View style={{ marginTop: 24, width: 200 }}>
-            <PrimaryButton label="Unlock" onPress={handleManualUnlock} />
-          </View>
-        </View>
-      </Modal>
-    </>
-  );
+  return null;
 };
 
 function RootLayout(): JSX.Element | null {
@@ -269,16 +204,15 @@ function RootLayout(): JSX.Element | null {
         <QueryClientProvider client={queryClient}>
           <SentryUserSync />
           <PushNotificationRegistration />
+          <ProfileSyncer />
           <StatusBar style="light" />
           <OfflineBanner />
-          <BiometricGate>
-            <Stack
-              screenOptions={{
-                contentStyle: { backgroundColor: theme.colors.background },
-                headerShown: false,
-              }}
-            />
-          </BiometricGate>
+          <Stack
+            screenOptions={{
+              contentStyle: { backgroundColor: theme.colors.background },
+              headerShown: false,
+            }}
+          />
         </QueryClientProvider>
       </ClerkProvider>
     </GestureHandlerRootView>

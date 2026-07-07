@@ -21,6 +21,7 @@ import { useSubscriptionStore } from '../../../stores/subscriptionStore';
 import { useState, useEffect, useMemo } from 'react';
 import { useProfileStats } from '../../../services/profile';
 import { useItinerariesList } from '../../../services/itinerary';
+import { useTranslation } from 'react-i18next';
 
 
 type SettingRow = {
@@ -52,6 +53,7 @@ const getHandle = (username: string | null | undefined, email?: string): string 
 };
 
 export default function ProfileScreen(): JSX.Element {
+  const { t } = useTranslation();
   const { signOut, getToken } = useAuth();
   const [token, setToken] = useState<string | null>(null);
 
@@ -61,12 +63,27 @@ export default function ProfileScreen(): JSX.Element {
 
   const { data: stats } = useProfileStats(token, { enabled: !!token });
   const { data: itineraries } = useItinerariesList(token, { enabled: !!token });
+  const setTier = useSubscriptionStore((state) => state.setTier);
+
+  useEffect(() => {
+    if (token) {
+      import('../../../services/profile').then(({ getProfile }) => {
+        getProfile(token)
+          .then((data) => {
+            if (data && data.entitlement) {
+              setTier(data.entitlement.tier);
+            }
+          })
+          .catch(() => {});
+      });
+    }
+  }, [token, setTier]);
 
   const travelerStats = useMemo(() => [
-    { label: 'Countries visited', value: stats?.countriesVisited ?? 1, emoji: '🌍' },
-    { label: 'Trips planned', value: stats?.tripsPlanned ?? 0, emoji: '✈️' },
-    { label: 'Places saved', value: stats?.placesSaved ?? 0, emoji: '📍' },
-  ], [stats]);
+    { label: t('profile.countriesVisited'), value: stats?.countriesVisited ?? 1, emoji: '🌍' },
+    { label: t('profile.tripsPlanned'), value: stats?.tripsPlanned ?? 0, emoji: '✈️' },
+    { label: t('profile.placesSaved'), value: stats?.placesSaved ?? 0, emoji: '📍' },
+  ], [stats, t]);
 
   const recentTrips = useMemo(() => {
     if (itineraries && itineraries.length > 0) {
@@ -87,55 +104,70 @@ export default function ProfileScreen(): JSX.Element {
     ];
   }, [itineraries]);
 
-  const badges = useMemo(() => [
+  const baseBadges = useMemo(() => [
     {
       id: 'first-itinerary',
       icon: '🗺',
-      name: 'First Itinerary',
-      description: 'Built your first AI-powered trip plan.',
+      name: t('profile.badges.firstItinerary'),
+      description: t('profile.badges.firstItineraryDesc'),
       earned: (stats?.tripsPlanned ?? 0) > 0,
     },
     {
       id: 'world-explorer',
       icon: '🌏',
-      name: 'World Explorer',
-      description: 'Saved places across multiple countries.',
+      name: t('profile.badges.worldExplorer'),
+      description: t('profile.badges.worldExplorerDesc'),
       earned: (stats?.countriesVisited ?? 0) > 1,
     },
     {
       id: 'foodie',
       icon: '🍜',
-      name: 'Foodie',
-      description: 'Found local food gems with Traveling.',
+      name: t('profile.badges.foodie'),
+      description: t('profile.badges.foodieDesc'),
       earned: (stats?.placesSaved ?? 0) > 0,
     },
     {
       id: 'mountain-lover',
       icon: '🏔',
-      name: 'Mountain Lover',
-      description: 'Planned high-altitude adventures.',
+      name: t('profile.badges.mountainLover'),
+      description: t('profile.badges.mountainLoverDesc'),
       earned: false,
     },
     {
       id: 'solo-traveler',
       icon: '🔒',
-      name: 'Solo Traveler',
-      description: 'Unlock after your first solo route.',
+      name: t('profile.badges.soloTraveler'),
+      description: t('profile.badges.soloTravelerDesc'),
       earned: (stats?.tripsPlanned ?? 0) >= 3,
     },
-  ], [stats]);
+  ], [stats, t]);
 
-  const travelerTitle = useMemo(() => {
-    if (!stats) return 'Adventure Seeker';
-    if (stats.countriesVisited > 2) return 'World Explorer';
-    if (stats.tripsPlanned > 0) return 'Adventure Seeker';
-    if (stats.placesSaved > 0) return 'Local Guide';
-    return 'Travel Planner';
-  }, [stats]);
-
-  const { user } = useUser();
   const tier = useSubscriptionStore((state) => state.tier);
   const isPro = tier === 'premium';
+
+  const badges = useMemo(() => {
+    const arr = [...baseBadges];
+    if (isPro) {
+      arr.unshift({
+        id: 'pro-traveler',
+        icon: '⭐',
+        name: t('profile.badges.proTraveler'),
+        description: t('profile.badges.proTravelerDesc'),
+        earned: true,
+      });
+    }
+    return arr;
+  }, [baseBadges, isPro, t]);
+
+  const travelerTitle = useMemo(() => {
+    if (!stats) return t('profile.titles.adventureSeeker');
+    if (stats.countriesVisited > 2) return t('profile.titles.worldExplorer');
+    if (stats.tripsPlanned > 0) return t('profile.titles.adventureSeeker');
+    if (stats.placesSaved > 0) return t('profile.titles.localGuide');
+    return t('profile.titles.travelPlanner');
+  }, [stats, t]);
+
+  const { user } = useUser();
   const displayName = user?.fullName ?? user?.username ?? 'Traveling Traveler';
   const email = user?.primaryEmailAddress?.emailAddress;
   const handle = getHandle(user?.username, email);
@@ -144,21 +176,21 @@ export default function ProfileScreen(): JSX.Element {
   const settings: readonly SettingRow[] = [
     {
       id: 'account',
-      label: 'Account',
+      label: t('profile.settings.account'),
       hint: 'Opens account settings.',
       icon: UserRound,
       onPress: () => router.push('/(tabs)/profile/account' as never),
     },
     {
       id: 'notifications',
-      label: 'Notifications',
+      label: t('profile.settings.notifications'),
       hint: 'Opens notification preferences.',
       icon: Bell,
       onPress: () => router.push('/(tabs)/profile/notifications' as never),
     },
     {
       id: 'subscription',
-      label: 'Subscription',
+      label: t('profile.settings.subscription'),
       hint: 'Opens the subscription and paywall screen.',
       icon: CreditCard,
       badge: isPro ? 'PRO' : undefined,
@@ -166,21 +198,21 @@ export default function ProfileScreen(): JSX.Element {
     },
     {
       id: 'privacy',
-      label: 'Privacy Policy',
+      label: t('profile.settings.privacy'),
       hint: 'Opens the Privacy Policy screen.',
       icon: ShieldCheck,
       onPress: () => router.push('/legal/privacy-policy' as never),
     },
     {
       id: 'terms',
-      label: 'Terms of Service',
+      label: t('profile.settings.terms'),
       hint: 'Opens the Terms of Service screen.',
       icon: FileText,
       onPress: () => router.push('/legal/terms' as never),
     },
     {
       id: 'sign-out',
-      label: 'Sign Out',
+      label: t('profile.settings.signOut'),
       hint: 'Signs out of Traveling.',
       icon: LogOut,
       danger: true,
@@ -225,10 +257,9 @@ export default function ProfileScreen(): JSX.Element {
               </Text>
             </View>
             <PrimaryButton
-              accessibilityHint="Navigates to the edit profile screen placeholder."
               className="mt-5 w-full"
               icon={Pencil}
-              label="Edit Profile"
+              label={t('profile.editProfile')}
               onPress={() => router.push('/(tabs)/profile/edit' as never)}
             />
           </View>
@@ -242,16 +273,14 @@ export default function ProfileScreen(): JSX.Element {
 
         <View>
           <View className="mb-3 flex-row items-center justify-between">
-            <Text accessibilityLabel="Your Badges" className="font-inter-bold text-2xl text-white">
-              Your Badges
+            <Text className="font-inter-bold text-2xl text-white">
+              {t('profile.yourBadges')}
             </Text>
             <TouchableOpacity
-              accessibilityHint="Shows all traveler badges."
-              accessibilityLabel="See all badges"
               accessibilityRole="button"
               className="rounded-full bg-white/10 px-3 py-2"
             >
-              <Text className="font-inter-semibold text-xs text-white">See all</Text>
+              <Text className="font-inter-semibold text-xs text-white">{t('profile.seeAll')}</Text>
             </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -262,8 +291,8 @@ export default function ProfileScreen(): JSX.Element {
         </View>
 
         <View>
-          <Text accessibilityLabel="Recent trips" className="mb-3 font-inter-bold text-2xl text-white">
-            Recent Trips
+          <Text className="mb-3 font-inter-bold text-2xl text-white">
+            {t('profile.recentTrips')}
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {recentTrips.map((trip) => (

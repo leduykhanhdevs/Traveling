@@ -55,6 +55,23 @@ export const postSavePlace = asyncHandler(async (req, res) => {
   if (!user) {
     throw new AppError('USER_NOT_FOUND', 'Create a Traveling profile before saving places.', 404);
   }
+
+  const { getEntitlementStatus } = await import('../services/billing.service.js');
+  const status = await getEntitlementStatus(req.auth.userId);
+
+  if (status.tier !== 'premium') {
+    const savedCount = await prisma.savedPlace.count({
+      where: { userId: user.id },
+    });
+    if (savedCount >= status.freeLimits.freeSavedPlaces) {
+      throw new AppError(
+        'PAYMENT_REQUIRED',
+        'You have reached the maximum number of saved places for free users. Upgrade to premium for unlimited saves.',
+        402
+      );
+    }
+  }
+
   const saved = await prisma.savedPlace.upsert({
     where: {
       userId_placeId: {

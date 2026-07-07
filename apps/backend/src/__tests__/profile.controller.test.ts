@@ -18,6 +18,7 @@ const validProfileBody = {
   sweetPreference: 2,
   savoryPreference: 5,
   nationality: 'Vietnamese',
+  appLocale: 'vi',
 };
 
 describe('profile.controller', () => {
@@ -44,6 +45,7 @@ describe('profile.controller', () => {
         freeLimits: {
           freeAiQueriesPerDay: 20,
           freeTranslationsPerDay: 50,
+          freeSavedPlaces: 10,
         } as const,
       };
       userFindUniqueMock.mockResolvedValue(user);

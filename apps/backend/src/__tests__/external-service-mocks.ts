@@ -27,6 +27,7 @@ jest.mock('../services/prisma.service.js', () => ({
     },
     savedPlace: {
       upsert: jest.fn(),
+      count: jest.fn(),
     },
     searchHistory: {
       create: jest.fn(),
@@ -47,6 +48,15 @@ jest.mock('../services/prisma.service.js', () => ({
       create: jest.fn(),
       deleteMany: jest.fn(),
     },
+    bankTransferOrder: {
+      findMany: jest.fn(),
+      update: jest.fn(),
+    },
+    premiumGrant: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+    },
+    $transaction: jest.fn(),
     $disconnect: jest.fn(),
   },
 }));
@@ -60,5 +70,13 @@ jest.mock('../services/redis.service.js', () => ({
     expire: jest.fn().mockResolvedValue(1),
   },
 }));
+
+jest.mock('twilio', () => {
+  return jest.fn().mockImplementation(() => ({
+    messages: {
+      create: jest.fn(),
+    },
+  }));
+});
 
 export {};

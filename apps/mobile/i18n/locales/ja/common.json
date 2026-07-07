@@ -1,0 +1,144 @@
+{
+  "greeting": "こんにちは",
+  "welcome": "旅行へようこそ",
+  "paywall": {
+    "title": "トラベルプレミアム",
+    "subtitle": "無制限の発見、カメラ翻訳、オフラインフレーズ、完全な旅程。",
+    "perMonth": "月あたり",
+    "features": {
+      "aiDiscovery": "AIの発見",
+      "translations": "翻訳",
+      "cameraTranslate": "カメラ翻訳",
+      "offlinePacks": "オフラインパック",
+      "itineraryPlanner": "旅程プランナー",
+      "unlimited": "無制限",
+      "yes": "はい",
+      "no": "いいえ"
+    },
+    "subscribeNow": "今すぐ購読する",
+    "bankTransfer": "タイン・トゥアン・クア・チュイン・コン (VN)",
+    "notAvailable": "利用不可",
+    "noPackages": "現在利用できる購入パッケージはありません。",
+    "success": "成功",
+    "purchaseError": "購入エラー",
+    "error": "エラー",
+    "bankModal": {
+      "title": "銀行振込",
+      "instruction": "Quét mã QR qua ứng dụng ngân hàng hoặc Momo để thanh toán.",
+      "bank": "銀行",
+      "account": "アカウント",
+      "name": "名前",
+      "amount": "額",
+      "content": "コンテンツ",
+      "note": "(上記の正確な転送内容を含めてください。プレミアムは数分以内に自動的に有効になります)。",
+      "close": "近い"
+    }
+  },
+  "sos": {
+    "title": "緊急援助",
+    "subtitle": "市内電話番号は、現在の GPS 位置に基づいています。",
+    "loading": "地元の緊急電話番号を検索しています...",
+    "police": "警察",
+    "fire": "火",
+    "ambulance": "救急車",
+    "sendAlert": "SOS アラートを送信する",
+    "close": "近い",
+    "button": "SOS",
+    "buttonLoading": "SOS...",
+    "errorGps": "現在の GPS 位置が見つかりません。",
+    "errorLoad": "緊急電話番号を読み込めません。",
+    "errorSendGps": "SOS アラートを送信する前に GPS 位置情報が必要です。",
+    "errorSend": "SOS アラートを送信できません。",
+    "successPartially": "SOS が部分的に失敗しました。送信先{{succeeded}}、失敗しました{{failed}}。",
+    "successFull": "SOSは正常に送信されました{{succeeded}}連絡先。",
+    "errorFull": "SOS を次のいずれかに送信できませんでした{{failed}}連絡先。"
+  },
+  "tabs": {
+    "discover": "発見する",
+    "translate": "翻訳する",
+    "itinerary": "旅程",
+    "community": "コミュニティ",
+    "profile": "プロフィール"
+  },
+  "onboarding": {
+    "skip": "スキップ",
+    "next": "次",
+    "heroTitle": "AI で世界を発見する",
+    "heroSubtitle": "Travel は完璧な旅行を数秒で計画します",
+    "featuresTitle": "外出中に必要なものすべて",
+    "features": {
+      "aiItineraries": "AIの旅程",
+      "aiItinerariesDesc": "気分、ペース、予算に応じてその日のルートが決まります。",
+      "liveTranslation": "ライブ翻訳",
+      "liveTranslationDesc": "摩擦を少なくして、その場での瞬間を話し、読み、理解します。",
+      "smartDiscovery": "スマートディスカバリー",
+      "smartDiscoveryDesc": "AI がランク付けした自信を持って、食べ物、場所、体験を見つけてください。"
+    },
+    "styleTitle": "あなたはどんな旅行者ですか?",
+    "styleSubtitle": "1 つ以上選択してください。旅行はあなたの周りの旅行気分を調整します。",
+    "styleRequired": "続行するには、少なくとも 1 つの旅行スタイルを選択してください。",
+    "styles": {
+      "adventure": "アドベンチャー",
+      "foodie": "食通",
+      "culture": "文化",
+      "beach": "ビーチ",
+      "city": "シティエクスプローラー",
+      "eco": "エコトラベル"
+    },
+    "finalTitle": "もうすぐそこです！",
+    "finalSubtitle": "最初の推奨事項は、これらの旅行信号から始まります。",
+    "terms1": "続行すると、次のことに同意したことになります",
+    "termsLink": "利用規約",
+    "terms2": "そして",
+    "privacyLink": "プライバシーポリシー",
+    "terms3": "。",
+    "getStarted": "始めましょう",
+    "signIn": "すでにアカウントをお持ちですか?サインイン",
+    "languageTitle": "言語を選択してください",
+    "languageSubtitle": "これは後から設定で変更できます。"
+  },
+  "profile": {
+    "countriesVisited": "訪問国",
+    "tripsPlanned": "旅行の計画",
+    "placesSaved": "保存された場所",
+    "badges": {
+      "firstItinerary": "最初の旅程",
+      "firstItineraryDesc": "初めての AI を活用した旅行計画を作成しました。",
+      "worldExplorer": "ワールドエクスプローラー",
+      "worldExplorerDesc": "複数の国にわたる場所を保存しました。",
+      "foodie": "食通",
+      "foodieDesc": "トラベリングで地元の逸品を見つけてください。",
+      "mountainLover": "山の恋人",
+      "mountainLoverDesc": "高地冒険を計画しました。",
+      "soloTraveler": "一人旅",
+      "soloTravelerDesc": "最初のソロルートの後にロックを解除します。",
+      "proTraveler": "プロトラベラー",
+      "proTravelerDesc": "アクティブなプレミアム サブスクリプション。"
+    },
+    "titles": {
+      "adventureSeeker": "冒険の探求者",
+      "worldExplorer": "ワールドエクスプローラー",
+      "localGuide": "ローカルガイド",
+      "travelPlanner": "トラベルプランナー"
+    },
+    "settings": {
+      "account": "アカウント",
+      "notifications": "通知",
+      "subscription": "サブスクリプション",
+      "privacy": "プライバシーポリシー",
+      "terms": "利用規約",
+      "signOut": "サインアウト"
+    },
+    "editProfile": "プロフィールの編集",
+    "yourBadges": "あなたのバッジ",
+    "seeAll": "全て見る",
+    "recentTrips": "最近の旅行"
+  },
+  "legal": {
+    "privacyPolicy": "プライバシーポリシー",
+    "openPrivacyPolicy": "プライバシーポリシーを開く",
+    "termsOfService": "利用規約",
+    "openTerms": "公開規約",
+    "back": "戻る"
+  }
+}

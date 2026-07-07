@@ -20,8 +20,23 @@ export type EntitlementStatus = {
   freeLimits: typeof QUERY_TIERS;
 };
 
+import { prisma } from '../services/prisma.service.js';
+
 export const getEntitlementStatus = async (appUserId: string): Promise<EntitlementStatus> => {
   try {
+    // 1. Check DB for active manual or bank-transfer grants
+    const activeGrant = await prisma.premiumGrant.findFirst({
+      where: {
+        userId: appUserId,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (activeGrant) {
+      return { tier: 'premium', freeLimits: QUERY_TIERS };
+    }
+
+    // 2. Check RevenueCat API
     const url = new URL(
       `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
     );
@@ -42,7 +57,8 @@ export const getEntitlementStatus = async (appUserId: string): Promise<Entitleme
       tier: expires > Date.now() ? 'premium' : 'free',
       freeLimits: QUERY_TIERS,
     };
-  } catch {
+  } catch (error) {
+    console.error('Error in getEntitlementStatus', error);
     return {
       tier: 'free',
       freeLimits: QUERY_TIERS,

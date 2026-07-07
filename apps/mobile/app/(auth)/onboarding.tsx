@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+// router removed
 import { Check, ChevronRight } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -26,61 +26,68 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { usePreferencesStore } from '../../stores/preferencesStore';
+import { useTranslation } from 'react-i18next';
 
-type SlideId = 'hero' | 'features' | 'style' | 'final';
+
+type SlideId = 'language' | 'hero' | 'features' | 'style' | 'final';
 type TravelStyleOption = {
   id: string;
   emoji: string;
-  label: string;
+  labelKey: string;
 };
 
 const slides: readonly { id: SlideId }[] = [
+  { id: 'language' },
   { id: 'hero' },
   { id: 'features' },
   { id: 'style' },
   { id: 'final' },
 ];
 
-const features = [
+const getFeatures = (t: (key: string) => string) => [
   {
     id: 'ai-itineraries',
-    emoji: 'ðŸ¤–',
-    title: 'AI Itineraries',
-    description: 'Day-by-day routes shaped around your mood, pace, and budget.',
+    emoji: '🤖',
+    title: t('onboarding.features.aiItineraries'),
+    description: t('onboarding.features.aiItinerariesDesc'),
   },
   {
     id: 'live-translation',
-    emoji: 'ðŸŒ',
-    title: 'Live Translation',
-    description: 'Speak, read, and understand local moments with less friction.',
+    emoji: '🌍',
+    title: t('onboarding.features.liveTranslation'),
+    description: t('onboarding.features.liveTranslationDesc'),
   },
   {
     id: 'smart-discovery',
-    emoji: 'ðŸ—º',
-    title: 'Smart Discovery',
-    description: 'Find food, places, and experiences with AI-ranked confidence.',
+    emoji: '🗺️',
+    title: t('onboarding.features.smartDiscovery'),
+    description: t('onboarding.features.smartDiscoveryDesc'),
   },
-] as const;
+];
 
 const travelStyles: readonly TravelStyleOption[] = [
-  { id: 'adventure', emoji: 'ðŸ”', label: 'Adventure' },
-  { id: 'foodie', emoji: 'ðŸœ', label: 'Foodie' },
-  { id: 'culture', emoji: 'ðŸ›', label: 'Culture' },
-  { id: 'beach', emoji: 'ðŸ–', label: 'Beach' },
-  { id: 'city', emoji: 'ðŸ™', label: 'City Explorer' },
-  { id: 'eco', emoji: 'ðŸŒ¿', label: 'Eco Travel' },
+  { id: 'adventure', emoji: '🏕️', labelKey: 'onboarding.styles.adventure' },
+  { id: 'foodie', emoji: '🍜', labelKey: 'onboarding.styles.foodie' },
+  { id: 'culture', emoji: '🏛️', labelKey: 'onboarding.styles.culture' },
+  { id: 'beach', emoji: '🏖️', labelKey: 'onboarding.styles.beach' },
+  { id: 'city', emoji: '🏙️', labelKey: 'onboarding.styles.city' },
+  { id: 'eco', emoji: '🌿', labelKey: 'onboarding.styles.eco' },
+];
+
+const languages = [
+  { code: 'en', label: 'English' },
+  { code: 'vi', label: 'Tiếng Việt' },
+  { code: 'zh-CN', label: '简体中文' },
+  { code: 'es', label: 'Español' },
+  { code: 'hi', label: 'हिन्दी' },
+  { code: 'fr', label: 'Français' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'pt', label: 'Português' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'ja', label: '日本語' }
 ];
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<{ id: SlideId }>);
-
-const navigateToLogin = (): void => {
-  usePreferencesStore.getState().completeOnboarding();
-  router.replace('/(auth)/login' as never);
-};
-
-const navigateToLegal = (screen: 'terms' | 'privacy-policy'): void => {
-  router.push(`/legal/${screen}` as never);
-};
 
 const OnboardingDot = ({
   index,
@@ -109,6 +116,8 @@ const OnboardingDot = ({
 };
 
 export default function OnboardingScreen(): JSX.Element {
+
+  const { t, i18n } = useTranslation();
   const { width } = useWindowDimensions();
   const listRef = useRef<FlatList<{ id: SlideId }>>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -116,6 +125,11 @@ export default function OnboardingScreen(): JSX.Element {
   const reducedMotion = useReducedMotion();
   const scrollX = useSharedValue(0);
   const globeY = useSharedValue(0);
+
+  const changeLanguage = async (code: string) => {
+    await i18n.changeLanguage(code);
+    usePreferencesStore.getState().setAppLocale(code);
+  };
 
   useEffect(() => {
     if (reducedMotion) {
@@ -146,9 +160,10 @@ export default function OnboardingScreen(): JSX.Element {
   const selectedStyleLabels = useMemo(
     () =>
       selectedStyles
-        .map((styleId) => travelStyles.find((style) => style.id === styleId)?.label)
-        .filter((label): label is string => Boolean(label)),
-    [selectedStyles],
+        .map((styleId) => travelStyles.find((style) => style.id === styleId)?.labelKey)
+        .filter((labelKey): labelKey is string => Boolean(labelKey))
+        .map(key => t(key)),
+    [selectedStyles, t],
   );
 
   const toggleTravelStyle = (styleId: string): void => {
@@ -170,33 +185,58 @@ export default function OnboardingScreen(): JSX.Element {
     setActiveIndex(nextIndex);
   };
 
+  const renderLanguageSlide = (): JSX.Element => (
+    <View className="flex-1 justify-center px-6">
+      <Text className="mb-3 text-center font-inter-bold text-3xl text-white">
+        {t('onboarding.languageTitle')}
+      </Text>
+      <Text className="mb-7 text-center font-inter text-base text-white/70">
+        {t('onboarding.languageSubtitle')}
+      </Text>
+      <View className="flex-row flex-wrap justify-between gap-y-3">
+        {languages.map((lang) => {
+          const selected = i18n.language.startsWith(lang.code);
+          return (
+            <TouchableOpacity
+              key={lang.code}
+              className={`w-[48%] rounded-xl border p-4 items-center ${
+                selected ? 'border-primary bg-primary' : 'border-white/10 bg-white/10'
+              }`}
+              onPress={() => void changeLanguage(lang.code)}
+            >
+              <Text className="font-inter-semibold text-white">{lang.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+
   const renderHeroSlide = (): JSX.Element => (
     <View className="flex-1 items-center justify-center px-8">
       <Animated.View accessibilityLabel="Floating globe" className="mb-10" style={globeStyle}>
-        <Text className="text-8xl">ðŸŒ</Text>
+        <Text className="text-8xl">🌍 </Text>
       </Animated.View>
       <Text
-        accessibilityLabel="Discover the world with AI"
         className="text-center font-inter-bold text-[32px] leading-10 text-white"
       >
-        Discover the world with AI
+        {t('onboarding.heroTitle')}
       </Text>
       <Text
-        accessibilityLabel="Traveling plans your perfect trip in seconds"
         className="mt-4 text-center font-inter text-lg leading-7 text-white/75"
       >
-        Traveling plans your perfect trip in seconds
+        {t('onboarding.heroSubtitle')}
       </Text>
     </View>
   );
 
   const renderFeaturesSlide = (): JSX.Element => (
     <View className="flex-1 justify-center px-6">
-      <Text accessibilityLabel="Everything you need on the road" className="mb-7 font-inter-bold text-3xl text-white">
-        Everything you need on the road
+      <Text className="mb-7 font-inter-bold text-3xl text-white">
+        {t('onboarding.featuresTitle')}
       </Text>
       <View className="gap-4">
-        {features.map((feature, index) => (
+        {getFeatures(t).map((feature, index) => (
           <Animated.View
             key={feature.id}
             entering={reducedMotion ? undefined : FadeInUp.delay(index * 150).springify()}
@@ -204,7 +244,7 @@ export default function OnboardingScreen(): JSX.Element {
           >
             <View className="flex-row items-center gap-4">
               <View className="h-14 w-14 items-center justify-center rounded-2xl bg-white/10">
-                <Text accessibilityLabel={`${feature.title} icon`} className="text-3xl">
+                <Text className="text-3xl">
                   {feature.emoji}
                 </Text>
               </View>
@@ -224,13 +264,12 @@ export default function OnboardingScreen(): JSX.Element {
   const renderTravelStyleSlide = (): JSX.Element => (
     <View className="flex-1 justify-center px-6">
       <Text
-        accessibilityLabel="What kind of traveler are you?"
         className="mb-3 text-center font-inter-bold text-3xl text-white"
       >
-        What kind of traveler are you?
+        {t('onboarding.styleTitle')}
       </Text>
       <Text className="mb-7 text-center font-inter text-base text-white/70">
-        Pick one or more. Traveling will tune the trip mood around you.
+        {t('onboarding.styleSubtitle')}
       </Text>
       <View className="flex-row flex-wrap gap-3">
         {travelStyles.map((style) => {
@@ -238,8 +277,6 @@ export default function OnboardingScreen(): JSX.Element {
           return (
             <TouchableOpacity
               key={style.id}
-              accessibilityHint={`Toggles ${style.label} as a travel preference.`}
-              accessibilityLabel={`${style.label} travel style`}
               accessibilityRole="button"
               accessibilityState={{ selected }}
               className={`min-h-28 w-[47%] justify-between rounded-2xl border p-4 ${
@@ -255,14 +292,14 @@ export default function OnboardingScreen(): JSX.Element {
                   </View>
                 ) : null}
               </View>
-              <Text className="font-inter-bold text-base text-white">{style.label}</Text>
+              <Text className="font-inter-bold text-base text-white">{t(style.labelKey)}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
       {selectedStyles.length === 0 ? (
-        <Text accessibilityLabel="Select at least one travel style to continue" className="mt-4 text-center font-inter-semibold text-accent">
-          Select at least one travel style to continue.
+        <Text className="mt-4 text-center font-inter-semibold text-accent">
+          {t('onboarding.styleRequired')}
         </Text>
       ) : null}
     </View>
@@ -270,62 +307,56 @@ export default function OnboardingScreen(): JSX.Element {
 
   const renderFinalSlide = (): JSX.Element => (
     <View className="flex-1 justify-center px-6">
-      <Text accessibilityLabel="Almost there!" className="text-center font-inter-bold text-[32px] text-white">
-        Almost there!
+      <Text className="text-center font-inter-bold text-[32px] text-white">
+        {t('onboarding.finalTitle')}
       </Text>
       <Text className="mt-3 text-center font-inter text-base leading-6 text-white/70">
-        Your first recommendations will start with these travel signals.
+        {t('onboarding.finalSubtitle')}
       </Text>
       <View className="my-8 flex-row flex-wrap justify-center gap-2">
         {selectedStyleLabels.map((label) => (
           <View key={label} className="rounded-full bg-white/10 px-4 py-2">
-            <Text accessibilityLabel={`${label} selected`} className="font-inter-semibold text-sm text-white">
+            <Text className="font-inter-semibold text-sm text-white">
               {label}
             </Text>
           </View>
         ))}
       </View>
       <Text className="mb-5 px-2 text-center font-inter text-xs leading-5 text-white/60">
-        By continuing you agree to our{' '}
+        {t('onboarding.terms1')}
         <Text
-          accessibilityHint="Opens the Terms of Service screen."
-          accessibilityLabel="Terms of Service"
           className="font-inter-semibold text-white"
           onPress={() => navigateToLegal('terms')}
         >
-          Terms of Service
-        </Text>{' '}
-        and{' '}
+          {t('onboarding.termsLink')}
+        </Text>
+        {t('onboarding.terms2')}
         <Text
-          accessibilityHint="Opens the Privacy Policy screen."
-          accessibilityLabel="Privacy Policy"
           className="font-inter-semibold text-white"
           onPress={() => navigateToLegal('privacy-policy')}
         >
-          Privacy Policy
+          {t('onboarding.privacyLink')}
         </Text>
-        .
+        {t('onboarding.terms3')}
       </Text>
       <PrimaryButton
-        accessibilityHint="Continues to the Traveling sign in screen."
         disabled={selectedStyles.length === 0}
-        label="Get Started"
+        label={t('onboarding.getStarted')}
         onPress={navigateToLogin}
       />
       <TouchableOpacity
-        accessibilityHint="Navigates to the login screen."
-        accessibilityLabel="Already have an account? Sign in"
         accessibilityRole="button"
         className="mt-5 items-center"
         onPress={navigateToLogin}
       >
-        <Text className="font-inter-semibold text-sm text-white/80">Already have an account? Sign in</Text>
+        <Text className="font-inter-semibold text-sm text-white/80">{t('onboarding.signIn')}</Text>
       </TouchableOpacity>
     </View>
   );
 
   const renderSlide = ({ item }: { item: { id: SlideId } }): JSX.Element => (
     <View className="flex-1" style={{ width }}>
+      {item.id === 'language' ? renderLanguageSlide() : null}
       {item.id === 'hero' ? renderHeroSlide() : null}
       {item.id === 'features' ? renderFeaturesSlide() : null}
       {item.id === 'style' ? renderTravelStyleSlide() : null}
@@ -348,13 +379,11 @@ export default function OnboardingScreen(): JSX.Element {
       </View>
 
       <TouchableOpacity
-        accessibilityHint="Skips onboarding and opens the login screen."
-        accessibilityLabel="Skip onboarding"
         accessibilityRole="button"
         className="absolute right-5 top-5 z-20 rounded-full bg-white/10 px-4 py-2"
         onPress={navigateToLogin}
       >
-        <Text className="font-inter-semibold text-sm text-white">Skip</Text>
+        <Text className="font-inter-semibold text-sm text-white">{t('onboarding.skip')}</Text>
       </TouchableOpacity>
 
       <AnimatedFlatList
@@ -380,10 +409,9 @@ export default function OnboardingScreen(): JSX.Element {
         </View>
         {activeIndex < slides.length - 1 ? (
           <PrimaryButton
-            accessibilityHint="Moves to the next onboarding slide."
-            disabled={activeIndex === 2 && selectedStyles.length === 0}
+            disabled={activeIndex === 3 && selectedStyles.length === 0}
             icon={ChevronRight}
-            label="Next"
+            label={t('onboarding.next')}
             onPress={() => goToIndex(activeIndex + 1)}
           />
         ) : null}

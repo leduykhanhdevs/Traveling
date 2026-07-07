@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { useTranslation } from 'react-i18next';
 
 const legalUrl = (): string => {
   const baseUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -13,6 +14,7 @@ const legalUrl = (): string => {
 };
 
 export default function TermsScreen(): JSX.Element {
+  const { t } = useTranslation();
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const url = legalUrl();
@@ -44,7 +46,7 @@ export default function TermsScreen(): JSX.Element {
         <GlassCard>
           <View className="gap-4">
             <View>
-              <Text className="font-inter-bold text-3xl text-white">Terms of Service</Text>
+              <Text className="font-inter-bold text-3xl text-white">{t('legal.termsOfService')}</Text>
               <Text className="mt-2 font-inter text-sm text-zinc-300">{url}</Text>
             </View>
             {error ? (
@@ -53,14 +55,14 @@ export default function TermsScreen(): JSX.Element {
               </Text>
             ) : null}
             <PrimaryButton
-              label="Open Terms"
+              label={t('legal.openTerms')}
               icon={ExternalLink}
               loading={opening}
               onPress={() => {
                 void openTerms();
               }}
             />
-            <PrimaryButton label="Back" variant="ghost" onPress={() => router.back()} />
+            <PrimaryButton label={t('legal.back')} variant="ghost" onPress={() => router.back()} />
           </View>
         </GlassCard>
       </View>

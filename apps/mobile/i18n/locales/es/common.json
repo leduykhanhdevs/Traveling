@@ -1,0 +1,144 @@
+{
+  "greeting": "Hola",
+  "welcome": "Bienvenido a viajar",
+  "paywall": {
+    "title": "Premium de viaje",
+    "subtitle": "Descubrimiento ilimitado, traducción de cámara, frases sin conexión e itinerarios completos.",
+    "perMonth": "por mes",
+    "features": {
+      "aiDiscovery": "descubrimiento de IA",
+      "translations": "Traducciones",
+      "cameraTranslate": "Traducir cámara",
+      "offlinePacks": "Paquetes sin conexión",
+      "itineraryPlanner": "Planificador de itinerarios",
+      "unlimited": "Ilimitado",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "subscribeNow": "Suscríbete ahora",
+    "bankTransfer": "Thanh toán qua chuyển khoản (VN)",
+    "notAvailable": "No disponible",
+    "noPackages": "No hay paquetes de compra disponibles en este momento.",
+    "success": "Éxito",
+    "purchaseError": "Error de compra",
+    "error": "Error",
+    "bankModal": {
+      "title": "Transferencia bancaria",
+      "instruction": "Quét mã QR qua ứng dụng ngân hàng hoặc Momo để thanh toán.",
+      "bank": "Banco",
+      "account": "Cuenta",
+      "name": "Nombre",
+      "amount": "Cantidad",
+      "content": "Contenido",
+      "note": "(Incluya el contenido exacto de la transferencia arriba. Su prima se activará automáticamente en unos minutos).",
+      "close": "Cerca"
+    }
+  },
+  "sos": {
+    "title": "ayuda de emergencia",
+    "subtitle": "Los números locales se basan en su ubicación GPS actual.",
+    "loading": "Buscando números de emergencia locales...",
+    "police": "Policía",
+    "fire": "Fuego",
+    "ambulance": "Ambulancia",
+    "sendAlert": "Enviar alerta SOS",
+    "close": "Cerca",
+    "button": "LLAMADA DE SOCORRO",
+    "buttonLoading": "LLAMADA DE SOCORRO...",
+    "errorGps": "No se puede encontrar su ubicación GPS actual.",
+    "errorLoad": "No se pueden cargar números de emergencia.",
+    "errorSendGps": "Se requiere ubicación GPS antes de enviar una alerta SOS.",
+    "errorSend": "No se puede enviar la alerta SOS.",
+    "successPartially": "SOS falló parcialmente. Enviado a{{succeeded}}, falló por{{failed}}.",
+    "successFull": "SOS enviado exitosamente a{{succeeded}}contacto(s).",
+    "errorFull": "No se pudo enviar SOS a ninguno de tus{{failed}}contacto(s)."
+  },
+  "tabs": {
+    "discover": "Descubrir",
+    "translate": "Traducir",
+    "itinerary": "Itinerario",
+    "community": "Comunidad",
+    "profile": "Perfil"
+  },
+  "onboarding": {
+    "skip": "Saltar",
+    "next": "Próximo",
+    "heroTitle": "Descubre el mundo con IA",
+    "heroSubtitle": "Travelling planifica tu viaje perfecto en segundos",
+    "featuresTitle": "Todo lo que necesitas en el camino",
+    "features": {
+      "aiItineraries": "Itinerarios de IA",
+      "aiItinerariesDesc": "Rutas diarias que se adaptan a tu estado de ánimo, ritmo y presupuesto.",
+      "liveTranslation": "Traducción en vivo",
+      "liveTranslationDesc": "Habla, lee y comprende momentos locales con menos fricción.",
+      "smartDiscovery": "Descubrimiento inteligente",
+      "smartDiscoveryDesc": "Encuentre comida, lugares y experiencias con confianza clasificada por IA."
+    },
+    "styleTitle": "¿Qué tipo de viajero eres?",
+    "styleSubtitle": "Elija uno o más. Viajar sintonizará el ambiente de viaje que te rodea.",
+    "styleRequired": "Selecciona al menos un estilo de viaje para continuar.",
+    "styles": {
+      "adventure": "Aventura",
+      "foodie": "Conocedor gourmet",
+      "culture": "Cultura",
+      "beach": "Playa",
+      "city": "Explorador de la ciudad",
+      "eco": "Viajes ecológicos"
+    },
+    "finalTitle": "¡Casi llegamos!",
+    "finalSubtitle": "Tus primeras recomendaciones comenzarán con estas señales de viaje.",
+    "terms1": "Al continuar aceptas nuestra",
+    "termsLink": "Términos de servicio",
+    "terms2": "y",
+    "privacyLink": "política de privacidad",
+    "terms3": ".",
+    "getStarted": "Empezar",
+    "signIn": "¿Ya tienes una cuenta? Iniciar sesión",
+    "languageTitle": "Elige tu idioma",
+    "languageSubtitle": "Puedes cambiar esto más tarde en la configuración."
+  },
+  "profile": {
+    "countriesVisited": "Países visitados",
+    "tripsPlanned": "Viajes planificados",
+    "placesSaved": "Lugares guardados",
+    "badges": {
+      "firstItinerary": "Primer itinerario",
+      "firstItineraryDesc": "Cree su primer plan de viaje impulsado por IA.",
+      "worldExplorer": "Explorador del mundo",
+      "worldExplorerDesc": "Lugares guardados en varios países.",
+      "foodie": "Conocedor gourmet",
+      "foodieDesc": "Encontré joyas gastronómicas locales con Travelling.",
+      "mountainLover": "Amante de la montaña",
+      "mountainLoverDesc": "Aventuras planificadas a gran altura.",
+      "soloTraveler": "Viajero solitario",
+      "soloTravelerDesc": "Desbloquea después de tu primera ruta en solitario.",
+      "proTraveler": "Viajero profesional",
+      "proTravelerDesc": "Suscripción Premium Activa."
+    },
+    "titles": {
+      "adventureSeeker": "Buscador de aventuras",
+      "worldExplorer": "Explorador del mundo",
+      "localGuide": "Guía local",
+      "travelPlanner": "Planificador de viajes"
+    },
+    "settings": {
+      "account": "Cuenta",
+      "notifications": "Notificaciones",
+      "subscription": "Suscripción",
+      "privacy": "política de privacidad",
+      "terms": "Términos de servicio",
+      "signOut": "Desconectar"
+    },
+    "editProfile": "Editar perfil",
+    "yourBadges": "Tus insignias",
+    "seeAll": "Ver todo",
+    "recentTrips": "Viajes recientes"
+  },
+  "legal": {
+    "privacyPolicy": "política de privacidad",
+    "openPrivacyPolicy": "Abrir Política de Privacidad",
+    "termsOfService": "Términos de servicio",
+    "openTerms": "Términos abiertos",
+    "back": "Atrás"
+  }
+}

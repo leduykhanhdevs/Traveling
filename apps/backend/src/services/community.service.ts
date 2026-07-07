@@ -31,6 +31,17 @@ export type CommunityComment = {
   createdAt: string;
 };
 
+export type CommunityStory = {
+  id: string;
+  userId: string;
+  author: CommunityAuthor;
+  imageUrl: string;
+  caption?: string;
+  placeId?: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
 export type CreateReviewInput = {
   userId: string;
   placeId: string;
@@ -52,6 +63,13 @@ export type CreateCommentInput = {
   clerkUserId: string;
   postId: string;
   content: string;
+};
+
+export type CreateStoryInput = {
+  clerkUserId: string;
+  imageUrl: string;
+  caption?: string;
+  placeId?: string;
 };
 
 const authorNameFromEmail = (email: string): string => email.split('@')[0] ?? 'Traveler';
@@ -151,6 +169,36 @@ const toCommunityComment = (comment: {
     },
     content: comment.content,
     createdAt: comment.createdAt.toISOString(),
+  };
+};
+
+const toCommunityStory = (story: {
+  id: string;
+  userId: string;
+  imageUrl: string;
+  caption: string | null;
+  placeId: string | null;
+  createdAt: Date;
+  expiresAt: Date;
+  user: {
+    email: string;
+  };
+}): CommunityStory => {
+  const name = authorNameFromEmail(story.user.email);
+
+  return {
+    id: story.id,
+    userId: story.userId,
+    author: {
+      id: story.userId,
+      name,
+      initials: authorInitials(name),
+    },
+    imageUrl: story.imageUrl,
+    caption: story.caption ?? undefined,
+    placeId: story.placeId ?? undefined,
+    createdAt: story.createdAt.toISOString(),
+    expiresAt: story.expiresAt.toISOString(),
   };
 };
 
@@ -444,4 +492,49 @@ export const listCommunityPosts = async (
   });
 
   return posts.map((post: (typeof posts)[number]) => toCommunityPost(post, viewerUserId));
+};
+
+export const createCommunityStory = async (input: CreateStoryInput): Promise<CommunityStory> => {
+  const user = await userByClerkId(input.clerkUserId);
+  const story = await prisma.story.create({
+    data: {
+      userId: user.id,
+      imageUrl: input.imageUrl,
+      caption: input.caption,
+      placeId: input.placeId,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+
+  return toCommunityStory(story);
+};
+
+export const listCommunityStories = async (): Promise<readonly CommunityStory[]> => {
+  const stories = await prisma.story.findMany({
+    where: {
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 50,
+  });
+
+  return stories.map(toCommunityStory);
 };

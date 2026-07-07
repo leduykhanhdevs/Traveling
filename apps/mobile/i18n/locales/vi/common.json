@@ -1,0 +1,144 @@
+{
+  "greeting": "Xin chào",
+  "welcome": "Chào mừng đến với Du lịch",
+  "paywall": {
+    "title": "Du lịch cao cấp",
+    "subtitle": "Khám phá không giới hạn, dịch thuật bằng camera, cụm từ ngoại tuyến và hành trình đầy đủ.",
+    "perMonth": "mỗi tháng",
+    "features": {
+      "aiDiscovery": "khám phá AI",
+      "translations": "Bản dịch",
+      "cameraTranslate": "Dịch máy ảnh",
+      "offlinePacks": "Gói ngoại tuyến",
+      "itineraryPlanner": "Người lập kế hoạch hành trình",
+      "unlimited": "Không giới hạn",
+      "yes": "Đúng",
+      "no": "KHÔNG"
+    },
+    "subscribeNow": "Đăng ký ngay",
+    "bankTransfer": "Thanh toán qua tài khoản (VN)",
+    "notAvailable": "Không có sẵn",
+    "noPackages": "Không có gói mua hàng có sẵn ngay bây giờ.",
+    "success": "Thành công",
+    "purchaseError": "Lỗi mua hàng",
+    "error": "Lỗi",
+    "bankModal": {
+      "title": "Chuyển khoản ngân hàng",
+      "instruction": "Quét mã QR qua ngân hàng hoặc Momo để thanh toán.",
+      "bank": "Ngân hàng",
+      "account": "Tài khoản",
+      "name": "Tên",
+      "amount": "Số lượng",
+      "content": "Nội dung",
+      "note": "(Vui lòng bao gồm nội dung chuyển khoản chính xác ở trên. Phí bảo hiểm của bạn sẽ được kích hoạt tự động trong vòng vài phút).",
+      "close": "Đóng"
+    }
+  },
+  "sos": {
+    "title": "Trợ giúp khẩn cấp",
+    "subtitle": "Số địa phương được dựa trên vị trí GPS hiện tại của bạn.",
+    "loading": "Đang tìm số điện thoại khẩn cấp tại địa phương...",
+    "police": "Cảnh sát",
+    "fire": "Ngọn lửa",
+    "ambulance": "xe cứu thương",
+    "sendAlert": "Gửi cảnh báo SOS",
+    "close": "Đóng",
+    "button": "SOS",
+    "buttonLoading": "SOS...",
+    "errorGps": "Không thể tìm thấy vị trí GPS hiện tại của bạn.",
+    "errorLoad": "Không thể tải số khẩn cấp.",
+    "errorSendGps": "Cần có vị trí GPS trước khi gửi cảnh báo SOS.",
+    "errorSend": "Không thể gửi cảnh báo SOS.",
+    "successPartially": "SOS không thành công một phần. Đã gửi tới{{succeeded}}, thất bại vì{{failed}}.",
+    "successFull": "SOS đã được gửi thành công tới{{succeeded}}(các) liên hệ.",
+    "errorFull": "Không thể gửi SOS tới bất kỳ ai trong số bạn{{failed}}(các) liên hệ."
+  },
+  "tabs": {
+    "discover": "Phát hiện",
+    "translate": "Dịch",
+    "itinerary": "Hành trình",
+    "community": "Cộng đồng",
+    "profile": "Hồ sơ"
+  },
+  "onboarding": {
+    "skip": "Nhảy",
+    "next": "Kế tiếp",
+    "heroTitle": "Khám phá thế giới với AI",
+    "heroSubtitle": "Du lịch lên kế hoạch cho chuyến đi hoàn hảo của bạn chỉ trong vài giây",
+    "featuresTitle": "Mọi thứ bạn cần trên đường",
+    "features": {
+      "aiItineraries": "Hành trình AI",
+      "aiItinerariesDesc": "Các tuyến đường hàng ngày được định hình theo tâm trạng, tốc độ và ngân sách của bạn.",
+      "liveTranslation": "Dịch trực tiếp",
+      "liveTranslationDesc": "Nói, đọc và hiểu các khoảnh khắc địa phương một cách dễ dàng hơn.",
+      "smartDiscovery": "Khám phá thông minh",
+      "smartDiscoveryDesc": "Tìm đồ ăn, địa điểm và trải nghiệm với độ tự tin được xếp hạng AI."
+    },
+    "styleTitle": "Bạn là loại khách du lịch nào?",
+    "styleSubtitle": "Chọn một hoặc nhiều. Du lịch sẽ điều chỉnh tâm trạng chuyến đi xung quanh bạn.",
+    "styleRequired": "Chọn ít nhất một phong cách du lịch để tiếp tục.",
+    "styles": {
+      "adventure": "Cuộc phiêu lưu",
+      "foodie": "Người sành ăn",
+      "culture": "Văn hoá",
+      "beach": "Bãi biển",
+      "city": "thám hiểm thành phố",
+      "eco": "Du lịch sinh thái"
+    },
+    "finalTitle": "Hầu như ở đó!",
+    "finalSubtitle": "Những đề xuất đầu tiên của bạn sẽ bắt đầu bằng những tín hiệu du lịch này.",
+    "terms1": "Bằng cách tiếp tục, bạn đồng ý với chúng tôi",
+    "termsLink": "Điều khoản dịch vụ",
+    "terms2": "Và",
+    "privacyLink": "Chính sách bảo mật",
+    "terms3": ".",
+    "getStarted": "Bắt đầu",
+    "signIn": "Đã có tài khoản? Đăng nhập",
+    "languageTitle": "Chọn ngôn ngữ của bạn",
+    "languageSubtitle": "Bạn có thể thay đổi điều này sau trong cài đặt."
+  },
+  "profile": {
+    "countriesVisited": "Các quốc gia đã ghé thăm",
+    "tripsPlanned": "Chuyến đi đã lên kế hoạch",
+    "placesSaved": "Địa điểm đã lưu",
+    "badges": {
+      "firstItinerary": "Hành trình đầu tiên",
+      "firstItineraryDesc": "Xây dựng kế hoạch chuyến đi được hỗ trợ bởi AI đầu tiên của bạn.",
+      "worldExplorer": "Nhà thám hiểm thế giới",
+      "worldExplorerDesc": "Địa điểm đã lưu trên nhiều quốc gia.",
+      "foodie": "Người sành ăn",
+      "foodieDesc": "Tìm thấy đá quý thực phẩm địa phương với Du lịch.",
+      "mountainLover": "Người yêu miền núi",
+      "mountainLoverDesc": "Đã lên kế hoạch cho những chuyến phiêu lưu trên cao.",
+      "soloTraveler": "Du khách một mình",
+      "soloTravelerDesc": "Mở khóa sau lộ trình solo đầu tiên của bạn.",
+      "proTraveler": "khách du lịch chuyên nghiệp",
+      "proTravelerDesc": "Đăng ký trả phí đang hoạt động."
+    },
+    "titles": {
+      "adventureSeeker": "Người tìm kiếm phiêu lưu",
+      "worldExplorer": "Nhà thám hiểm thế giới",
+      "localGuide": "Hướng dẫn viên địa phương",
+      "travelPlanner": "Người lập kế hoạch du lịch"
+    },
+    "settings": {
+      "account": "Tài khoản",
+      "notifications": "Thông báo",
+      "subscription": "Đăng ký",
+      "privacy": "Chính sách bảo mật",
+      "terms": "Điều khoản dịch vụ",
+      "signOut": "Đăng xuất"
+    },
+    "editProfile": "Chỉnh sửa hồ sơ",
+    "yourBadges": "Huy hiệu của bạn",
+    "seeAll": "Xem tất cả",
+    "recentTrips": "Chuyến đi gần đây"
+  },
+  "legal": {
+    "privacyPolicy": "Chính sách bảo mật",
+    "openPrivacyPolicy": "Chính sách bảo mật mở",
+    "termsOfService": "Điều khoản dịch vụ",
+    "openTerms": "Điều khoản mở",
+    "back": "Mặt sau"
+  }
+}

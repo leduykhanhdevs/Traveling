@@ -7,6 +7,7 @@ import { useCurrentLocation, type CurrentLocation } from '../hooks/useCurrentLoc
 import { apiRequest } from '../services/api';
 import { GlassCard } from './GlassCard';
 import { PrimaryButton } from './PrimaryButton';
+import { useTranslation } from 'react-i18next';
 
 type SOSButtonProps = {
   emergencyContact?: string;
@@ -37,6 +38,7 @@ const formatLocation = (location: CurrentLocation): string =>
   `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`;
 
 export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const { error: locationError, refreshLocation } = useCurrentLocation();
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,7 +58,7 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
     try {
       const nextLocation = await refreshLocation();
       if (!nextLocation) {
-        throw new Error(locationError ?? 'Unable to find your current GPS location.');
+        throw new Error(locationError ?? t('sos.errorGps'));
       }
 
       setCurrentLocation(nextLocation);
@@ -67,7 +69,7 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
       );
       setNumbers(data);
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : 'Unable to load emergency numbers.';
+      const message = caught instanceof Error ? caught.message : t('sos.errorLoad');
       setError(message);
     } finally {
       setLoading(false);
@@ -76,7 +78,7 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
 
   const sendSOSAlert = async (): Promise<void> => {
     if (!currentLocation) {
-      setError('GPS location is required before sending an SOS alert.');
+      setError(t('sos.errorSendGps'));
       return;
     }
 
@@ -86,28 +88,37 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
 
     try {
       const token = await getToken();
-      const data = await apiRequest<SOSConfirmation>('/api/v1/utilities/sos', {
-        method: 'POST',
-        token,
-        body: {
-          lat: currentLocation.lat,
-          lng: currentLocation.lng,
-          message: 'Traveling SOS: I need help.',
-        },
-      });
+      const payload = {
+        lat: currentLocation.lat,
+        lng: currentLocation.lng,
+        message: 'Traveling SOS: I need help.',
+      };
+
+      const [data] = await Promise.all([
+        apiRequest<SOSConfirmation>('/api/v1/utilities/sos', {
+          method: 'POST',
+          token,
+          body: payload,
+        }),
+        apiRequest('/api/v1/utilities/sos/push', {
+          method: 'POST',
+          token,
+          body: payload,
+        }).catch(() => null), // ignore push errors
+      ]);
       
       const failed = data.recipients.filter(r => r.status === 'failed');
       const succeeded = data.recipients.filter(r => r.status === 'success');
       
       if (failed.length === 0) {
-        setConfirmation(`SOS sent successfully to ${succeeded.length} contact(s).`);
+        setConfirmation(t('sos.successFull', { succeeded: succeeded.length }));
       } else if (succeeded.length > 0) {
-        setError(`SOS partially failed. Sent to ${succeeded.length}, failed for ${failed.length}.`);
+        setError(t('sos.successPartially', { succeeded: succeeded.length, failed: failed.length }));
       } else {
-        setError(`Failed to send SOS to any of your ${failed.length} contact(s).`);
+        setError(t('sos.errorFull', { failed: failed.length }));
       }
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : 'Unable to send SOS alert.';
+      const message = caught instanceof Error ? caught.message : t('sos.errorSend');
       setError(message);
     } finally {
       setSending(false);
@@ -134,7 +145,7 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
         ) : (
           <ShieldAlert size={18} color={theme.colors.text} />
         )}
-        <Text className="font-inter-bold text-white">{loading ? 'SOS...' : 'SOS'}</Text>
+        <Text className="font-inter-bold text-white">{loading ? t('sos.buttonLoading') : t('sos.button')}</Text>
       </TouchableOpacity>
 
       <Modal
@@ -147,9 +158,9 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
           <GlassCard accessibilityViewIsModal>
             <View className="gap-4">
               <View>
-                <Text className="font-inter-bold text-2xl text-white">Emergency help</Text>
+                <Text className="font-inter-bold text-2xl text-white">{t('sos.title')}</Text>
                 <Text className="mt-1 font-inter text-sm text-zinc-300">
-                  Local numbers are based on your current GPS location.
+                  {t('sos.subtitle')}
                 </Text>
               </View>
 
@@ -157,7 +168,7 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
                 <View className="flex-row items-center gap-3 rounded-lg bg-white/10 p-3">
                   <ActivityIndicator color={theme.colors.text} />
                   <Text className="font-inter text-sm text-zinc-300">
-                    Finding local emergency numbers...
+                    {t('sos.loading')}
                   </Text>
                 </View>
               ) : null}
@@ -167,19 +178,19 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
                   <Text className="font-inter-semibold text-white">{numbers.country}</Text>
                   <View className="flex-row gap-2">
                     <View className="flex-1 rounded-lg bg-white/10 p-3">
-                      <Text className="font-inter text-xs text-zinc-400">Police</Text>
+                      <Text className="font-inter text-xs text-zinc-400">{t('sos.police')}</Text>
                       <Text className="mt-1 font-inter-bold text-xl text-white">
                         {numbers.police}
                       </Text>
                     </View>
                     <View className="flex-1 rounded-lg bg-white/10 p-3">
-                      <Text className="font-inter text-xs text-zinc-400">Fire</Text>
+                      <Text className="font-inter text-xs text-zinc-400">{t('sos.fire')}</Text>
                       <Text className="mt-1 font-inter-bold text-xl text-white">
                         {numbers.fire}
                       </Text>
                     </View>
                     <View className="flex-1 rounded-lg bg-white/10 p-3">
-                      <Text className="font-inter text-xs text-zinc-400">Ambulance</Text>
+                      <Text className="font-inter text-xs text-zinc-400">{t('sos.ambulance')}</Text>
                       <Text className="mt-1 font-inter-bold text-xl text-white">
                         {numbers.ambulance}
                       </Text>
@@ -208,7 +219,7 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
 
               <View className="gap-2">
                 <PrimaryButton
-                  label="Send SOS alert"
+                  label={t('sos.sendAlert')}
                   icon={ShieldAlert}
                   loading={sending}
                   disabled={!currentLocation || loading}
@@ -217,7 +228,7 @@ export const SOSButton = (_props: SOSButtonProps): JSX.Element => {
                   }}
                 />
                 <PrimaryButton
-                  label="Close"
+                  label={t('sos.close')}
                   variant="ghost"
                   onPress={() => setModalVisible(false)}
                 />

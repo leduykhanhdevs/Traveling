@@ -1,0 +1,144 @@
+{
+  "greeting": "Hello",
+  "welcome": "Welcome to Traveling",
+  "paywall": {
+    "title": "Traveling Premium",
+    "subtitle": "Unlimited discovery, camera translation, offline phrases, and full itineraries.",
+    "perMonth": "per month",
+    "features": {
+      "aiDiscovery": "AI discovery",
+      "translations": "Translations",
+      "cameraTranslate": "Camera translate",
+      "offlinePacks": "Offline packs",
+      "itineraryPlanner": "Itinerary planner",
+      "unlimited": "Unlimited",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "subscribeNow": "Subscribe Now",
+    "bankTransfer": "Thanh toán qua chuyển khoản (VN)",
+    "notAvailable": "Not Available",
+    "noPackages": "No purchase packages are available right now.",
+    "success": "Success",
+    "purchaseError": "Purchase Error",
+    "error": "Error",
+    "bankModal": {
+      "title": "Bank Transfer",
+      "instruction": "Quét mã QR qua ứng dụng ngân hàng hoặc Momo để thanh toán.",
+      "bank": "Bank",
+      "account": "Account",
+      "name": "Name",
+      "amount": "Amount",
+      "content": "Content",
+      "note": "(Please include the exact transfer content above. Your premium will be activated automatically within a few minutes).",
+      "close": "Close"
+    }
+  },
+  "sos": {
+    "title": "Emergency help",
+    "subtitle": "Local numbers are based on your current GPS location.",
+    "loading": "Finding local emergency numbers...",
+    "police": "Police",
+    "fire": "Fire",
+    "ambulance": "Ambulance",
+    "sendAlert": "Send SOS alert",
+    "close": "Close",
+    "button": "SOS",
+    "buttonLoading": "SOS...",
+    "errorGps": "Unable to find your current GPS location.",
+    "errorLoad": "Unable to load emergency numbers.",
+    "errorSendGps": "GPS location is required before sending an SOS alert.",
+    "errorSend": "Unable to send SOS alert.",
+    "successPartially": "SOS partially failed. Sent to {{succeeded}}, failed for {{failed}}.",
+    "successFull": "SOS sent successfully to {{succeeded}} contact(s).",
+    "errorFull": "Failed to send SOS to any of your {{failed}} contact(s)."
+  },
+  "tabs": {
+    "discover": "Discover",
+    "translate": "Translate",
+    "itinerary": "Itinerary",
+    "community": "Community",
+    "profile": "Profile"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "heroTitle": "Discover the world with AI",
+    "heroSubtitle": "Traveling plans your perfect trip in seconds",
+    "featuresTitle": "Everything you need on the road",
+    "features": {
+      "aiItineraries": "AI Itineraries",
+      "aiItinerariesDesc": "Day-by-day routes shaped around your mood, pace, and budget.",
+      "liveTranslation": "Live Translation",
+      "liveTranslationDesc": "Speak, read, and understand local moments with less friction.",
+      "smartDiscovery": "Smart Discovery",
+      "smartDiscoveryDesc": "Find food, places, and experiences with AI-ranked confidence."
+    },
+    "styleTitle": "What kind of traveler are you?",
+    "styleSubtitle": "Pick one or more. Traveling will tune the trip mood around you.",
+    "styleRequired": "Select at least one travel style to continue.",
+    "styles": {
+      "adventure": "Adventure",
+      "foodie": "Foodie",
+      "culture": "Culture",
+      "beach": "Beach",
+      "city": "City Explorer",
+      "eco": "Eco Travel"
+    },
+    "finalTitle": "Almost there!",
+    "finalSubtitle": "Your first recommendations will start with these travel signals.",
+    "terms1": "By continuing you agree to our ",
+    "termsLink": "Terms of Service",
+    "terms2": " and ",
+    "privacyLink": "Privacy Policy",
+    "terms3": ".",
+    "getStarted": "Get Started",
+    "signIn": "Already have an account? Sign in",
+    "languageTitle": "Choose your language",
+    "languageSubtitle": "You can change this later in settings."
+  },
+  "profile": {
+    "countriesVisited": "Countries visited",
+    "tripsPlanned": "Trips planned",
+    "placesSaved": "Places saved",
+    "badges": {
+      "firstItinerary": "First Itinerary",
+      "firstItineraryDesc": "Built your first AI-powered trip plan.",
+      "worldExplorer": "World Explorer",
+      "worldExplorerDesc": "Saved places across multiple countries.",
+      "foodie": "Foodie",
+      "foodieDesc": "Found local food gems with Traveling.",
+      "mountainLover": "Mountain Lover",
+      "mountainLoverDesc": "Planned high-altitude adventures.",
+      "soloTraveler": "Solo Traveler",
+      "soloTravelerDesc": "Unlock after your first solo route.",
+      "proTraveler": "Pro Traveler",
+      "proTravelerDesc": "Active Premium Subscription."
+    },
+    "titles": {
+      "adventureSeeker": "Adventure Seeker",
+      "worldExplorer": "World Explorer",
+      "localGuide": "Local Guide",
+      "travelPlanner": "Travel Planner"
+    },
+    "settings": {
+      "account": "Account",
+      "notifications": "Notifications",
+      "subscription": "Subscription",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "signOut": "Sign Out"
+    },
+    "editProfile": "Edit Profile",
+    "yourBadges": "Your Badges",
+    "seeAll": "See all",
+    "recentTrips": "Recent Trips"
+  },
+  "legal": {
+    "privacyPolicy": "Privacy Policy",
+    "openPrivacyPolicy": "Open Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "openTerms": "Open Terms",
+    "back": "Back"
+  }
+}

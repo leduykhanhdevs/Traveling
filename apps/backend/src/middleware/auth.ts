@@ -32,6 +32,13 @@ const authenticate = async (
   return { userId: payload.sub, sessionId };
 };
 
+export const requireUserId = (userId: string | undefined, message: string = 'Sign in to access this resource.'): string => {
+  if (!userId) {
+    throw new AppError('UNAUTHORIZED', message, 401);
+  }
+  return userId;
+};
+
 export const requireAuth: RequestHandler = async (req, _res, next) => {
   try {
     req.auth = await authenticate(req.header('authorization'));

@@ -10,6 +10,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 type PreferencesState = PersonalizationProfile & {
   onboardingComplete: boolean;
+  appLocale: string | null;
+  setAppLocale: (locale: string) => void;
   setPreferredLanguage: (language: LanguageCode) => void;
   toggleDietaryRestriction: (restriction: DietaryRestriction) => void;
   setTravelStyle: (style: TravelStyle) => void;
@@ -30,6 +32,8 @@ export const usePreferencesStore = create<PreferencesState>()(
       sweetPreference: 3,
       savoryPreference: 3,
       onboardingComplete: false,
+      appLocale: null,
+      setAppLocale: (locale) => set({ appLocale: locale }),
       setPreferredLanguage: (language) => set({ preferredLanguage: language }),
       toggleDietaryRestriction: (restriction) =>
         set((state) => ({

@@ -3,7 +3,6 @@ import { createServer } from './server.js';
 import { prisma } from './services/prisma.service.js';
 import { closeRedis } from './services/redis.service.js';
 import { logger } from './utils/logger.js';
-
 const app = createServer();
 
 const server = app.listen(env.PORT, () => {

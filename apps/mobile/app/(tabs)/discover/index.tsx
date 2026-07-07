@@ -21,6 +21,7 @@ import { PlaceMap } from '../../../components/PlaceMap';
 import { ResultCard } from '../../../components/ResultCard';
 import { Skeleton } from '../../../components/Skeleton';
 import { SOSButton } from '../../../components/SOSButton';
+import { AdBanner } from '../../../components/AdBanner';
 import { theme } from '../../../constants/theme';
 import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 import { useHapticAction } from '../../../hooks/useHapticAction';
@@ -677,6 +678,9 @@ export default function DiscoverScreen(): JSX.Element {
                         )}
                         showsHorizontalScrollIndicator={false}
                       />
+                    </View>
+                    <View className="mt-6">
+                      <AdBanner />
                     </View>
                   </View>
                 )}

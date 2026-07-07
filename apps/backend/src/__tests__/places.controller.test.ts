@@ -2,8 +2,13 @@ import './external-service-mocks.js';
 import request from 'supertest';
 import { getPlaceDetail, postSavePlace } from '../controllers/places.controller.js';
 import { getGooglePlaceDetails } from '../services/google-places.service.js';
+import { getEntitlementStatus } from '../services/billing.service.js';
 import { prisma } from '../services/prisma.service.js';
 import { authenticated, buildTestApp } from './controller-test-utils.js';
+
+jest.mock('../services/billing.service.js', () => ({
+  getEntitlementStatus: jest.fn(),
+}));
 
 type ReviewRecord = {
   id: string;
@@ -92,6 +97,7 @@ describe('places.controller', () => {
     });
 
     it('saves a place for an authenticated user profile', async () => {
+      jest.mocked(getEntitlementStatus).mockResolvedValue({ tier: 'premium', freeLimits: {} as unknown });
       userFindUniqueMock.mockResolvedValue({ id: 'user_1', clerkId: 'clerk_user_1' });
       const savedPlace = {
         id: 'saved_1',

@@ -6,6 +6,9 @@ import {
   getItineraryById,
   putItinerary,
   deleteItinerary,
+  generateItineraryInvite,
+  acceptItineraryInvite,
+  postReplanWeather,
 } from '../controllers/itinerary.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -14,6 +17,9 @@ export const itineraryRouter = Router();
 itineraryRouter.use(requireAuth);
 itineraryRouter.get('/', getItineraries);
 itineraryRouter.get('/:id', getItineraryById);
+itineraryRouter.post('/:id/replan-weather', requireAuth, postReplanWeather);
+itineraryRouter.post('/:id/share', requireAuth, generateItineraryInvite);
+itineraryRouter.post('/accept-invite', requireAuth, acceptItineraryInvite);
 itineraryRouter.post('/generate', postGenerateItinerary);
 itineraryRouter.put('/:id', putItinerary);
 itineraryRouter.delete('/:id', deleteItinerary);

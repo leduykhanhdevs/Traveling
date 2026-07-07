@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MMKV } from 'react-native-mmkv';
 
 export type VaultDocument = {
@@ -71,9 +71,8 @@ export const useDocumentVault = (): {
 
         if (result.canceled || !result.assets[0]) return;
 
-        const base64Data = await FileSystem.readAsStringAsync(result.assets[0].uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+        const file = new FileSystem.File(result.assets[0].uri);
+        const base64Data = await file.base64();
 
         const storage = await getVaultStorage();
         const id = `${Date.now()}`;
@@ -81,7 +80,7 @@ export const useDocumentVault = (): {
         
         // Store the encrypted blob and delete the unencrypted temp file
         storage.set(`doc_${id}`, dataUri);
-        await FileSystem.deleteAsync(result.assets[0].uri, { idempotent: true });
+        await file.delete();
 
         // Update metadata
         const rawMetadata = storage.getString('vault-metadata');

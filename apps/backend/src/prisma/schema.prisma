@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -12,6 +13,7 @@ model User {
   clerkId             String          @unique
   email               String          @unique
   preferredLanguage   String          @default("en")
+  appLocale           String?         @default("en")
   dietaryRestrictions String[]        @default([])
   travelStyle         String          @default("local")
   spicyPreference     Int             @default(3)
@@ -33,6 +35,11 @@ model User {
   searchHistory       SearchHistory[]
   activityLogs        ActivityLog[]
   viewedPlaces        ViewedPlace[]
+  bankTransferOrders  BankTransferOrder[]
+  premiumGrants       PremiumGrant[]
+  sharedBudgets       SharedBudget[]
+  sharedItineraries   SharedItinerary[]
+  stories             Story[]
 }
 
 model Budget {
@@ -44,6 +51,7 @@ model Budget {
   createdAt   DateTime     @default(now())
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       BudgetItem[]
+  sharedUsers SharedBudget[]
 
   @@index([userId, createdAt])
 }
@@ -150,6 +158,7 @@ model Itinerary {
   content     Json
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sharedUsers SharedItinerary[]
 
   @@index([userId, createdAt])
 }
@@ -194,6 +203,20 @@ model Comment {
   @@index([userId, createdAt])
 }
 
+model Story {
+  id        String   @id @default(cuid())
+  userId    String
+  imageUrl  String
+  caption   String?
+  placeId   String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([placeId])
+}
+
 model Like {
   id        String   @id @default(cuid())
   postId    String
@@ -233,3 +256,59 @@ model ViewedPlace {
   @@unique([userId, placeId])
   @@index([userId, viewedAt])
 }
+
+model BankTransferOrder {
+  id              String    @id @default(cuid())
+  userId          String
+  planCode        String
+  amount          Float
+  currency        String    @default("VND")
+  transferContent String    @unique
+  status          String    @default("pending")
+  paidAt          DateTime?
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([transferContent])
+}
+
+model PremiumGrant {
+  id        String    @id @default(cuid())
+  userId    String
+  source    String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model SharedBudget {
+  id        String   @id @default(cuid())
+  budgetId  String
+  userId    String
+  role      String   @default("viewer")
+  createdAt DateTime @default(now())
+  budget    Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, userId])
+  @@index([userId])
+}
+
+model SharedItinerary {
+  id          String    @id @default(cuid())
+  itineraryId String
+  userId      String
+  role        String    @default("viewer")
+  createdAt   DateTime  @default(now())
+  itinerary   Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([itineraryId, userId])
+  @@index([userId])
+}
+
+

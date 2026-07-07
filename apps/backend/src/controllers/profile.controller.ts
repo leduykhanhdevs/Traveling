@@ -14,6 +14,7 @@ const upsertProfileSchema = z.object({
   sweetPreference: z.number().int().min(1).max(5),
   savoryPreference: z.number().int().min(1).max(5),
   nationality: z.string().optional(),
+  appLocale: z.string().optional(),
 });
 
 export const getProfile = asyncHandler(async (req, res) => {

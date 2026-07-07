@@ -11,6 +11,7 @@ import { requestLogger } from './middleware/request-logger.js';
 import { optionalAuth } from './middleware/auth.js';
 import { apiRouter } from './routes/index.js';
 import { legalRouter } from './routes/legal.routes.js';
+import { webhookRouter } from './routes/webhook.routes.js';
 import { sendSuccess } from './utils/http-response.js';
 
 type SentryExpressCompat = typeof Sentry & {
@@ -63,6 +64,9 @@ export const createServer = (): express.Express => {
     }),
   );
   app.use(compression());
+  
+  app.use('/api/v1/payments/bank-transfer/webhook', express.raw({ type: 'application/json' }), webhookRouter);
+  
   app.use(express.json({ limit: '20mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(correlationIdMiddleware);

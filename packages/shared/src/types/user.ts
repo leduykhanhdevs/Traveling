@@ -17,9 +17,10 @@ export type PersonalizationProfile = {
   preferredLanguage: LanguageCode;
   dietaryRestrictions: readonly DietaryRestriction[];
   travelStyle: TravelStyle;
-  spicyPreference: number;
-  sweetPreference: number;
-  savoryPreference: number;
+  spicyPreference: number; // 1-5
+  sweetPreference: number; // 1-5
+  savoryPreference: number; // 1-5
+  appLocale?: string | null;
 };
 
 export type SubscriptionTier = 'free' | 'premium';

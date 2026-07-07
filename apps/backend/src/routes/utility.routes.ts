@@ -9,6 +9,7 @@ import {
   postPersonalEmergencyContact,
   postPushNotification,
   postSOS,
+  postSOSPush,
 } from '../controllers/utility.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -23,3 +24,4 @@ utilityRouter.post('/emergency-contacts/personal', requireAuth, postPersonalEmer
 utilityRouter.post('/sos', requireAuth, postSOS);
 utilityRouter.post('/device-token', requireAuth, postDeviceToken);
 utilityRouter.post('/push/send', requireAuth, postPushNotification);
+utilityRouter.post('/sos/push', requireAuth, postSOSPush);

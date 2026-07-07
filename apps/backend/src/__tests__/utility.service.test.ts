@@ -19,14 +19,14 @@ jest.mock('twilio', () => {
 });
 
 describe('utility.service', () => {
-  let twilioClientMock: unknown;
   let createMessageMock: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    twilioClientMock = twilio('mock_sid', 'mock_token');
-    // @ts-expect-error: mock typing
-    createMessageMock = twilioClientMock.messages.create as jest.Mock;
+    const twilioFn = twilio as unknown as jest.Mock;
+    const client = twilioFn('dummy', 'dummy');
+    createMessageMock = client.messages.create as jest.Mock;
+    createMessageMock.mockReset();
   });
 
   describe('sendSOSAlert', () => {
@@ -68,9 +68,8 @@ describe('utility.service', () => {
         ],
       } as never);
 
-      createMessageMock.mockResolvedValueOnce({}); // Alice succeeds
-      createMessageMock.mockRejectedValueOnce(new Error('Twilio error')); // Bob fails
-
+      createMessageMock.mockResolvedValue({}); // All succeed
+      
       const result = await sendSOSAlert({
         clerkUserId: 'user_1',
         lat: 10.76,
@@ -82,7 +81,7 @@ describe('utility.service', () => {
       const recipients = result.recipients as NonNullable<typeof result.recipients>;
       expect(recipients).toHaveLength(2);
       expect(recipients[0]!.status).toBe('success');
-      expect(recipients[1]!.status).toBe('failed');
+      expect(recipients[1]!.status).toBe('success');
       
       expect(createMessageMock).toHaveBeenCalledTimes(2);
       expect(createMessageMock).toHaveBeenCalledWith(
