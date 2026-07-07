@@ -32,9 +32,10 @@ export const configureRevenueCat = async (userId?: string): Promise<PurchaseResu
       message: 'RevenueCat native SDK is configured.',
     };
   } catch (error: unknown) {
+    const e = error as any;
     return {
       status: 'error',
-      message: error.message || 'Failed to configure RevenueCat.',
+      message: e.message || 'Failed to configure RevenueCat.',
     };
   }
 };
@@ -62,10 +63,11 @@ export const purchasePackage = async (pack: PurchasesPackage): Promise<PurchaseR
     }
     return { status: 'error', message: 'Purchase successful but entitlement not active.' };
   } catch (error: unknown) {
-    if (!error.userCancelled) {
+    const e = error as any;
+    if (!e.userCancelled) {
       console.error('Purchase error', error);
     }
-    return { status: 'error', message: error.message || 'Purchase failed.' };
+    return { status: 'error', message: e.message || 'Purchase failed.' };
   }
 };
 
@@ -80,6 +82,7 @@ export const restorePurchases = async (): Promise<PurchaseResult> => {
     }
     return { status: 'error', message: 'No active premium entitlements found.' };
   } catch (error: unknown) {
-    return { status: 'error', message: error.message || 'Failed to restore purchases.' };
+    const e = error as any;
+    return { status: 'error', message: e.message || 'Failed to restore purchases.' };
   }
 };

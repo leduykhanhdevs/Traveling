@@ -167,7 +167,7 @@ export const postReplanWeather = asyncHandler(async (req, res) => {
   const newContent = await generateItinerary({
     destination: `${itinerary.destination} (Weather context: ${weather.description}, ${weather.temperatureCelsius}°C, prioritizing indoor activities if it's raining)`,
     days: itinerary.days,
-    budgetRange: itinerary.budgetRange as "low" | "medium" | "high",
+    budgetRange: itinerary.budgetRange as any,
     userId: user.id,
     travelStyle: user.travelStyle || 'any',
   });

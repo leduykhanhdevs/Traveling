@@ -1,4 +1,4 @@
-// router removed
+import { router } from 'expo-router';
 import { Check, ChevronRight } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -129,6 +129,14 @@ export default function OnboardingScreen(): JSX.Element {
   const changeLanguage = async (code: string) => {
     await i18n.changeLanguage(code);
     usePreferencesStore.getState().setAppLocale(code);
+  };
+
+  const navigateToLogin = () => {
+    router.replace('/(auth)/login');
+  };
+
+  const navigateToLegal = (page: string) => {
+    router.push(`/legal/${page}` as any);
   };
 
   useEffect(() => {

@@ -97,7 +97,7 @@ describe('places.controller', () => {
     });
 
     it('saves a place for an authenticated user profile', async () => {
-      jest.mocked(getEntitlementStatus).mockResolvedValue({ tier: 'premium', freeLimits: {} as unknown });
+      jest.mocked(getEntitlementStatus).mockResolvedValue({ tier: 'premium', freeLimits: {} as any });
       userFindUniqueMock.mockResolvedValue({ id: 'user_1', clerkId: 'clerk_user_1' });
       const savedPlace = {
         id: 'saved_1',

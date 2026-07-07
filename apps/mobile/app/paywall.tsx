@@ -24,7 +24,7 @@ export default function PaywallScreen() {
   const { t } = useTranslation();
   const { getToken } = useAuth();
   const [status, setStatus] = useState<PurchaseResult | null>(null);
-  const [availablePackage, setAvailablePackage] = useState<unknown>(null);
+  const [availablePackage, setAvailablePackage] = useState<any>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [bankOrder, setBankOrder] = useState<BankTransferOrder | null>(null);
   const setTier = useSubscriptionStore((state) => state.setTier);
