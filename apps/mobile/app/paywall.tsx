@@ -24,6 +24,7 @@ export default function PaywallScreen() {
   const { t } = useTranslation();
   const { getToken } = useAuth();
   const [status, setStatus] = useState<PurchaseResult | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [availablePackage, setAvailablePackage] = useState<any>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [bankOrder, setBankOrder] = useState<BankTransferOrder | null>(null);

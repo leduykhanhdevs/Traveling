@@ -136,6 +136,7 @@ export default function OnboardingScreen(): JSX.Element {
   };
 
   const navigateToLegal = (page: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     router.push(`/legal/${page}` as any);
   };
 

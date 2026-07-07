@@ -8,14 +8,14 @@ jest.mock('../config/env.js', () => ({
 }));
 import { sendSOSAlert } from '../services/utility.service.js';
 import { prisma } from '../services/prisma.service.js';
-import twilio from 'twilio';
+
 
 const mockCreateMessage = jest.fn();
 
 jest.mock('twilio', () => {
   return jest.fn(() => ({
     messages: {
-      create: (...args: any[]) => mockCreateMessage(...args),
+      create: (...args: unknown[]) => mockCreateMessage(...args),
     },
   }));
 });
