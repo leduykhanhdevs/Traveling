@@ -56,7 +56,7 @@ describe('webhook.controller', () => {
       transactionMock.mockImplementation(async (callback: unknown) => {
         const cb = callback as (args: unknown) => Promise<unknown>;
         return cb({
-          bankTransferOrder: { update: jest.fn() },
+          bankTransferOrder: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
           premiumGrant: { create: jest.fn() },
         });
       });

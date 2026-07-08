@@ -258,17 +258,18 @@ model ViewedPlace {
 }
 
 model BankTransferOrder {
-  id              String    @id @default(cuid())
-  userId          String
-  planCode        String
-  amount          Float
-  currency        String    @default("VND")
-  transferContent String    @unique
-  status          String    @default("pending")
-  paidAt          DateTime?
-  expiresAt       DateTime
-  createdAt       DateTime  @default(now())
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  userId                String
+  planCode              String
+  amount                Float
+  currency              String    @default("VND")
+  transferContent       String    @unique
+  status                String    @default("pending")
+  providerTransactionId String?   @unique
+  paidAt                DateTime?
+  expiresAt             DateTime
+  createdAt             DateTime  @default(now())
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
   @@index([transferContent])

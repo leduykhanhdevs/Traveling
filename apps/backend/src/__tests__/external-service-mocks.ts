@@ -50,7 +50,9 @@ jest.mock('../services/prisma.service.js', () => ({
     },
     bankTransferOrder: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     premiumGrant: {
       findFirst: jest.fn(),
