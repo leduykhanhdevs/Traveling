@@ -4,6 +4,7 @@ import { AppError } from '../utils/errors.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import crypto from 'crypto';
+import { posthog } from '../services/posthog.service.js';
 
 const SEPAY_WEBHOOK_SECRET = process.env.SEPAY_WEBHOOK_SECRET || 'PLACEHOLDER_SEPAY_SECRET';
 
@@ -72,7 +73,7 @@ export const postBankTransferWebhook = asyncHandler(async (req: Request, res: Re
     // 2. Grant Premium
     const days = matchingOrder.planCode === 'yearly' ? 365 : 30;
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * days);
-    
+
     await tx.premiumGrant.create({
       data: {
         userId: matchingOrder.userId,
@@ -80,6 +81,18 @@ export const postBankTransferWebhook = asyncHandler(async (req: Request, res: Re
         expiresAt,
       }
     });
+  });
+
+  posthog.capture({
+    distinctId: matchingOrder.userId,
+    event: 'payment_completed',
+    properties: {
+      plan_code: matchingOrder.planCode,
+      amount: matchingOrder.amount,
+      currency: matchingOrder.currency,
+      order_id: matchingOrder.id,
+      source: 'bank_transfer',
+    },
   });
 
   res.status(200).json({ success: true });

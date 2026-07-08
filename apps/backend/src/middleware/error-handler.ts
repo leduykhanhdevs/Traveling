@@ -2,6 +2,7 @@ import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import { AppError, normalizeError, toErrorResponse } from '../utils/errors.js';
 import { logUnknownError } from '../utils/logger.js';
+import { posthog } from '../services/posthog.service.js';
 
 export const notFoundHandler: ErrorRequestHandler = (error, _req, _res, next) => {
   next(error);
@@ -17,6 +18,11 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
     logUnknownError('Request failed', error, {
       correlationId: req.correlationId,
       path: req.path,
+    });
+    posthog.captureException(error, req.auth?.userId, {
+      path: req.path,
+      method: req.method,
+      status_code: appError.statusCode,
     });
   }
 

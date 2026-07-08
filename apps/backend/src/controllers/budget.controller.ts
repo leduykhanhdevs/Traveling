@@ -8,6 +8,7 @@ import {
 import { asyncHandler } from '../utils/async-handler.js';
 import { AppError } from '../utils/errors.js';
 import { sendSuccess } from '../utils/http-response.js';
+import { posthog } from '../services/posthog.service.js';
 
 const budgetSchema = z.object({
   tripName: z.string().trim().min(1).max(120),
@@ -40,8 +41,17 @@ export const getBudgets = asyncHandler(async (req, res) => {
 });
 
 export const postBudget = asyncHandler(async (req, res) => {
+  const userId = requireUserId(req.auth?.userId);
   const body = budgetSchema.parse(req.body);
-  const budget = await createBudget(requireUserId(req.auth?.userId), body);
+  const budget = await createBudget(userId, body);
+  posthog.capture({
+    distinctId: userId,
+    event: 'budget_created',
+    properties: {
+      currency: body.currency,
+      total_budget: body.totalBudget,
+    },
+  });
   sendSuccess(res, budget, 201);
 });
 

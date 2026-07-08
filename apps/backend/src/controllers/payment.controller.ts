@@ -3,6 +3,7 @@ import { prisma } from '../services/prisma.service.js';
 import { AppError } from '../utils/errors.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { asyncHandler } from '../utils/async-handler.js';
+import { posthog } from '../services/posthog.service.js';
 
 const MB_BANK_BIN = '970422'; // NAPAS BIN for MB Bank
 const MB_BANK_ACCOUNT = '190720060000';
@@ -36,6 +37,17 @@ export const createBankTransferOrder = asyncHandler(async (req: Request, res: Re
   });
 
   const qrUrl = `https://api.vietqr.io/image/${MB_BANK_BIN}-${MB_BANK_ACCOUNT}-compact.jpg?amount=${amount}&addInfo=${transferContent}&accountName=${MB_BANK_ACCOUNT_NAME}`;
+
+  posthog.capture({
+    distinctId: userId,
+    event: 'payment_initiated',
+    properties: {
+      plan_code: planCode,
+      amount,
+      currency: 'VND',
+      order_id: order.id,
+    },
+  });
 
   sendSuccess(res, {
     orderId: order.id,

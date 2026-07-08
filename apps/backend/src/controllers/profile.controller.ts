@@ -4,6 +4,7 @@ import { prisma } from '../services/prisma.service.js';
 import { AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
+import { posthog } from '../services/posthog.service.js';
 
 const upsertProfileSchema = z.object({
   email: z.string().email(),
@@ -44,6 +45,17 @@ export const putProfile = asyncHandler(async (req, res) => {
     create: {
       clerkId: req.auth.userId,
       ...body,
+    },
+  });
+  posthog.identify({
+    distinctId: req.auth.userId,
+    properties: {
+      $set: {
+        preferred_language: body.preferredLanguage,
+        travel_style: body.travelStyle,
+        nationality: body.nationality,
+        app_locale: body.appLocale,
+      },
     },
   });
   sendSuccess(res, user);

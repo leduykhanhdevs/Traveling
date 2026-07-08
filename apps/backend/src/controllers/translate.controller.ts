@@ -8,6 +8,7 @@ import { checkAndIncrementUsage } from '../services/billing.service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { logUserActivity } from '../services/activity.service.js';
+import { posthog } from '../services/posthog.service.js';
 
 export const postTranslate = asyncHandler(async (req, res) => {
   const userId = req.auth!.userId;
@@ -25,7 +26,16 @@ export const postTranslate = asyncHandler(async (req, res) => {
     targetLang: body.targetLang,
     textLength: body.sourceText.length,
   });
-  
+  posthog.capture({
+    distinctId: userId,
+    event: 'text_translated',
+    properties: {
+      source_lang: body.sourceLang,
+      target_lang: body.targetLang,
+      text_length: body.sourceText.length,
+    },
+  });
+
   sendSuccess(res, data);
 });
 
@@ -40,6 +50,14 @@ export const postOcrTranslate = asyncHandler(async (req, res) => {
     targetLang: body.targetLang,
     blocksCount: blocks.length,
   });
-  
+  posthog.capture({
+    distinctId: userId,
+    event: 'ocr_translation_requested',
+    properties: {
+      target_lang: body.targetLang,
+      blocks_count: blocks.length,
+    },
+  });
+
   sendSuccess(res, { blocks });
 });

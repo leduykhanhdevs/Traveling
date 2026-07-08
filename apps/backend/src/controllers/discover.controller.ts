@@ -4,6 +4,7 @@ import { sendSuccess } from '../utils/http-response.js';
 import { discoverPlaces } from '../services/recommendation.service.js';
 import { logUserActivity } from '../services/activity.service.js';
 import { checkAndIncrementUsage } from '../services/billing.service.js';
+import { posthog } from '../services/posthog.service.js';
 
 export const postDiscover = asyncHandler(async (req, res) => {
   const userId = req.auth!.userId;
@@ -20,6 +21,14 @@ export const postDiscover = asyncHandler(async (req, res) => {
     lat: body.lat,
     lng: body.lng,
   });
-  
+  posthog.capture({
+    distinctId: userId,
+    event: 'place_discovered',
+    properties: {
+      query: body.query,
+      result_count: Array.isArray(data) ? data.length : undefined,
+    },
+  });
+
   sendSuccess(res, data);
 });

@@ -8,15 +8,26 @@ import { sendSuccess } from '../utils/http-response.js';
 import { AppError } from '../utils/errors.js';
 import { prisma } from '../services/prisma.service.js';
 import crypto from 'crypto';
+import { posthog } from '../services/posthog.service.js';
 
 export const postGenerateItinerary = asyncHandler(async (req, res) => {
   const userId = req.auth!.userId;
   await checkAndIncrementUsage(userId, 'itinerary');
-  
+
   const body = itineraryRequestSchema.parse(req.body);
   const plan = await generateItinerary({
     ...body,
     userId,
+  });
+  posthog.capture({
+    distinctId: userId,
+    event: 'itinerary_generated',
+    properties: {
+      destination: body.destination,
+      days: body.days,
+      budget_range: body.budgetRange,
+      travel_style: body.travelStyle,
+    },
   });
   sendSuccess(res, plan);
 });
@@ -47,7 +58,13 @@ export const generateItineraryInvite = asyncHandler(async (req, res) => {
   const signature = hmac.digest('hex');
 
   const inviteToken = Buffer.from(JSON.stringify({ itineraryId, sig: signature })).toString('base64');
-  
+
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'itinerary_shared',
+    properties: { itinerary_id: itineraryId },
+  });
+
   sendSuccess(res, { inviteToken, url: `https://traveling.app/invite/itinerary?token=${inviteToken}` });
 });
 
@@ -84,6 +101,12 @@ export const acceptItineraryInvite = asyncHandler(async (req, res) => {
     create: { itineraryId, userId: user.id, role: 'editor' }
   });
 
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'itinerary_invite_accepted',
+    properties: { itinerary_id: itineraryId },
+  });
+
   sendSuccess(res, { success: true, itineraryId });
 });
 
@@ -98,6 +121,12 @@ export const postExportItinerary = asyncHandler(async (req, res) => {
 
   const pdf = await exportItineraryPdf(itineraryId, req.body as unknown);
   const filename = `traveling-itinerary-${itineraryId.replace(/[^a-zA-Z0-9_-]/g, '-')}.pdf`;
+
+  posthog.capture({
+    distinctId: req.auth!.userId,
+    event: 'itinerary_exported',
+    properties: { itinerary_id: itineraryId },
+  });
 
   res
     .status(200)
@@ -178,6 +207,15 @@ export const postReplanWeather = asyncHandler(async (req, res) => {
     data: { content: newContent }
   });
 
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'weather_replan_triggered',
+    properties: {
+      itinerary_id: itineraryId,
+      destination: itinerary.destination,
+    },
+  });
+
   sendSuccess(res, updated);
 });
 
@@ -212,6 +250,11 @@ export const deleteItinerary = asyncHandler(async (req, res) => {
 
   await prisma.itinerary.delete({
     where: { id: itineraryId },
+  });
+  posthog.capture({
+    distinctId: req.auth!.userId,
+    event: 'itinerary_deleted',
+    properties: { itinerary_id: itineraryId },
   });
   sendSuccess(res, { success: true });
 });

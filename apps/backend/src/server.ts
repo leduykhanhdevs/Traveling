@@ -3,6 +3,7 @@ import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { setupExpressErrorHandler, setupExpressRequestContext } from 'posthog-node';
 import { env } from './config/env.js';
 import { apiRateLimiter } from './middleware/rate-limit.js';
 import { correlationIdMiddleware } from './middleware/correlation-id.js';
@@ -13,6 +14,7 @@ import { apiRouter } from './routes/index.js';
 import { legalRouter } from './routes/legal.routes.js';
 import { webhookRouter } from './routes/webhook.routes.js';
 import { sendSuccess } from './utils/http-response.js';
+import { posthog } from './services/posthog.service.js';
 
 type SentryExpressCompat = typeof Sentry & {
   Handlers?: {
@@ -70,6 +72,7 @@ export const createServer = (): express.Express => {
   app.use(express.json({ limit: '20mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(correlationIdMiddleware);
+  setupExpressRequestContext(posthog, app);
   app.use(requestLogger);
   app.get('/health', (_req, res) => {
     sendSuccess(res, {
@@ -101,6 +104,7 @@ export const createServer = (): express.Express => {
   } else {
     sentry.setupExpressErrorHandler?.(app);
   }
+  setupExpressErrorHandler(posthog, app);
   app.use(errorHandler);
 
   return app;
