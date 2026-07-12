@@ -8,6 +8,9 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Validate monorepo
@@ -37,6 +40,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/traveling
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/traveling
       REDIS_URL: redis://localhost:6379
       CLERK_SECRET_KEY: test_clerk_secret
       OPENAI_API_KEY: test_openai
@@ -61,6 +65,9 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Generate Prisma client
         run: npm run prisma:generate --workspace @traveling/backend
 
@@ -72,6 +79,12 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Test backend
+        run: npm test --workspace apps/backend
+
+      - name: Test mobile
+        run: npm test --workspace apps/mobile
 
       - name: Build
         run: npm run build

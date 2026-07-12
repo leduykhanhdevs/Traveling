@@ -26,20 +26,42 @@ const resources = {
   ja: { common: jaCommon },
 };
 
+export type AppLocale = keyof typeof resources;
+
+const supportedLocales = new Set<AppLocale>(Object.keys(resources) as AppLocale[]);
+
+export const normalizeAppLocale = (value: string | null | undefined): AppLocale => {
+  const normalized = value?.trim().replace('_', '-').toLowerCase();
+  if (!normalized) return 'en';
+  if (normalized === 'zh' || normalized.startsWith('zh-')) return 'zh-CN';
+
+  const language = normalized.split('-')[0] ?? 'en';
+  return supportedLocales.has(language as AppLocale) ? (language as AppLocale) : 'en';
+};
+
 import { usePreferencesStore } from '../stores/preferencesStore';
 const storedLocale = usePreferencesStore.getState().appLocale;
-const deviceLanguage = storedLocale ?? getLocales()[0]?.languageCode ?? 'en';
+const deviceLanguage = normalizeAppLocale(storedLocale ?? getLocales()[0]?.languageTag);
 
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: deviceLanguage, // default language
+    lng: deviceLanguage,
     fallbackLng: 'en',
+    supportedLngs: Object.keys(resources),
     interpolation: {
       escapeValue: false, // react already safes from xss
     },
     defaultNS: 'common',
   });
+
+usePreferencesStore.subscribe((state, previousState) => {
+  if (state.appLocale === previousState.appLocale) return;
+  const nextLocale = normalizeAppLocale(state.appLocale);
+  if (i18n.resolvedLanguage !== nextLocale) {
+    void i18n.changeLanguage(nextLocale);
+  }
+});
 
 export default i18n;

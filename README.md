@@ -1,117 +1,120 @@
 # Traveling
 
-Traveling is a cross-platform Expo React Native travel assistant with real-time translation, AI-ranked local discovery, itinerary planning, community reviews, utility widgets, and a freemium upgrade path.
+A cross-platform travel assistant with AI-powered discovery, real-time translation, itinerary planning, budget management, community features, and a complete public web platform.
 
 ## Architecture
 
 ```text
-              +-----------------------------+
-              |  Expo RN app (Expo Router)  |
-              |  Clerk, NativeWind, Zustand |
-              +--------------+--------------+
-                             |
-                       HTTPS / JWT
-                             |
-       +---------------------v---------------------+
-       |       Node 20 Express API (TypeScript)    |
-       | Zod, Winston, Clerk JWT, rate limiting    |
-       +------+---------+---------+---------+------+
-              |         |         |         |
-        +-----v--+ +----v----+ +--v----+ +--v-----+
-        | Prisma | | Redis   | | GPT-4o| | DeepL  |
-        | Postgres| caching | | AI    | | Google |
-        +-----+--+ +----+----+ +---+---+ +---+----+
-              |         |          |         |
-              |   +-----v----------v---------v----------------+
-              |   | Google Places, SerpAPI, Apify, Speech,    |
-              |   | Vision OCR, ExchangeRate, OpenWeather     |
-              |   +-------------------------------------------+
+Traveling Monorepo
+├── apps/
+│   ├── backend/      Express + TypeScript REST API (PostgreSQL, Redis, Clerk)
+│   ├── mobile/       Expo React Native mobile app (iOS + Android)
+│   └── web/          Next.js App Router public website + web application
+├── packages/
+│   └── shared/       Shared Zod schemas, TypeScript types, constants
+├── docker-compose.yml
+├── turbo.json
+└── docs/
 ```
 
-## File Tree
+## Repository
 
-```text
-traveling/
-  apps/
-    backend/
-      src/
-        config/          Environment validation
-        controllers/     HTTP controllers
-        middleware/      Clerk auth, rate limit, logging, errors
-        prisma/          Prisma schema and migration
-        routes/          /api/v1 routers
-        services/        OpenAI, Places, SerpAPI, Apify, DeepL, Redis, Prisma
-        utils/           Errors, hashing, responses
-      Dockerfile
-      package.json
-    mobile/
-      app/               Expo Router auth, tabs, screens, paywall
-      components/        Glass UI, buttons, cards, controls
-      constants/         Theme and options
-      hooks/             Location, haptics, voice, document vault
-      services/          Backend API clients, analytics, RevenueCat wrapper
-      stores/            Zustand preferences, subscription, offline packs
-      utils/             Formatters and offline phrase pack generator
-      app.json
-      eas.json
-  packages/
-    shared/
-      src/
-        constants/       App constants and 50+ languages
-        schemas/         Zod API contracts
-        types/           Shared discovery, translation, itinerary, user types
-  .github/workflows/     CI and EAS build workflows
-  docker-compose.yml
-  turbo.json
+```bash
+git clone https://github.com/leduykhanhdevs/Traveling D:\DuAn\Traveling
+cd D:\DuAn\Traveling
 ```
 
-## First Run
+## Prerequisites
 
-1. Install dependencies:
+- Node.js 20+
+- npm 10+
+- PostgreSQL 16+ (or `docker compose up -d postgres`)
+- Redis 7+ (or `docker compose up -d redis`)
+- Clerk account (free tier)
+- API keys for external services (see environment setup)
+
+## Quick Start
+
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-2. Create environment files:
+### 2. Environment setup
 
 ```bash
 cp apps/backend/.env.example apps/backend/.env
+cp apps/web/.env.example apps/web/.env
 cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-3. Start local PostgreSQL and Redis:
+Edit each `.env` file with your credentials. See [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) for details.
+
+### 3. Start database and Redis
 
 ```bash
 docker compose up -d postgres redis
 ```
 
-4. Generate Prisma client and apply migrations:
+### 4. Setup database
 
 ```bash
-npm run prisma:generate --workspace @traveling/backend
-npm run prisma:migrate --workspace @traveling/backend
+npm run db:generate
+npm run db:migrate
 ```
 
-5. Build the shared package:
+### 5. Start development
 
 ```bash
-npm run build --workspace @traveling/shared
+# All apps (backend, web, mobile)
+npm run dev
+
+# Or individually:
+npm run dev --workspace=@traveling/backend   # API on :4000
+npm run dev --workspace=@traveling/web       # Web app on :3000
+npm run dev --workspace=@traveling/mobile    # Expo on :8081
 ```
 
-6. Start the backend:
+## What's Included
 
-```bash
-npm run dev --workspace @traveling/backend
-```
+### Public Website (`apps/web`)
+- Home page, About, Features, Pricing, Destinations, Discover, Community
+- Help Center with user guides
+- Privacy, Terms, Cookies, Security, Accessibility, Contact pages
+- SEO-optimized with SSR/SSG, Open Graph, sitemap, structured data
+- Vietnamese and English support
 
-7. Start Expo:
+### Web Application (`apps/web/app`)
+- User dashboard with real data overview
+- AI-powered place discovery
+- Itinerary planning and management
+- Text translation center
+- Budget tracking with expense management
+- Saved places management
+- Community feed with posts, likes, and comments
+- Profile and settings
 
-```bash
-npm run start --workspace @traveling/mobile
-```
+### Admin Portal (`apps/web/admin`)
+- Admin dashboard with platform analytics
+- User management
+- Content, reports, subscriptions management
+- Role-protected routes (USER, ADMIN, SUPER_ADMIN)
 
-Expo Go can run the app for core screens. RevenueCat purchases require an EAS development or production build because Expo Go cannot load that native SDK.
+### Backend API (`apps/backend`)
+- RESTful API at `/api/v1/*`
+- Clerk JWT authentication
+- PostgresQL with Prisma ORM
+- Redis caching and rate limiting
+- OpenAI, DeepL, Google Places integrations
+- Comprehensive error handling and logging
+
+### Mobile App (`apps/mobile`)
+- Expo React Native (iOS + Android)
+- All core features with native UI
+- Expo Router navigation
+- Clerk authentication
+- RevenueCat subscriptions
 
 ## Validation Commands
 
@@ -119,156 +122,74 @@ Expo Go can run the app for core screens. RevenueCat purchases require an EAS de
 npm run typecheck
 npm run lint
 npm run build
+npm test
+npm run env:audit
 ```
-
-Verified locally in this workspace:
-
-```text
-npm run typecheck  -> pass
-npm run lint       -> pass
-npm run build      -> pass
-```
-
-## API Overview
-
-Base URL: `http://localhost:4000`
-
-All API responses are structured:
-
-```json
-{ "success": true, "data": {} }
-```
-
-or:
-
-```json
-{ "success": false, "error": { "code": "ERROR_CODE", "message": "Human readable", "details": {} } }
-```
-
-### Health
-
-`GET /health`
-
-Returns service status and timestamp.
-
-### Discovery
-
-`POST /api/v1/discover`
-
-```json
-{
-  "query": "lẩu bò",
-  "lat": 10.7769,
-  "lng": 106.7009,
-  "filters": {
-    "radiusMeters": 2000,
-    "priceRange": [1, 2],
-    "dietaryRestrictions": ["halal"],
-    "openNow": true
-  },
-  "surpriseMe": false
-}
-```
-
-Pipeline: GPT-4o intent parsing, Google Places expanding radius search, SerpAPI Google Maps signals, Apify TikTok/Facebook signals, GPT summaries, composite scoring, Redis caching.
-
-`GET /api/v1/places/:placeId`
-
-Returns Google details plus community reviews.
-
-`POST /api/v1/places/save`
-
-Saves a place for the authenticated user.
-
-### Translation
-
-`POST /api/v1/translate`
-
-```json
-{
-  "sourceText": "Xin chào",
-  "sourceLang": "auto",
-  "targetLang": "en"
-}
-```
-
-DeepL is primary and Google Cloud Translation is fallback. Redis TTL is 24 hours.
-
-`POST /api/v1/translate/ocr`
-
-```json
-{
-  "imageBase64": "...",
-  "targetLang": "en"
-}
-```
-
-Uses Google Cloud Vision OCR, then translates each text block.
-
-`POST /api/v1/speech/transcribe`
-
-```json
-{
-  "audioBase64": "...",
-  "languageCode": "vi-VN"
-}
-```
-
-### Itinerary
-
-`POST /api/v1/itineraries/generate`
-
-Generates a GPT-4o day-by-day itinerary and links slots to Places API results.
-
-### Community
-
-`GET /api/v1/community?nationality=Vietnamese&city=Ho%20Chi%20Minh%20City&foodCategory=hotpot`
-
-`POST /api/v1/community/reviews`
-
-`POST /api/v1/community/follow`
-
-### Utilities
-
-`GET /api/v1/utilities/currency?base=USD`
-
-`GET /api/v1/utilities/weather?city=Ho%20Chi%20Minh%20City`
-
-### Profile
-
-`GET /api/v1/profile`
-
-`PUT /api/v1/profile`
-
-Creates or updates the Clerk-linked Traveling profile.
-
-## Deployment
-
-Backend:
-
-```bash
-docker build -f apps/backend/Dockerfile -t traveling-backend .
-docker run --env-file apps/backend/.env -p 4000:4000 traveling-backend
-```
-
-Mobile EAS:
-
-```bash
-cd apps/mobile
-eas build --platform android --profile production
-eas build --platform ios --profile production
-```
-
-GitHub Actions includes:
-
-- `ci.yml`: install, Prisma generate/deploy, typecheck, lint, build.
-- `eas-build.yml`: manual EAS Android/iOS/all build dispatch.
 
 ## Environment Variables
 
-See:
+See [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) for the complete matrix of all environment variables across all applications.
 
-- `apps/backend/.env.example`
-- `apps/mobile/.env.example`
+## Database
 
-No secrets are hardcoded in the project.
+- PostgreSQL 16 with Prisma ORM
+- 20+ models covering users, budgets, itineraries, community, payments, and admin
+- See [docs/DATABASE.md](docs/DATABASE.md) for schema details
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture and design decisions |
+| [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) | All environment variables with descriptions |
+| [docs/DATABASE.md](docs/DATABASE.md) | Database schema, models, and migrations |
+| [docs/API.md](docs/API.md) | API endpoints and usage |
+| [docs/WEB_GUIDE.md](docs/WEB_GUIDE.md) | Web application guide |
+| [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) | Admin portal guide |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment instructions |
+| [docs/SECURITY.md](docs/SECURITY.md) | Security architecture |
+| [docs/TESTING.md](docs/TESTING.md) | Testing guide |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues |
+| [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | Pre-launch checklist |
+
+## Features
+
+- **Smart Discovery** — AI-powered place recommendations with dietary, budget, and preference filters
+- **Itinerary Planning** — AI-generated day-by-day travel itineraries
+- **Real-time Translation** — 50+ languages via DeepL and Google
+- **OCR Translation** — Camera translation for menus and signs (Premium)
+- **Voice Translation** — Speech-to-text and translation (Premium)
+- **Budget Management** — Track expenses, split costs, manage currencies
+- **Saved Places** — Bookmark and organize your favorite spots
+- **Travel Community** — Posts, reviews, likes, comments, follows
+- **Weather & Currency** — Real-time weather and exchange rates
+- **Safety Tools** — Emergency contacts and SOS alerts
+- **Premium Subscriptions** — Unlimited access to advanced features
+
+## Security
+
+- Clerk enterprise authentication
+- JWT-based API authorization
+- Role-based access control (USER, MODERATOR, ADMIN, SUPER_ADMIN)
+- Rate limiting via Redis
+- Input validation via Zod
+- Helmet security headers
+- Audit logging for admin actions
+- CORS allowlist
+- No secrets in code
+
+See `SECURITY.md` for responsible disclosure.
+
+## Deployment
+
+- **Web:** Vercel with `vercel.json`
+- **Backend:** Docker container on Railway / Render / Fly.io
+- **Database:** Supabase / Neon PostgreSQL
+- **Redis:** Upstash / any Redis provider
+- **Storage:** Supabase Storage / Cloudinary
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
+
+## License
+
+Private — internal project.

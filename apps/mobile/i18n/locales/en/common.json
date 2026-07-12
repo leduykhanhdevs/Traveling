@@ -1,6 +1,12 @@
 {
   "greeting": "Hello",
   "welcome": "Welcome to Traveling",
+  "auth": {
+    "tagline": "Translate instantly and discover places locals genuinely recommend.",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "continueWithFacebook": "Continue with Facebook"
+  },
   "paywall": {
     "title": "Traveling Premium",
     "subtitle": "Unlimited discovery, camera translation, offline phrases, and full itineraries.",
@@ -16,7 +22,7 @@
       "no": "No"
     },
     "subscribeNow": "Subscribe Now",
-    "bankTransfer": "Thanh toán qua chuyển khoản (VN)",
+    "bankTransfer": "Pay by bank transfer (Vietnam)",
     "notAvailable": "Not Available",
     "noPackages": "No purchase packages are available right now.",
     "success": "Success",
@@ -24,13 +30,13 @@
     "error": "Error",
     "bankModal": {
       "title": "Bank Transfer",
-      "instruction": "Quét mã QR qua ứng dụng ngân hàng hoặc Momo để thanh toán.",
+      "instruction": "Scan the QR code with your banking or MoMo app to pay.",
       "bank": "Bank",
       "account": "Account",
       "name": "Name",
       "amount": "Amount",
-      "content": "Content",
-      "note": "(Please include the exact transfer content above. Your premium will be activated automatically within a few minutes).",
+      "content": "Transfer reference",
+      "note": "Use the exact transfer reference shown above. Premium activates automatically within a few minutes.",
       "close": "Close"
     }
   },
@@ -39,7 +45,7 @@
     "subtitle": "Local numbers are based on your current GPS location.",
     "loading": "Finding local emergency numbers...",
     "police": "Police",
-    "fire": "Fire",
+    "fire": "Fire service",
     "ambulance": "Ambulance",
     "sendAlert": "Send SOS alert",
     "close": "Close",
@@ -49,9 +55,9 @@
     "errorLoad": "Unable to load emergency numbers.",
     "errorSendGps": "GPS location is required before sending an SOS alert.",
     "errorSend": "Unable to send SOS alert.",
-    "successPartially": "SOS partially failed. Sent to {{succeeded}}, failed for {{failed}}.",
-    "successFull": "SOS sent successfully to {{succeeded}} contact(s).",
-    "errorFull": "Failed to send SOS to any of your {{failed}} contact(s)."
+    "successPartially": "SOS partially delivered. Sent: {{succeeded}}; failed: {{failed}}.",
+    "successFull": "SOS sent successfully. Recipients reached: {{succeeded}}.",
+    "errorFull": "SOS could not be sent. Failed recipients: {{failed}}."
   },
   "tabs": {
     "discover": "Discover",
@@ -87,7 +93,7 @@
     },
     "finalTitle": "Almost there!",
     "finalSubtitle": "Your first recommendations will start with these travel signals.",
-    "terms1": "By continuing you agree to our ",
+    "terms1": "By continuing, you agree to our ",
     "termsLink": "Terms of Service",
     "terms2": " and ",
     "privacyLink": "Privacy Policy",
@@ -129,6 +135,14 @@
       "terms": "Terms of Service",
       "signOut": "Sign Out"
     },
+    "account": {
+      "details": "Account details",
+      "managedByClerk": "Managed securely by Clerk",
+      "authDescription": "Your identity, active sessions, and password are managed by Clerk and your OAuth provider.",
+      "restoreDescription": "Restore a previous App Store or Google Play subscription.",
+      "restoring": "Restoring...",
+      "restorePurchases": "Restore purchases"
+    },
     "editProfile": "Edit Profile",
     "yourBadges": "Your Badges",
     "seeAll": "See all",
@@ -138,7 +152,7 @@
     "privacyPolicy": "Privacy Policy",
     "openPrivacyPolicy": "Open Privacy Policy",
     "termsOfService": "Terms of Service",
-    "openTerms": "Open Terms",
+    "openTerms": "Open Terms of Service",
     "back": "Back"
   }
 }

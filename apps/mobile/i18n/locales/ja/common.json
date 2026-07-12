@@ -1,12 +1,18 @@
 {
   "greeting": "こんにちは",
-  "welcome": "旅行へようこそ",
+  "welcome": "Travelingへようこそ",
+  "auth": {
+    "tagline": "すぐに翻訳し、地元の人が本当におすすめする場所を見つけましょう。",
+    "continueWithGoogle": "Googleで続ける",
+    "continueWithApple": "Appleで続ける",
+    "continueWithFacebook": "Facebookで続ける"
+  },
   "paywall": {
-    "title": "トラベルプレミアム",
+    "title": "Traveling Premium",
     "subtitle": "無制限の発見、カメラ翻訳、オフラインフレーズ、完全な旅程。",
     "perMonth": "月あたり",
     "features": {
-      "aiDiscovery": "AIの発見",
+      "aiDiscovery": "AIによるスポット検索",
       "translations": "翻訳",
       "cameraTranslate": "カメラ翻訳",
       "offlinePacks": "オフラインパック",
@@ -15,8 +21,8 @@
       "yes": "はい",
       "no": "いいえ"
     },
-    "subscribeNow": "今すぐ購読する",
-    "bankTransfer": "タイン・トゥアン・クア・チュイン・コン (VN)",
+    "subscribeNow": "今すぐ登録",
+    "bankTransfer": "銀行振込で支払う（ベトナム）",
     "notAvailable": "利用不可",
     "noPackages": "現在利用できる購入パッケージはありません。",
     "success": "成功",
@@ -24,14 +30,14 @@
     "error": "エラー",
     "bankModal": {
       "title": "銀行振込",
-      "instruction": "Quét mã QR qua ứng dụng ngân hàng hoặc Momo để thanh toán.",
+      "instruction": "銀行アプリまたはMoMoでQRコードを読み取ってお支払いください。",
       "bank": "銀行",
-      "account": "アカウント",
-      "name": "名前",
-      "amount": "額",
-      "content": "コンテンツ",
-      "note": "(上記の正確な転送内容を含めてください。プレミアムは数分以内に自動的に有効になります)。",
-      "close": "近い"
+      "account": "口座番号",
+      "name": "口座名義",
+      "amount": "金額",
+      "content": "振込内容",
+      "note": "上記の振込内容を正確に入力してください。Premiumは数分以内に自動で有効になります。",
+      "close": "閉じる"
     }
   },
   "sos": {
@@ -39,22 +45,22 @@
     "subtitle": "市内電話番号は、現在の GPS 位置に基づいています。",
     "loading": "地元の緊急電話番号を検索しています...",
     "police": "警察",
-    "fire": "火",
+    "fire": "消防",
     "ambulance": "救急車",
     "sendAlert": "SOS アラートを送信する",
-    "close": "近い",
+    "close": "閉じる",
     "button": "SOS",
     "buttonLoading": "SOS...",
     "errorGps": "現在の GPS 位置が見つかりません。",
     "errorLoad": "緊急電話番号を読み込めません。",
     "errorSendGps": "SOS アラートを送信する前に GPS 位置情報が必要です。",
     "errorSend": "SOS アラートを送信できません。",
-    "successPartially": "SOS が部分的に失敗しました。送信先{{succeeded}}、失敗しました{{failed}}。",
-    "successFull": "SOSは正常に送信されました{{succeeded}}連絡先。",
-    "errorFull": "SOS を次のいずれかに送信できませんでした{{failed}}連絡先。"
+    "successPartially": "SOSは一部のみ送信されました。成功：{{succeeded}}、失敗：{{failed}}。",
+    "successFull": "SOSを送信しました。送信先：{{succeeded}}件。",
+    "errorFull": "SOSを送信できませんでした。失敗：{{failed}}件。"
   },
   "tabs": {
-    "discover": "発見する",
+    "discover": "探す",
     "translate": "翻訳する",
     "itinerary": "旅程",
     "community": "コミュニティ",
@@ -62,9 +68,9 @@
   },
   "onboarding": {
     "skip": "スキップ",
-    "next": "次",
+    "next": "次へ",
     "heroTitle": "AI で世界を発見する",
-    "heroSubtitle": "Travel は完璧な旅行を数秒で計画します",
+    "heroSubtitle": "Travelingがあなたに合った旅行を数秒で計画します",
     "featuresTitle": "外出中に必要なものすべて",
     "features": {
       "aiItineraries": "AIの旅程",
@@ -72,10 +78,10 @@
       "liveTranslation": "ライブ翻訳",
       "liveTranslationDesc": "摩擦を少なくして、その場での瞬間を話し、読み、理解します。",
       "smartDiscovery": "スマートディスカバリー",
-      "smartDiscoveryDesc": "AI がランク付けした自信を持って、食べ物、場所、体験を見つけてください。"
+      "smartDiscoveryDesc": "AIが順位付けしたおすすめから、グルメ、場所、体験を見つけられます。"
     },
     "styleTitle": "あなたはどんな旅行者ですか?",
-    "styleSubtitle": "1 つ以上選択してください。旅行はあなたの周りの旅行気分を調整します。",
+    "styleSubtitle": "1つ以上選択してください。Travelingがお好みに合わせておすすめを調整します。",
     "styleRequired": "続行するには、少なくとも 1 つの旅行スタイルを選択してください。",
     "styles": {
       "adventure": "アドベンチャー",
@@ -86,12 +92,12 @@
       "eco": "エコトラベル"
     },
     "finalTitle": "もうすぐそこです！",
-    "finalSubtitle": "最初の推奨事項は、これらの旅行信号から始まります。",
-    "terms1": "続行すると、次のことに同意したことになります",
+    "finalSubtitle": "選択内容をもとに、最初のおすすめをパーソナライズします。",
+    "terms1": "続行すると、",
     "termsLink": "利用規約",
-    "terms2": "そして",
+    "terms2": "および",
     "privacyLink": "プライバシーポリシー",
-    "terms3": "。",
+    "terms3": "に同意したものとみなされます。",
     "getStarted": "始めましょう",
     "signIn": "すでにアカウントをお持ちですか?サインイン",
     "languageTitle": "言語を選択してください",
@@ -107,11 +113,11 @@
       "worldExplorer": "ワールドエクスプローラー",
       "worldExplorerDesc": "複数の国にわたる場所を保存しました。",
       "foodie": "食通",
-      "foodieDesc": "トラベリングで地元の逸品を見つけてください。",
-      "mountainLover": "山の恋人",
+      "foodieDesc": "Travelingで地元のグルメを見つけました。",
+      "mountainLover": "山好き",
       "mountainLoverDesc": "高地冒険を計画しました。",
       "soloTraveler": "一人旅",
-      "soloTravelerDesc": "最初のソロルートの後にロックを解除します。",
+      "soloTravelerDesc": "最初の一人旅ルートを作成すると獲得できます。",
       "proTraveler": "プロトラベラー",
       "proTravelerDesc": "アクティブなプレミアム サブスクリプション。"
     },
@@ -129,6 +135,14 @@
       "terms": "利用規約",
       "signOut": "サインアウト"
     },
+    "account": {
+      "details": "アカウント情報",
+      "managedByClerk": "Clerkが安全に管理",
+      "authDescription": "本人情報、アクティブなセッション、パスワードはClerkとOAuthプロバイダーが管理します。",
+      "restoreDescription": "App StoreまたはGoogle Playの以前のサブスクリプションを復元します。",
+      "restoring": "復元中...",
+      "restorePurchases": "購入を復元"
+    },
     "editProfile": "プロフィールの編集",
     "yourBadges": "あなたのバッジ",
     "seeAll": "全て見る",
@@ -138,7 +152,7 @@
     "privacyPolicy": "プライバシーポリシー",
     "openPrivacyPolicy": "プライバシーポリシーを開く",
     "termsOfService": "利用規約",
-    "openTerms": "公開規約",
+    "openTerms": "利用規約を開く",
     "back": "戻る"
   }
 }

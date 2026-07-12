@@ -1,4 +1,4 @@
-# Paste this into Antigravity IDE (Agent Manager, Agent-Assisted mode)
+tđ# Paste this into Antigravity IDE (Agent Manager, Agent-Assisted mode)
 
 Before pasting: this prompt is self-contained and doesn't require the older audit files, though keeping them in the repo for history doesn't hurt.
 

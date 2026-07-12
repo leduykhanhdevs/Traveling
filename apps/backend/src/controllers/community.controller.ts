@@ -16,6 +16,7 @@ import { AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { logUserActivity } from '../services/activity.service.js';
+import { posthog } from '../services/posthog.service.js';
 
 const filtersSchema = z.object({
   nationality: z.string().optional(),
@@ -72,6 +73,15 @@ export const postCommunityReview = asyncHandler(async (req, res) => {
     nationality: body.nationality,
   });
   await logUserActivity(req.auth.userId, 'post_review', { placeId: body.placeId });
+  posthog.capture({
+    distinctId: req.auth.userId,
+    event: 'community_review_submitted',
+    properties: {
+      place_id: body.placeId,
+      rating: body.rating,
+      has_photos: (body.photos?.length ?? 0) > 0,
+    },
+  });
   sendSuccess(res, review, 201);
 });
 
@@ -95,6 +105,14 @@ export const postCommunityPost = asyncHandler(async (req, res) => {
     placeId: body.placeId,
   });
   await logUserActivity(clerkUserId, 'create_post', { contentSummary: body.content.slice(0, 50) });
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'community_post_created',
+    properties: {
+      has_image: Boolean(body.imageUrl),
+      has_place: Boolean(body.placeId),
+    },
+  });
   sendSuccess(res, post, 201);
 });
 
@@ -146,5 +164,13 @@ export const postCommunityStory = asyncHandler(async (req, res) => {
     placeId: body.placeId,
   });
   await logUserActivity(clerkUserId, 'create_story', { placeId: body.placeId });
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'story_created',
+    properties: {
+      has_caption: Boolean(body.caption),
+      has_place: Boolean(body.placeId),
+    },
+  });
   sendSuccess(res, story, 201);
 });

@@ -27,6 +27,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { usePreferencesStore } from '../../stores/preferencesStore';
 import { useTranslation } from 'react-i18next';
+import type { TravelStyle } from '@traveling/shared';
 
 
 type SlideId = 'language' | 'hero' | 'features' | 'style' | 'final';
@@ -73,6 +74,15 @@ const travelStyles: readonly TravelStyleOption[] = [
   { id: 'city', emoji: '🏙️', labelKey: 'onboarding.styles.city' },
   { id: 'eco', emoji: '🌿', labelKey: 'onboarding.styles.eco' },
 ];
+
+const travelStyleValues: Readonly<Record<string, TravelStyle>> = {
+  adventure: 'adventure',
+  beach: 'local',
+  city: 'local',
+  culture: 'culture',
+  eco: 'local',
+  foodie: 'local',
+};
 
 const languages = [
   { code: 'en', label: 'English' },
@@ -132,6 +142,14 @@ export default function OnboardingScreen(): JSX.Element {
   };
 
   const navigateToLogin = () => {
+    const preferences = usePreferencesStore.getState();
+    const selectedTravelStyle = selectedStyles
+      .map((style) => travelStyleValues[style])
+      .find((style): style is TravelStyle => Boolean(style));
+    if (selectedTravelStyle) {
+      preferences.setTravelStyle(selectedTravelStyle);
+    }
+    preferences.completeOnboarding();
     router.replace('/(auth)/login');
   };
 

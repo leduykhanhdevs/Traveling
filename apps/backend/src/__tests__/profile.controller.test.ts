@@ -10,7 +10,6 @@ import { prisma } from '../services/prisma.service.js';
 import { authenticated, buildTestApp } from './controller-test-utils.js';
 
 const validProfileBody = {
-  email: 'traveler@example.com',
   preferredLanguage: 'en',
   dietaryRestrictions: ['vegan'],
   travelStyle: 'local food',
@@ -71,6 +70,7 @@ describe('profile.controller', () => {
       const user = {
         id: 'user_1',
         clerkId: 'clerk_user_1',
+        email: 'verified@example.com',
         ...validProfileBody,
       };
       userUpsertMock.mockResolvedValue(user);
@@ -90,10 +90,11 @@ describe('profile.controller', () => {
         where: {
           clerkId: 'clerk_user_1',
         },
-        update: validProfileBody,
+        update: { ...validProfileBody, email: 'verified@example.com' },
         create: {
           clerkId: 'clerk_user_1',
           ...validProfileBody,
+          email: 'verified@example.com',
         },
       });
     });
@@ -109,11 +110,35 @@ describe('profile.controller', () => {
         },
       ]);
 
-      const response = await request(app).put('/').send({ ...validProfileBody, email: 'bad' });
+      const response = await request(app)
+        .put('/')
+        .send({ ...validProfileBody, spicyPreference: 0 });
 
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
       expect(userUpsertMock).not.toHaveBeenCalled();
+    });
+
+    it('ignores an email supplied by the client and uses the verified Clerk email', async () => {
+      userUpsertMock.mockResolvedValue({ id: 'user_1' });
+      const app = buildTestApp([
+        {
+          method: 'put',
+          path: '/',
+          handlers: [authenticated('clerk_user_1'), putProfile],
+        },
+      ]);
+
+      const response = await request(app)
+        .put('/')
+        .send({ ...validProfileBody, email: 'attacker@example.com' });
+
+      expect(response.status).toBe(200);
+      expect(userUpsertMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({ email: 'verified@example.com' }),
+        }),
+      );
     });
   });
 

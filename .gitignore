@@ -75,3 +75,7 @@ skills-lock.json
 **/.lingma/
 **/.qwen/
 **/.terramind/
+
+# Exclude embedded repos
+context-mill/
+traveling-project/

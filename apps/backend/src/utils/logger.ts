@@ -25,8 +25,21 @@ export const logUnknownError = (
       ? { name: error.name, message: error.message, stack: error.stack }
       : { value: error };
 
+  const safeMetadata = metadata
+    ? Object.fromEntries(
+        Object.entries(metadata).map(([key, value]) => [
+          key,
+          /^(userId|clerkId|email|phone|lat|lng|token|authorization|query|content|body)$/i.test(
+            key,
+          )
+            ? '[REDACTED]'
+            : value,
+        ]),
+      )
+    : undefined;
+
   logger.error(message, {
     error: normalized,
-    ...metadata,
+    ...safeMetadata,
   });
 };

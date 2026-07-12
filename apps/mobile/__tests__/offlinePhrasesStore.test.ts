@@ -10,17 +10,20 @@ describe('offlinePhrasesStore', () => {
     expect(useOfflinePhrasesStore.getState().packs).toEqual({});
   });
 
-  it('downloads a 500 phrase pack for a country code', () => {
+  it('downloads the real Vietnamese phrase pack for a country code', () => {
     useOfflinePhrasesStore.getState().downloadPack('vn');
 
     const vietnamPack = useOfflinePhrasesStore.getState().packs.vn;
-    expect(vietnamPack).toHaveLength(500);
+    expect(vietnamPack).toHaveLength(17);
     expect(vietnamPack?.[0]).toEqual({
       id: 'vn-1',
-      category: 'Arrival',
-      source: 'Essential arrival phrase 1',
-      translation: '[VN] Essential arrival phrase 1',
+      category: 'arrival',
+      source: 'Where is the baggage claim?',
+      translation: 'Khu nhận hành lý ở đâu?',
     });
+    expect(vietnamPack?.every((phrase) => !/^\[[A-Z-]+]\s/.test(phrase.translation))).toBe(
+      true,
+    );
   });
 
   it('removes only the requested country pack', () => {
@@ -30,6 +33,15 @@ describe('offlinePhrasesStore', () => {
     useOfflinePhrasesStore.getState().removePack('vn');
 
     expect(useOfflinePhrasesStore.getState().packs.vn).toBeUndefined();
-    expect(useOfflinePhrasesStore.getState().packs.jp).toHaveLength(500);
+    expect(useOfflinePhrasesStore.getState().packs.jp).toHaveLength(17);
+    expect(useOfflinePhrasesStore.getState().packs.jp?.[0]?.translation).toBe(
+      '手荷物受取所はどこですか？',
+    );
+  });
+
+  it('does not fabricate translations for an unsupported country', () => {
+    useOfflinePhrasesStore.getState().downloadPack('xx');
+
+    expect(useOfflinePhrasesStore.getState().packs.xx).toBeUndefined();
   });
 });

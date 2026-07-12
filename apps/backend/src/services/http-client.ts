@@ -6,15 +6,23 @@ export const fetchJson = async <T>(
   init: RequestInit | undefined,
   serviceName: string,
 ): Promise<T> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+  const abortFromCaller = (): void => controller.abort();
+  init?.signal?.addEventListener('abort', abortFromCaller, { once: true });
+
   try {
-    const response = await fetch(url, init);
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
     const text = await response.text();
 
     if (!response.ok) {
-      throw new AppError('UPSTREAM_ERROR', `${serviceName} request failed.`, response.status, {
+      logUnknownError(`${serviceName} returned an error response`, new Error('Upstream error'), {
         status: response.status,
-        body: text.slice(0, 600),
       });
+      throw new AppError('UPSTREAM_ERROR', `${serviceName} request failed.`, 502);
     }
 
     if (text.trim().length === 0) {
@@ -29,5 +37,8 @@ export const fetchJson = async <T>(
 
     logUnknownError(`${serviceName} request failed`, error);
     throw new AppError('UPSTREAM_ERROR', `${serviceName} is unavailable.`, 502);
+  } finally {
+    clearTimeout(timeout);
+    init?.signal?.removeEventListener('abort', abortFromCaller);
   }
 };

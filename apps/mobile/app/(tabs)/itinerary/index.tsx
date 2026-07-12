@@ -597,11 +597,6 @@ export default function ItineraryScreen(): JSX.Element {
       <PremiumModal 
         visible={premiumModalVisible} 
         onClose={() => setPremiumModalVisible(false)}
-        onSuccess={() => {
-          setPremiumModalVisible(false);
-          // Optional: automatically retry the generation here
-          handleGenerateItinerary();
-        }}
       />
     </SafeAreaView>
   );
