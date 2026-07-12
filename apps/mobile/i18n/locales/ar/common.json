@@ -1,8 +1,14 @@
 {
   "greeting": "مرحبًا",
-  "welcome": "مرحبا بكم في السفر",
+  "welcome": "مرحبًا بك في Traveling",
+  "auth": {
+    "tagline": "ترجم فورًا واكتشف أماكن يوصي بها السكان المحليون فعلًا.",
+    "continueWithGoogle": "المتابعة باستخدام Google",
+    "continueWithApple": "المتابعة باستخدام Apple",
+    "continueWithFacebook": "المتابعة باستخدام Facebook"
+  },
   "paywall": {
-    "title": "قسط السفر",
+    "title": "Traveling Premium",
     "subtitle": "اكتشاف غير محدود، وترجمة بالكاميرا، وعبارات دون اتصال بالإنترنت، ومسارات كاملة.",
     "perMonth": "كل شهر",
     "features": {
@@ -16,7 +22,7 @@
       "no": "لا"
     },
     "subscribeNow": "اشترك الآن",
-    "bankTransfer": "ثانه تون كوا تشوين خوان (VN)",
+    "bankTransfer": "الدفع بتحويل بنكي (فيتنام)",
     "notAvailable": "غير متوفر",
     "noPackages": "لا تتوفر حزم الشراء في الوقت الحالي.",
     "success": "نجاح",
@@ -24,14 +30,14 @@
     "error": "خطأ",
     "bankModal": {
       "title": "التحويل البنكي",
-      "instruction": "Quét mão QR qua ứng dụng ngân hàng hoặc Momo đểthanh toán.",
+      "instruction": "امسح رمز QR باستخدام تطبيق البنك أو MoMo لإتمام الدفع.",
       "bank": "بنك",
       "account": "حساب",
       "name": "اسم",
-      "amount": "كمية",
-      "content": "محتوى",
-      "note": "(يُرجى تضمين محتوى النقل الدقيق أعلاه. سيتم تنشيط قسط التأمين الخاص بك تلقائيًا خلال بضع دقائق).",
-      "close": "يغلق"
+      "amount": "المبلغ",
+      "content": "مرجع التحويل",
+      "note": "استخدم مرجع التحويل الموضح أعلاه كما هو. سيتم تفعيل Premium تلقائيًا خلال بضع دقائق.",
+      "close": "إغلاق"
     }
   },
   "sos": {
@@ -39,19 +45,19 @@
     "subtitle": "تعتمد الأرقام المحلية على موقعك الحالي عبر نظام تحديد المواقع العالمي (GPS).",
     "loading": "جارٍ البحث عن أرقام الطوارئ المحلية...",
     "police": "شرطة",
-    "fire": "نار",
+    "fire": "الإطفاء",
     "ambulance": "سيارة إسعاف",
     "sendAlert": "إرسال تنبيه SOS",
-    "close": "يغلق",
+    "close": "إغلاق",
     "button": "SOS",
-    "buttonLoading": "استغاثة...",
+    "buttonLoading": "SOS...",
     "errorGps": "غير قادر على العثور على موقع GPS الحالي الخاص بك.",
     "errorLoad": "غير قادر على تحميل أرقام الطوارئ.",
     "errorSendGps": "مطلوب موقع GPS قبل إرسال تنبيه SOS.",
     "errorSend": "غير قادر على إرسال تنبيه SOS.",
-    "successPartially": "فشل SOS جزئيًا. أرسلت إلى{{succeeded}}، فشل ل{{failed}}.",
-    "successFull": "تم إرسال SOS بنجاح إلى{{succeeded}}جهة الاتصال (جهات الاتصال).",
-    "errorFull": "فشل في إرسال SOS إلى أي من{{failed}}جهة الاتصال (جهات الاتصال)."
+    "successPartially": "تم إرسال SOS جزئيًا. نجح: {{succeeded}}؛ فشل: {{failed}}.",
+    "successFull": "تم إرسال SOS بنجاح. عدد المستلمين: {{succeeded}}.",
+    "errorFull": "تعذر إرسال SOS. عدد عمليات الإرسال الفاشلة: {{failed}}."
   },
   "tabs": {
     "discover": "يكتشف",
@@ -61,10 +67,10 @@
     "profile": "حساب تعريفي"
   },
   "onboarding": {
-    "skip": "يتخطى",
+    "skip": "تخطي",
     "next": "التالي",
     "heroTitle": "اكتشف العالم باستخدام الذكاء الاصطناعي",
-    "heroSubtitle": "خطط السفر لرحلتك المثالية في ثوانٍ",
+    "heroSubtitle": "يخطط Traveling لرحلة تناسبك خلال ثوانٍ",
     "featuresTitle": "كل ما تحتاجه على الطريق",
     "features": {
       "aiItineraries": "مسارات الذكاء الاصطناعي",
@@ -72,24 +78,24 @@
       "liveTranslation": "الترجمة الحية",
       "liveTranslationDesc": "تحدث واقرأ وافهم اللحظات المحلية بأقل احتكاك.",
       "smartDiscovery": "الاكتشاف الذكي",
-      "smartDiscoveryDesc": "ابحث عن الطعام والأماكن والتجارب بثقة مصنفة حسب الذكاء الاصطناعي."
+      "smartDiscoveryDesc": "اعثر على الطعام والأماكن والتجارب من خلال توصيات يرتبها الذكاء الاصطناعي."
     },
     "styleTitle": "أي نوع من المسافرين أنت؟",
-    "styleSubtitle": "اختر واحدًا أو أكثر. السفر سوف يضبط مزاج الرحلة من حولك.",
+    "styleSubtitle": "اختر نمطًا واحدًا أو أكثر. سيخصص Traveling التوصيات وفقًا لتفضيلاتك.",
     "styleRequired": "حدد نمط سفر واحدًا على الأقل للمتابعة.",
     "styles": {
-      "adventure": "مفامرة",
+      "adventure": "مغامرة",
       "foodie": "عشاق الطعام",
       "culture": "ثقافة",
       "beach": "شاطئ",
       "city": "مستكشف المدينة",
       "eco": "السفر البيئي"
     },
-    "finalTitle": "هناك تقريبا!",
-    "finalSubtitle": "ستبدأ توصياتك الأولى بإشارات السفر هذه.",
-    "terms1": "من خلال الاستمرار فإنك توافق على لدينا",
+    "finalTitle": "أوشكت على الانتهاء!",
+    "finalSubtitle": "ستُستخدم هذه الخيارات لتخصيص توصياتك الأولى.",
+    "terms1": "بالمتابعة، فإنك توافق على ",
     "termsLink": "شروط الخدمة",
-    "terms2": "و",
+    "terms2": " و",
     "privacyLink": "سياسة الخصوصية",
     "terms3": ".",
     "getStarted": "ابدأ",
@@ -129,6 +135,14 @@
       "terms": "شروط الخدمة",
       "signOut": "تسجيل الخروج"
     },
+    "account": {
+      "details": "تفاصيل الحساب",
+      "managedByClerk": "يديره Clerk بأمان",
+      "authDescription": "يدير Clerk وموفر OAuth هويتك وجلساتك النشطة وكلمة المرور.",
+      "restoreDescription": "استعد اشتراكًا سابقًا من App Store أو Google Play.",
+      "restoring": "جارٍ الاستعادة...",
+      "restorePurchases": "استعادة المشتريات"
+    },
     "editProfile": "تحرير الملف الشخصي",
     "yourBadges": "شاراتك",
     "seeAll": "شاهد الكل",
@@ -138,7 +152,7 @@
     "privacyPolicy": "سياسة الخصوصية",
     "openPrivacyPolicy": "افتح سياسة الخصوصية",
     "termsOfService": "شروط الخدمة",
-    "openTerms": "شروط مفتوحة",
-    "back": "خلف"
+    "openTerms": "فتح شروط الخدمة",
+    "back": "رجوع"
   }
 }

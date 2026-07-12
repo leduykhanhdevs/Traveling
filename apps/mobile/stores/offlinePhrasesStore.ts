@@ -14,12 +14,16 @@ export const useOfflinePhrasesStore = create<OfflinePhrasesState>()(
     (set) => ({
       packs: {},
       downloadPack: (countryCode) =>
-        set((state) => ({
-          packs: {
-            ...state.packs,
-            [countryCode]: buildOfflinePhrasePack(countryCode),
-          },
-        })),
+        set((state) => {
+          const phrasePack = buildOfflinePhrasePack(countryCode);
+          if (phrasePack.length === 0) return state;
+          return {
+            packs: {
+              ...state.packs,
+              [countryCode]: phrasePack,
+            },
+          };
+        }),
       removePack: (countryCode) =>
         set((state) => {
           const next = { ...state.packs };

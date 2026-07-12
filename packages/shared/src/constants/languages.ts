@@ -60,6 +60,8 @@ export type LanguageCode =
   | 'vi'
   | 'zh';
 
+export type TranslationTargetLanguageCode = Exclude<LanguageCode, 'auto'>;
+
 export type SupportedLanguage = {
   code: LanguageCode;
   name: string;
@@ -173,4 +175,13 @@ export const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = [
   { code: 'zh', name: 'Chinese', nativeName: '中文', deeplTargetCode: 'ZH', googleCode: 'zh' },
 ];
 
-export const DEFAULT_TARGET_LANGUAGE: LanguageCode = 'en';
+const LANGUAGE_CODES = new Set<LanguageCode>(SUPPORTED_LANGUAGES.map((language) => language.code));
+
+export const isLanguageCode = (value: string): value is LanguageCode =>
+  LANGUAGE_CODES.has(value as LanguageCode);
+
+export const isTranslationTargetLanguageCode = (
+  value: string,
+): value is TranslationTargetLanguageCode => value !== 'auto' && isLanguageCode(value);
+
+export const DEFAULT_TARGET_LANGUAGE: TranslationTargetLanguageCode = 'en';

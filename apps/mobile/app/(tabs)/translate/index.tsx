@@ -11,6 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Speech from 'expo-speech';
 
 import { PhrasebookSheet, type PhrasebookPhrase } from '../../../components/PhrasebookSheet';
 import { PrimaryButton } from '../../../components/PrimaryButton';
@@ -22,6 +23,7 @@ import {
 import { theme } from '../../../constants/theme';
 import { useVoiceRecorder } from '../../../hooks/useVoiceRecorder';
 import { useOfflinePhrasesStore } from '../../../stores/offlinePhrasesStore';
+import { resolveOfflinePhraseLocale } from '../../../utils/offlinePhrases';
 import { usePreferencesStore } from '../../../stores/preferencesStore';
 import { useAuth } from '@clerk/clerk-expo';
 import { translateText, transcribeAudio } from '../../../services/translation';
@@ -44,37 +46,11 @@ const languageFlags: Partial<Record<LanguageCode, string>> = {
   zh: '🇨🇳',
 };
 
-const initialMessages: readonly TranslationBubbleMessage[] = [
-  {
-    id: 'message-1-source',
-    languageLabel: 'English',
-    role: 'source',
-    text: 'Hi, can you recommend a local breakfast spot near here?',
-  },
-  {
-    flag: '🇻🇳',
-    id: 'message-1-translation',
-    languageLabel: 'Vietnamese',
-    role: 'translation',
-    text: 'Xin chao, ban co the goi y mot quan an sang dia phuong gan day khong?',
-  },
-  {
-    id: 'message-2-source',
-    languageLabel: 'English',
-    role: 'source',
-    text: 'Please make it not too spicy.',
-  },
-  {
-    flag: '🇻🇳',
-    id: 'message-2-translation',
-    languageLabel: 'Vietnamese',
-    role: 'translation',
-    text: 'Lam on dung lam qua cay.',
-  },
-];
-
 const getLanguageLabel = (language: LanguageCode): string =>
   SUPPORTED_LANGUAGES.find((item) => item.code === language)?.name ?? language.toUpperCase();
+
+const getSpeechLanguage = (language: LanguageCode): string =>
+  SUPPORTED_LANGUAGES.find((item) => item.code === language)?.googleCode ?? 'en';
 
 const copyToClipboard = async (text: string): Promise<void> => {
   const maybeNavigator = (globalThis as typeof globalThis & { navigator?: ClipboardLike }).navigator;
@@ -97,7 +73,8 @@ export default function TranslateScreen(): JSX.Element {
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>(
     preferredLanguage === 'en' ? 'vi' : preferredLanguage,
   );
-  const [messages, setMessages] = useState<readonly TranslationBubbleMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<readonly TranslationBubbleMessage[]>([]);
+  const [translationError, setTranslationError] = useState<string | null>(null);
   const [pickerModalVisible, setPickerModalVisible] = useState(false);
   const [activePicker, setActivePicker] = useState<'source' | 'target'>('source');
   const [inputText, setInputText] = useState('');
@@ -110,7 +87,24 @@ export default function TranslateScreen(): JSX.Element {
 
   const sourceLabel = useMemo(() => getLanguageLabel(sourceLanguage), [sourceLanguage]);
   const targetLabel = useMemo(() => getLanguageLabel(targetLanguage), [targetLanguage]);
-  const offlinePhraseCount = packs.vn?.length ?? 0;
+  const targetPhrasePack = useMemo(() => {
+    const targetLocale = resolveOfflinePhraseLocale(targetLanguage);
+    if (!targetLocale) return [];
+    const matchingEntry = Object.entries(packs).find(
+      ([code]) => resolveOfflinePhraseLocale(code) === targetLocale,
+    );
+    return matchingEntry?.[1] ?? [];
+  }, [packs, targetLanguage]);
+  const phrasebookPhrases = useMemo(
+    () =>
+      targetPhrasePack.map((phrase) => ({
+        category: phrase.category,
+        id: phrase.id,
+        phrase: phrase.translation,
+      })),
+    [targetPhrasePack],
+  );
+  const offlinePhraseCount = phrasebookPhrases.length;
 
   useEffect(() => {
     const scrollTimer = setTimeout(() => {
@@ -143,6 +137,7 @@ export default function TranslateScreen(): JSX.Element {
     if (!trimmed) {
       return;
     }
+    setTranslationError(null);
 
     const timestamp = Date.now();
     
@@ -176,16 +171,8 @@ export default function TranslateScreen(): JSX.Element {
       };
 
       setMessages((current) => [...current, translationMessage]);
-    } catch (error) {
-      console.error('Translation failed', error);
-      const errorMessage: TranslationBubbleMessage = {
-        flag: '⚠️',
-        id: `message-${timestamp}-error`,
-        languageLabel: targetLabel,
-        role: 'translation',
-        text: 'Translation failed. Please check connection.',
-      };
-      setMessages((current) => [...current, errorMessage]);
+    } catch {
+      setTranslationError('Translation failed. Please check your connection and try again.');
     }
   };
 
@@ -207,12 +194,11 @@ export default function TranslateScreen(): JSX.Element {
         if (result?.transcript) {
           await appendTranslationPair(result.transcript);
         }
-      } catch (err) {
-        console.error('Audio transcription failed', err);
-        await appendTranslationPair('Speech transcription failed.');
+      } catch {
+        setTranslationError('Speech transcription failed. Please try again.');
       }
     } else {
-      await appendTranslationPair('No speech detected.');
+      setTranslationError('No speech was detected.');
     }
   };
 
@@ -224,11 +210,17 @@ export default function TranslateScreen(): JSX.Element {
 
   const playMessage = (message: TranslationBubbleMessage): void => {
     setLastPlayedId(message.id);
+    Speech.stop();
+    Speech.speak(message.text, {
+      language: getSpeechLanguage(message.role === 'source' ? sourceLanguage : targetLanguage),
+    });
     setTimeout(() => setLastPlayedId(null), 900);
   };
 
   const playPhrase = (phrase: PhrasebookPhrase): void => {
     setLastPlayedId(phrase.id);
+    Speech.stop();
+    Speech.speak(phrase.phrase, { language: getSpeechLanguage(targetLanguage) });
     setTimeout(() => setLastPlayedId(null), 900);
   };
 
@@ -343,7 +335,7 @@ export default function TranslateScreen(): JSX.Element {
                   style={pulseStyle}
                 />
                 <TouchableOpacity
-                  accessibilityHint="Hold to record voice input, release to mock translate it."
+                  accessibilityHint="Hold to record voice input, then release to transcribe and translate it."
                   accessibilityLabel="Voice input microphone"
                   accessibilityRole="button"
                   accessibilityState={{ selected: recorder.recording }}
@@ -362,16 +354,18 @@ export default function TranslateScreen(): JSX.Element {
               </View>
 
               <PrimaryButton
-                accessibilityHint="Adds a mock translated response to the conversation."
+                accessibilityHint="Translates the entered text using the selected languages."
                 className="flex-1"
                 disabled={!inputText.trim()}
                 icon={Send}
                 label="Translate"
-                onPress={() => appendTranslationPair(inputText)}
+                onPress={() => {
+                  void appendTranslationPair(inputText);
+                }}
               />
 
               <TouchableOpacity
-                accessibilityHint="Replays the most recent mock spoken translation."
+                accessibilityHint="Speaks the most recent translated message."
                 accessibilityLabel="Play latest translation"
                 accessibilityRole="button"
                 className={`h-12 w-12 items-center justify-center rounded-full ${
@@ -388,6 +382,10 @@ export default function TranslateScreen(): JSX.Element {
               </TouchableOpacity>
             </View>
 
+            {translationError ? (
+              <Text className="mt-3 font-inter text-sm text-red-300">{translationError}</Text>
+            ) : null}
+
             {recorder.error ? (
               <Text className="mt-2 font-inter-semibold text-xs text-accent">{recorder.error}</Text>
             ) : null}
@@ -396,9 +394,9 @@ export default function TranslateScreen(): JSX.Element {
       </KeyboardAvoidingView>
 
       <PhrasebookSheet
-        offlineAvailable
         onClose={() => setPhrasebookVisible(false)}
         onPlayPhrase={playPhrase}
+        phrases={phrasebookPhrases}
         visible={phrasebookVisible}
       />
 

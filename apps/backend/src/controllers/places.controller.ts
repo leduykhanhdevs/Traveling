@@ -4,6 +4,7 @@ import { prisma } from '../services/prisma.service.js';
 import { AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
+import { posthog } from '../services/posthog.service.js';
 
 const savePlaceSchema = z.object({
   placeId: z.string().min(1),
@@ -92,6 +93,14 @@ export const postSavePlace = asyncHandler(async (req, res) => {
       address: body.address,
       lat: body.lat,
       lng: body.lng,
+    },
+  });
+  posthog.capture({
+    distinctId: req.auth!.userId,
+    event: 'place_saved',
+    properties: {
+      place_id: body.placeId,
+      place_name: body.name,
     },
   });
   sendSuccess(res, saved, 201);

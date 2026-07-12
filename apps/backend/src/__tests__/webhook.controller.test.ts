@@ -1,100 +1,131 @@
 import './external-service-mocks.js';
+import crypto from 'node:crypto';
+import express from 'express';
 import request from 'supertest';
+import { MB_BANK_ACCOUNT } from '../controllers/payment.controller.js';
 import { postBankTransferWebhook } from '../controllers/webhook.controller.js';
 import { prisma } from '../services/prisma.service.js';
-// buildTestApp removed
-import crypto from 'crypto';
-import express from 'express';
 
 describe('webhook.controller', () => {
-  const bankTransferOrderFindManyMock = prisma.bankTransferOrder.findMany as unknown as jest.MockedFunction<
-    (args: unknown) => Promise<unknown>
-  >;
+  const bankTransferOrderFindUniqueMock =
+    prisma.bankTransferOrder.findUnique as unknown as jest.MockedFunction<
+      (args: unknown) => Promise<unknown>
+    >;
   const transactionMock = prisma.$transaction as unknown as jest.MockedFunction<
     (args: unknown) => Promise<unknown>
   >;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
   const app = express();
   app.use(express.raw({ type: 'application/json' }));
   app.post('/webhook', postBankTransferWebhook);
 
-  const signPayload = (payload: string, timestamp: string) => {
-    const hash = crypto.createHmac('sha256', process.env.SEPAY_WEBHOOK_SECRET || 'PLACEHOLDER_SEPAY_SECRET')
+  const signPayload = (payload: string, timestamp: string): string => {
+    const hash = crypto
+      .createHmac('sha256', process.env.SEPAY_WEBHOOK_SECRET!)
       .update(`${timestamp}.${payload}`)
       .digest('hex');
     return `sha256=${hash}`;
   };
 
-  describe('postBankTransferWebhook', () => {
-    it('rejects webhook with invalid signature', async () => {
-      const payload = JSON.stringify({ id: '123', content: 'VIP123', amount: 100000 });
-      const response = await request(app)
-        .post('/webhook')
-        .set('x-sepay-signature', 'invalid-signature')
-        .set('x-sepay-timestamp', '123456789')
-        .set('content-type', 'application/json')
-        .send(payload);
-
-      expect(response.status).toBe(401);
-      // message check removed
+  const validPayload = (id = 123): string =>
+    JSON.stringify({
+      accountNumber: MB_BANK_ACCOUNT,
+      code: 'VIPABCDEF1234567890',
+      content: 'VIPABCDEF1234567890 thanh toan',
+      id,
+      transferAmount: 120000,
+      transferType: 'in',
     });
 
-    it('matches and marks order as paid', async () => {
-      bankTransferOrderFindManyMock.mockResolvedValue([
-        {
-          id: 'order_1',
-          userId: 'user_1',
-          amount: 100000,
-          transferContent: 'VIP123',
-          status: 'pending',
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('rejects a webhook with an invalid signature', async () => {
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const response = await request(app)
+      .post('/webhook')
+      .set('x-sepay-signature', 'sha256=invalid')
+      .set('x-sepay-timestamp', timestamp)
+      .set('content-type', 'application/json')
+      .send(validPayload());
+
+    expect(response.status).toBe(401);
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a correctly signed webhook outside the replay window', async () => {
+    const timestamp = String(Math.floor(Date.now() / 1000) - 301);
+    const payload = validPayload();
+    const response = await request(app)
+      .post('/webhook')
+      .set('x-sepay-signature', signPayload(payload, timestamp))
+      .set('x-sepay-timestamp', timestamp)
+      .set('content-type', 'application/json')
+      .send(payload);
+
+    expect(response.status).toBe(401);
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it('atomically grants premium for a valid incoming payment', async () => {
+    const order = {
+      amount: 120000,
+      currency: 'VND',
+      expiresAt: new Date(Date.now() + 60_000),
+      id: 'order_1',
+      planCode: 'monthly',
+      status: 'pending',
+      transferContent: 'VIPABCDEF1234567890',
+      userId: 'user_1',
+    };
+    bankTransferOrderFindUniqueMock.mockResolvedValueOnce(null).mockResolvedValueOnce(order);
+    const grantCreateMock = jest.fn();
+    transactionMock.mockImplementation(async (callback: unknown) => {
+      const cb = callback as (tx: unknown) => Promise<unknown>;
+      return cb({
+        bankTransferOrder: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+        premiumGrant: {
+          create: grantCreateMock,
+          findFirst: jest.fn().mockResolvedValue(null),
         },
-      ]);
-      transactionMock.mockImplementation(async (callback: unknown) => {
-        const cb = callback as (args: unknown) => Promise<unknown>;
-        return cb({
-          bankTransferOrder: { update: jest.fn() },
-          premiumGrant: { create: jest.fn() },
-        });
       });
-
-      const payload = JSON.stringify({ id: '123', content: 'VIP1234', amount: 100000 });
-      const timestamp = '123456789';
-      const sig = signPayload(payload, timestamp);
-
-      const response = await request(app)
-        .post('/webhook')
-        .set('x-sepay-signature', sig)
-        .set('x-sepay-timestamp', timestamp)
-        .set('content-type', 'application/json')
-        .send(payload);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(transactionMock).toHaveBeenCalled();
     });
 
-    it('ignores duplicate webhook (no matching pending order)', async () => {
-      bankTransferOrderFindManyMock.mockResolvedValue([]);
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const payload = validPayload();
+    const response = await request(app)
+      .post('/webhook')
+      .set('x-sepay-signature', signPayload(payload, timestamp))
+      .set('x-sepay-timestamp', timestamp)
+      .set('content-type', 'application/json')
+      .send(payload);
 
-      const payload = JSON.stringify({ id: '123', content: 'VIP1234', amount: 100000 });
-      const timestamp = '123456789';
-      const sig = signPayload(payload, timestamp);
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ success: true });
+    expect(grantCreateMock).toHaveBeenCalledTimes(1);
+  });
 
-      const response = await request(app)
-        .post('/webhook')
-        .set('x-sepay-signature', sig)
-        .set('x-sepay-timestamp', timestamp)
-        .set('content-type', 'application/json')
-        .send(payload);
+  it('acknowledges a duplicate provider transaction without granting again', async () => {
+    bankTransferOrderFindUniqueMock.mockResolvedValue({ id: 'already_processed' });
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const payload = validPayload();
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.message).toMatch(/No matching pending order found/);
-      expect(transactionMock).not.toHaveBeenCalled();
-    });
+    const first = await request(app)
+      .post('/webhook')
+      .set('x-sepay-signature', signPayload(payload, timestamp))
+      .set('x-sepay-timestamp', timestamp)
+      .set('content-type', 'application/json')
+      .send(payload);
+    const retry = await request(app)
+      .post('/webhook')
+      .set('x-sepay-signature', signPayload(payload, timestamp))
+      .set('x-sepay-timestamp', timestamp)
+      .set('content-type', 'application/json')
+      .send(payload);
+
+    expect(first.body).toEqual({ success: true });
+    expect(retry.body).toEqual({ success: true });
+    expect(transactionMock).not.toHaveBeenCalled();
   });
 });

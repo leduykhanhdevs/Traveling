@@ -5,3 +5,7 @@
 
 // react-test-renderer requires this flag to enable `act(...)` support.
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+// Expo's Babel preset resolves EXPO_PUBLIC_* values while modules are transformed,
+// so define the test endpoint before application modules are loaded.
+process.env.EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';

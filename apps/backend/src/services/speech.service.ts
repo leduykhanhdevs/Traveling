@@ -68,22 +68,9 @@ export const transcribeAudio = async (
       confidence: alternative.confidence ?? 0,
     };
   } catch (error) {
-    console.error('Google Speech API failed or key missing, using fallback transcription:', error);
-    const simpleLang = languageCode.split('-')[0]?.toLowerCase() || 'en';
-    const fallbacks: Record<string, string> = {
-      en: 'Where is the best Pho restaurant in District 1?',
-      vi: 'Nhà hàng phở ngon nhất ở Quận 1 nằm ở đâu vậy?',
-      es: '¿Dónde está el mejor restaurante de Pho en el Distrito 1?',
-      fr: 'Où se trouve le meilleur restaurant de Pho dans le District 1?',
-      de: 'Wo ist das beste Pho-Restaurant im Bezirk 1?',
-      it: 'Dove si trova il miglior ristorante di Pho nel Distretto 1?',
-      ja: '第1区で一番美味しいフォーの店はどこですか？',
-      ko: '1군에서 가장 맛있는 쌀국수 맛집이 어디인가요?',
-      zh: '第一区最好的越南粉餐厅在哪里？',
-    };
-    return {
-      transcript: fallbacks[simpleLang] || fallbacks['en']!,
-      confidence: 0.9,
-    };
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError('TRANSCRIPTION_FAILED', 'Speech transcription is unavailable.', 502);
   }
 };

@@ -7,16 +7,46 @@ import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { AppError } from '../utils/errors.js';
 import { prisma } from '../services/prisma.service.js';
-import crypto from 'crypto';
+import { posthog } from '../services/posthog.service.js';
+import { createInviteToken, verifyInviteToken } from '../utils/invite-token.js';
+
+const FREE_TIER_SAVED_ITINERARY_LIMIT = 1;
 
 export const postGenerateItinerary = asyncHandler(async (req, res) => {
   const userId = req.auth!.userId;
+
+  // Free tier keeps at most 1 saved itinerary; premium is unlimited.
+  const entitlement = await getEntitlementStatus(userId);
+  if (entitlement.tier !== 'premium') {
+    const profile = await prisma.user.findUnique({ where: { clerkId: userId } });
+    if (profile) {
+      const savedCount = await prisma.itinerary.count({ where: { userId: profile.id } });
+      if (savedCount >= FREE_TIER_SAVED_ITINERARY_LIMIT) {
+        throw new AppError(
+          'PAYMENT_REQUIRED',
+          `Free plan is limited to ${FREE_TIER_SAVED_ITINERARY_LIMIT} saved itinerary. Delete an itinerary or upgrade to premium.`,
+          402,
+        );
+      }
+    }
+  }
+
   await checkAndIncrementUsage(userId, 'itinerary');
-  
+
   const body = itineraryRequestSchema.parse(req.body);
   const plan = await generateItinerary({
     ...body,
     userId,
+  });
+  posthog.capture({
+    distinctId: userId,
+    event: 'itinerary_generated',
+    properties: {
+      destination: body.destination,
+      days: body.days,
+      budget_range: body.budgetRange,
+      travel_style: body.travelStyle,
+    },
   });
   sendSuccess(res, plan);
 });
@@ -25,66 +55,83 @@ export const generateItineraryInvite = asyncHandler(async (req, res) => {
   const clerkUserId = req.auth?.userId;
   if (!clerkUserId) throw new AppError('UNAUTHORIZED', 'Sign in to invite.', 401);
   const itineraryId = z.string().min(1).parse(req.params.id);
+  const { role } = z
+    .object({ role: z.enum(['viewer', 'editor']).default('editor') })
+    .parse(req.body ?? {});
 
   const status = await getEntitlementStatus(clerkUserId);
   if (status.tier !== 'premium') {
     throw new AppError('PAYMENT_REQUIRED', 'Only Premium users can share itineraries.', 402);
   }
 
-  const user = await prisma.user.findUnique({ where: { clerkId: clerkUserId }});
-  if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
+  const user = await prisma.user.findUnique({ where: { clerkId: clerkUserId } });
+  if (!user) throw new AppError('NOT_FOUND', 'User not found.', 404);
 
   const itinerary = await prisma.itinerary.findFirst({
-    where: { id: itineraryId, userId: user.id }
+    where: { id: itineraryId, userId: user.id },
   });
 
   if (!itinerary) {
     throw new AppError('NOT_FOUND', 'Itinerary not found or you do not own it.', 404);
   }
 
-  const hmac = crypto.createHmac('sha256', process.env.JWT_SECRET || 'secret');
-  hmac.update(`itinerary_invite:${itineraryId}`);
-  const signature = hmac.digest('hex');
+  const inviteToken = createInviteToken({
+    resourceType: 'itinerary',
+    resourceId: itineraryId,
+    role,
+  });
 
-  const inviteToken = Buffer.from(JSON.stringify({ itineraryId, sig: signature })).toString('base64');
-  
-  sendSuccess(res, { inviteToken, url: `https://traveling.app/invite/itinerary?token=${inviteToken}` });
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'itinerary_shared',
+    properties: { itinerary_id: itineraryId },
+  });
+
+  sendSuccess(res, {
+    inviteToken,
+    url: `https://traveling.app/invite/itinerary?token=${encodeURIComponent(inviteToken)}`,
+  });
 });
 
 export const acceptItineraryInvite = asyncHandler(async (req, res) => {
   const clerkUserId = req.auth?.userId;
   if (!clerkUserId) throw new AppError('UNAUTHORIZED', 'Sign in to accept invite.', 401);
-  const { token } = req.body;
-  if (!token) throw new AppError('INVALID_INPUT', 'Token is required', 400);
+  const { token } = z.object({ token: z.string().trim().min(1).max(2048) }).parse(req.body);
+  const invite = verifyInviteToken(token, 'itinerary');
 
-  let payload;
-  try {
-    payload = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
-  } catch (e) {
-    throw new AppError('INVALID_INPUT', 'Invalid token', 400);
+  const user = await prisma.user.findUnique({ where: { clerkId: clerkUserId } });
+  if (!user) throw new AppError('NOT_FOUND', 'User not found.', 404);
+
+  const itinerary = await prisma.itinerary.findUnique({
+    where: { id: invite.resourceId },
+    select: { id: true, userId: true },
+  });
+  if (!itinerary) {
+    throw new AppError('ITINERARY_NOT_FOUND', 'Itinerary could not be found.', 404);
   }
 
-  const { itineraryId, sig } = payload;
-  if (!itineraryId || !sig) throw new AppError('INVALID_INPUT', 'Invalid token format', 400);
-
-  const hmac = crypto.createHmac('sha256', process.env.JWT_SECRET || 'secret');
-  hmac.update(`itinerary_invite:${itineraryId}`);
-  const expectedSig = hmac.digest('hex');
-
-  if (sig !== expectedSig) {
-    throw new AppError('UNAUTHORIZED', 'Invalid or expired invite token', 401);
+  if (itinerary.userId === user.id) {
+    sendSuccess(res, { success: true, itineraryId: itinerary.id });
+    return;
   }
-
-  const user = await prisma.user.findUnique({ where: { clerkId: clerkUserId }});
-  if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
 
   await prisma.sharedItinerary.upsert({
-    where: { itineraryId_userId: { itineraryId, userId: user.id } },
-    update: {},
-    create: { itineraryId, userId: user.id, role: 'editor' }
+    where: { itineraryId_userId: { itineraryId: itinerary.id, userId: user.id } },
+    update: { role: invite.role },
+    create: {
+      itineraryId: itinerary.id,
+      userId: user.id,
+      role: invite.role,
+    },
   });
 
-  sendSuccess(res, { success: true, itineraryId });
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'itinerary_invite_accepted',
+    properties: { itinerary_id: itinerary.id },
+  });
+
+  sendSuccess(res, { success: true, itineraryId: itinerary.id });
 });
 
 export const postExportItinerary = asyncHandler(async (req, res) => {
@@ -98,6 +145,12 @@ export const postExportItinerary = asyncHandler(async (req, res) => {
 
   const pdf = await exportItineraryPdf(itineraryId, req.body as unknown);
   const filename = `traveling-itinerary-${itineraryId.replace(/[^a-zA-Z0-9_-]/g, '-')}.pdf`;
+
+  posthog.capture({
+    distinctId: req.auth!.userId,
+    event: 'itinerary_exported',
+    properties: { itinerary_id: itineraryId },
+  });
 
   res
     .status(200)
@@ -178,6 +231,15 @@ export const postReplanWeather = asyncHandler(async (req, res) => {
     data: { content: newContent }
   });
 
+  posthog.capture({
+    distinctId: clerkUserId,
+    event: 'weather_replan_triggered',
+    properties: {
+      itinerary_id: itineraryId,
+      destination: itinerary.destination,
+    },
+  });
+
   sendSuccess(res, updated);
 });
 
@@ -212,6 +274,11 @@ export const deleteItinerary = asyncHandler(async (req, res) => {
 
   await prisma.itinerary.delete({
     where: { id: itineraryId },
+  });
+  posthog.capture({
+    distinctId: req.auth!.userId,
+    event: 'itinerary_deleted',
+    properties: { itinerary_id: itineraryId },
   });
   sendSuccess(res, { success: true });
 });
