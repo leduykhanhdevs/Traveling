@@ -12,7 +12,7 @@ export const getProfile = (
 }> => apiRequest('/api/v1/profile', { token });
 
 export const updateProfile = (
-  profile: PersonalizationProfile & { email: string; nationality?: string },
+  profile: PersonalizationProfile & { nationality?: string },
   token?: string | null,
 ): Promise<unknown> =>
   apiRequest('/api/v1/profile', {

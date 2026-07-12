@@ -10,6 +10,7 @@ import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { theme } from '../../constants/theme';
 import { useHapticAction } from '../../hooks/useHapticAction';
+import { useTranslation } from 'react-i18next';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -20,6 +21,7 @@ export default function LoginScreen(): JSX.Element {
   const facebook = useOAuth({ strategy: 'oauth_facebook' });
   const haptic = useHapticAction();
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
@@ -43,13 +45,8 @@ export default function LoginScreen(): JSX.Element {
         }
       } catch (error: unknown) {
         const err = error as Record<string, unknown>;
-        console.error('Clerk OAuth error message:', err?.message);
-        console.error('Clerk OAuth error keys:', Object.keys(err || {}));
-        try {
-          console.error('Clerk OAuth error stringified:', JSON.stringify(error));
-        } catch (e) {
-          console.error('Clerk OAuth error could not stringify:', e);
-        }
+        // OAuth errors can contain redirect parameters and credentials; never serialize them.
+        void err;
       }
     },
     [haptic],
@@ -64,20 +61,20 @@ export default function LoginScreen(): JSX.Element {
           </View>
           <Text className="font-inter-bold text-5xl text-white">Traveling</Text>
           <Text className="mt-4 max-w-xs font-inter text-lg text-zinc-300">
-            Translate instantly and discover places locals actually love.
+            {t('auth.tagline')}
           </Text>
         </View>
         <GlassCard>
           <View className="gap-3">
             <PrimaryButton
-              label="Continue with Google"
+              label={t('auth.continueWithGoogle')}
               icon={Search}
               onPress={() => {
                 void authenticate(google.startOAuthFlow);
               }}
             />
             <PrimaryButton
-              label="Continue with Apple"
+              label={t('auth.continueWithApple')}
               icon={Apple}
               variant="ghost"
               onPress={() => {
@@ -85,7 +82,7 @@ export default function LoginScreen(): JSX.Element {
               }}
             />
             <PrimaryButton
-              label="Continue with Facebook"
+              label={t('auth.continueWithFacebook')}
               icon={Facebook}
               variant="ghost"
               onPress={() => {

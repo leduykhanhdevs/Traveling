@@ -40,6 +40,8 @@ model User {
   sharedBudgets       SharedBudget[]
   sharedItineraries   SharedItinerary[]
   stories             Story[]
+  paidBudgetItems     BudgetItem[]      @relation("PaidBudgetItems")
+  budgetItemSplits    BudgetItemSplit[]
 }
 
 model Budget {
@@ -63,10 +65,25 @@ model BudgetItem {
   amount      Float
   description String
   date        DateTime
+  paidById    String?
   budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  paidBy      User?    @relation("PaidBudgetItems", fields: [paidById], references: [id], onDelete: SetNull)
+  splits      BudgetItemSplit[]
 
   @@index([budgetId, date])
   @@index([category])
+}
+
+model BudgetItemSplit {
+  id     String     @id @default(cuid())
+  itemId String
+  userId String
+  amount Float
+  item   BudgetItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, userId])
+  @@index([userId])
 }
 
 model DeviceToken {
@@ -261,7 +278,7 @@ model BankTransferOrder {
   id                    String    @id @default(cuid())
   userId                String
   planCode              String
-  amount                Float
+  amount                Int
   currency              String    @default("VND")
   transferContent       String    @unique
   status                String    @default("pending")
@@ -311,5 +328,4 @@ model SharedItinerary {
   @@unique([itineraryId, userId])
   @@index([userId])
 }
-
 

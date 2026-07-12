@@ -1,14 +1,20 @@
 {
   "greeting": "Olá",
-  "welcome": "Bem-vindo ao Viajar",
+  "welcome": "Boas-vindas ao Traveling",
+  "auth": {
+    "tagline": "Traduza na hora e descubra lugares realmente recomendados por moradores locais.",
+    "continueWithGoogle": "Continuar com o Google",
+    "continueWithApple": "Continuar com a Apple",
+    "continueWithFacebook": "Continuar com o Facebook"
+  },
   "paywall": {
-    "title": "Prêmio de viagem",
+    "title": "Traveling Premium",
     "subtitle": "Descoberta ilimitada, tradução de câmera, frases off-line e itinerários completos.",
     "perMonth": "por mês",
     "features": {
       "aiDiscovery": "Descoberta de IA",
       "translations": "Traduções",
-      "cameraTranslate": "Tradução da câmera",
+      "cameraTranslate": "Tradução pela câmera",
       "offlinePacks": "Pacotes off-line",
       "itineraryPlanner": "Planejador de itinerário",
       "unlimited": "Ilimitado",
@@ -16,7 +22,7 @@
       "no": "Não"
     },
     "subscribeNow": "Assine agora",
-    "bankTransfer": "Thanh toán qua chuyển khoản (VN)",
+    "bankTransfer": "Pagar por transferência bancária (Vietnã)",
     "notAvailable": "Não disponível",
     "noPackages": "Nenhum pacote de compra está disponível no momento.",
     "success": "Sucesso",
@@ -24,13 +30,13 @@
     "error": "Erro",
     "bankModal": {
       "title": "Transferência Bancária",
-      "instruction": "Quét mã QR qua ứng dụng ngân hàng hoặc Momo để thanh toán.",
+      "instruction": "Escaneie o código QR com seu aplicativo bancário ou MoMo para pagar.",
       "bank": "Banco",
       "account": "Conta",
       "name": "Nome",
-      "amount": "Quantia",
-      "content": "Contente",
-      "note": "(Inclua o conteúdo exato da transferência acima. Seu prêmio será ativado automaticamente em alguns minutos).",
+      "amount": "Valor",
+      "content": "Referência da transferência",
+      "note": "Use exatamente a referência de transferência exibida acima. O Premium será ativado automaticamente em alguns minutos.",
       "close": "Fechar"
     }
   },
@@ -39,7 +45,7 @@
     "subtitle": "Os números locais são baseados na sua localização GPS atual.",
     "loading": "Encontrando números de emergência locais...",
     "police": "Polícia",
-    "fire": "Fogo",
+    "fire": "Bombeiros",
     "ambulance": "Ambulância",
     "sendAlert": "Enviar alerta SOS",
     "close": "Fechar",
@@ -49,9 +55,9 @@
     "errorLoad": "Não foi possível carregar os números de emergência.",
     "errorSendGps": "A localização GPS é necessária antes de enviar um alerta SOS.",
     "errorSend": "Não foi possível enviar alerta SOS.",
-    "successPartially": "SOS falhou parcialmente. Enviado para{{succeeded}}, falhou por{{failed}}.",
-    "successFull": "SOS enviado com sucesso para{{succeeded}}contato(s).",
-    "errorFull": "Falha ao enviar SOS para qualquer um de seus{{failed}}contato(s)."
+    "successPartially": "O SOS foi enviado parcialmente. Envios concluídos: {{succeeded}}; falhas: {{failed}}.",
+    "successFull": "SOS enviado com sucesso. Destinatários alcançados: {{succeeded}}.",
+    "errorFull": "Não foi possível enviar o SOS. Destinatários com falha: {{failed}}."
   },
   "tabs": {
     "discover": "Descobrir",
@@ -62,9 +68,9 @@
   },
   "onboarding": {
     "skip": "Pular",
-    "next": "Próximo",
+    "next": "Avançar",
     "heroTitle": "Descubra o mundo com IA",
-    "heroSubtitle": "Viajar planeja sua viagem perfeita em segundos",
+    "heroSubtitle": "O Traveling planeja sua viagem ideal em segundos",
     "featuresTitle": "Tudo que você precisa na estrada",
     "features": {
       "aiItineraries": "Itinerários de IA",
@@ -72,14 +78,14 @@
       "liveTranslation": "Tradução ao vivo",
       "liveTranslationDesc": "Fale, leia e entenda momentos locais com menos atrito.",
       "smartDiscovery": "Descoberta Inteligente",
-      "smartDiscoveryDesc": "Encontre comida, lugares e experiências com a confiança classificada pela IA."
+      "smartDiscoveryDesc": "Encontre gastronomia, lugares e experiências com recomendações classificadas pela IA."
     },
     "styleTitle": "Que tipo de viajante você é?",
-    "styleSubtitle": "Escolha um ou mais. Viajar irá ajustar o clima da viagem ao seu redor.",
+    "styleSubtitle": "Escolha um ou mais. O Traveling adaptará as recomendações às suas preferências.",
     "styleRequired": "Selecione pelo menos um estilo de viagem para continuar.",
     "styles": {
       "adventure": "Aventura",
-      "foodie": "Viciado em comida",
+      "foodie": "Gastronomia",
       "culture": "Cultura",
       "beach": "Praia",
       "city": "Explorador da Cidade",
@@ -87,9 +93,9 @@
     },
     "finalTitle": "Quase lá!",
     "finalSubtitle": "Suas primeiras recomendações começarão com estes sinais de viagem.",
-    "terms1": "Ao continuar você concorda com nossos",
+    "terms1": "Ao continuar, você concorda com nossos ",
     "termsLink": "Termos de Serviço",
-    "terms2": "e",
+    "terms2": " e com nossa ",
     "privacyLink": "política de Privacidade",
     "terms3": ".",
     "getStarted": "Comece",
@@ -106,8 +112,8 @@
       "firstItineraryDesc": "Crie seu primeiro plano de viagem com tecnologia de IA.",
       "worldExplorer": "Explorador Mundial",
       "worldExplorerDesc": "Locais salvos em vários países.",
-      "foodie": "Viciado em comida",
-      "foodieDesc": "Encontrei joias de comida local com Traveling.",
+      "foodie": "Amante da gastronomia",
+      "foodieDesc": "Você encontrou joias da gastronomia local com o Traveling.",
       "mountainLover": "Amante da montanha",
       "mountainLoverDesc": "Aventuras planejadas em grandes altitudes.",
       "soloTraveler": "Viajante solitário",
@@ -125,9 +131,17 @@
       "account": "Conta",
       "notifications": "Notificações",
       "subscription": "Subscrição",
-      "privacy": "política de Privacidade",
+      "privacy": "Política de Privacidade",
       "terms": "Termos de Serviço",
       "signOut": "Sair"
+    },
+    "account": {
+      "details": "Detalhes da conta",
+      "managedByClerk": "Gerenciada com segurança pela Clerk",
+      "authDescription": "Sua identidade, sessões ativas e senha são gerenciadas pela Clerk e pelo seu provedor OAuth.",
+      "restoreDescription": "Restaure uma assinatura anterior da App Store ou do Google Play.",
+      "restoring": "Restaurando...",
+      "restorePurchases": "Restaurar compras"
     },
     "editProfile": "Editar perfil",
     "yourBadges": "Seus emblemas",
@@ -135,10 +149,10 @@
     "recentTrips": "Viagens recentes"
   },
   "legal": {
-    "privacyPolicy": "política de Privacidade",
-    "openPrivacyPolicy": "Política de privacidade aberta",
+    "privacyPolicy": "Política de Privacidade",
+    "openPrivacyPolicy": "Abrir a Política de Privacidade",
     "termsOfService": "Termos de Serviço",
-    "openTerms": "Termos Abertos",
+    "openTerms": "Abrir os Termos de Serviço",
     "back": "Voltar"
   }
 }

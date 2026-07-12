@@ -11,6 +11,10 @@ jest.mock('../services/google-places.service.js', () => ({
   getCityFromCoordinates: jest.fn(),
 }));
 
+jest.mock('../services/clerk.service.js', () => ({
+  getVerifiedPrimaryEmail: jest.fn().mockResolvedValue('verified@example.com'),
+}));
+
 jest.mock('../services/prisma.service.js', () => ({
   prisma: {
     follow: {
@@ -20,6 +24,22 @@ jest.mock('../services/prisma.service.js', () => ({
       create: jest.fn(),
       findUnique: jest.fn(),
       findFirst: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
+    },
+    emergencyContact: {
+      create: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+    },
+    sharedBudget: {
+      findMany: jest.fn().mockResolvedValue([]),
+      upsert: jest.fn(),
+    },
+    sharedItinerary: {
+      upsert: jest.fn(),
+    },
+    budgetItemSplit: {
+      createMany: jest.fn(),
     },
     review: {
       create: jest.fn(),
@@ -47,10 +67,14 @@ jest.mock('../services/prisma.service.js', () => ({
     budgetItem: {
       create: jest.fn(),
       deleteMany: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      createMany: jest.fn(),
     },
     bankTransferOrder: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
     },

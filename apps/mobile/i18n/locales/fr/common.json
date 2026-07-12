@@ -1,14 +1,20 @@
 {
   "greeting": "Bonjour",
-  "welcome": "Bienvenue en voyage",
+  "welcome": "Bienvenue sur Traveling",
+  "auth": {
+    "tagline": "Traduisez instantanément et découvrez des lieux vraiment recommandés par les habitants.",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Continuer avec Apple",
+    "continueWithFacebook": "Continuer avec Facebook"
+  },
   "paywall": {
-    "title": "Prime de voyage",
+    "title": "Traveling Premium",
     "subtitle": "Découverte illimitée, traduction par caméra, phrases hors ligne et itinéraires complets.",
     "perMonth": "par mois",
     "features": {
-      "aiDiscovery": "Découverte de l'IA",
+      "aiDiscovery": "Découverte avec l’IA",
       "translations": "Traductions",
-      "cameraTranslate": "Caméra traduire",
+      "cameraTranslate": "Traduction par caméra",
       "offlinePacks": "Packs hors ligne",
       "itineraryPlanner": "Planificateur d'itinéraire",
       "unlimited": "Illimité",
@@ -16,7 +22,7 @@
       "no": "Non"
     },
     "subscribeNow": "Abonnez-vous maintenant",
-    "bankTransfer": "Thanh toán qua chuyển khoản (VN)",
+    "bankTransfer": "Payer par virement bancaire (Vietnam)",
     "notAvailable": "Pas disponible",
     "noPackages": "Aucun forfait d’achat n’est disponible pour le moment.",
     "success": "Succès",
@@ -24,34 +30,34 @@
     "error": "Erreur",
     "bankModal": {
       "title": "Virement bancaire",
-      "instruction": "Quét mã QR qua ứng dụng ngân hàng hoặc Momo để thanh toán.",
+      "instruction": "Scannez le code QR avec votre application bancaire ou MoMo pour payer.",
       "bank": "Banque",
       "account": "Compte",
       "name": "Nom",
       "amount": "Montant",
-      "content": "Contenu",
-      "note": "(Veuillez inclure le contenu exact du transfert ci-dessus. Votre prime sera activée automatiquement dans quelques minutes).",
+      "content": "Référence du virement",
+      "note": "Utilisez exactement la référence de virement indiquée ci-dessus. Premium sera activé automatiquement sous quelques minutes.",
       "close": "Fermer"
     }
   },
   "sos": {
     "title": "Aide d'urgence",
     "subtitle": "Les numéros locaux sont basés sur votre position GPS actuelle.",
-    "loading": "Trouver des numéros d'urgence locaux...",
+    "loading": "Recherche des numéros d’urgence locaux...",
     "police": "Police",
-    "fire": "Feu",
+    "fire": "Pompiers",
     "ambulance": "Ambulance",
     "sendAlert": "Envoyer une alerte SOS",
     "close": "Fermer",
     "button": "SOS",
-    "buttonLoading": "SOS....",
+    "buttonLoading": "SOS...",
     "errorGps": "Impossible de trouver votre position GPS actuelle.",
     "errorLoad": "Impossible de charger les numéros d'urgence.",
     "errorSendGps": "La localisation GPS est requise avant d'envoyer une alerte SOS.",
     "errorSend": "Impossible d'envoyer une alerte SOS.",
-    "successPartially": "Le SOS a partiellement échoué. Envoyé à{{succeeded}}, a échoué pour{{failed}}.",
-    "successFull": "SOS envoyé avec succès à{{succeeded}}contact(s).",
-    "errorFull": "Échec de l'envoi d'un SOS à l'un de vos{{failed}}contact(s)."
+    "successPartially": "Le SOS a été partiellement envoyé. Envois réussis : {{succeeded}} ; échecs : {{failed}}.",
+    "successFull": "SOS envoyé avec succès. Destinataires joints : {{succeeded}}.",
+    "errorFull": "Le SOS n’a pas pu être envoyé. Destinataires en échec : {{failed}}."
   },
   "tabs": {
     "discover": "Découvrir",
@@ -61,10 +67,10 @@
     "profile": "Profil"
   },
   "onboarding": {
-    "skip": "Sauter",
+    "skip": "Passer",
     "next": "Suivant",
     "heroTitle": "Découvrez le monde avec l'IA",
-    "heroSubtitle": "Travelling planifie votre voyage parfait en quelques secondes",
+    "heroSubtitle": "Traveling planifie votre voyage idéal en quelques secondes",
     "featuresTitle": "Tout ce dont vous avez besoin sur la route",
     "features": {
       "aiItineraries": "Itinéraires IA",
@@ -72,10 +78,10 @@
       "liveTranslation": "Traduction en direct",
       "liveTranslationDesc": "Parlez, lisez et comprenez les moments locaux avec moins de frictions.",
       "smartDiscovery": "Découverte intelligente",
-      "smartDiscoveryDesc": "Trouvez de la nourriture, des lieux et des expériences avec une confiance classée par l'IA."
+      "smartDiscoveryDesc": "Trouvez des restaurants, des lieux et des expériences grâce aux recommandations classées par l’IA."
     },
     "styleTitle": "Quel genre de voyageur êtes-vous ?",
-    "styleSubtitle": "Choisissez-en un ou plusieurs. Voyager modifiera l’ambiance du voyage autour de vous.",
+    "styleSubtitle": "Choisissez-en un ou plusieurs. Traveling adaptera les recommandations à vos préférences.",
     "styleRequired": "Sélectionnez au moins un style de voyage pour continuer.",
     "styles": {
       "adventure": "Aventure",
@@ -85,11 +91,11 @@
       "city": "Explorateur de la ville",
       "eco": "Voyage écologique"
     },
-    "finalTitle": "J'y suis presque !",
-    "finalSubtitle": "Vos premières recommandations commenceront par ces signaux de voyage.",
-    "terms1": "En continuant, vous acceptez notre",
+    "finalTitle": "Vous y êtes presque !",
+    "finalSubtitle": "Ces choix permettront de personnaliser vos premières recommandations.",
+    "terms1": "En continuant, vous acceptez nos ",
     "termsLink": "Conditions d'utilisation",
-    "terms2": "et",
+    "terms2": " et notre ",
     "privacyLink": "politique de confidentialité",
     "terms3": ".",
     "getStarted": "Commencer",
@@ -107,7 +113,7 @@
       "worldExplorer": "Explorateur du monde",
       "worldExplorerDesc": "Lieux enregistrés dans plusieurs pays.",
       "foodie": "Fin gourmet",
-      "foodieDesc": "J'ai trouvé des joyaux de la cuisine locale avec Traveling.",
+      "foodieDesc": "Vous avez trouvé des pépites culinaires locales avec Traveling.",
       "mountainLover": "Amoureux de la montagne",
       "mountainLoverDesc": "Aventures planifiées en haute altitude.",
       "soloTraveler": "Voyageur solo",
@@ -125,9 +131,17 @@
       "account": "Compte",
       "notifications": "Notifications",
       "subscription": "Abonnement",
-      "privacy": "politique de confidentialité",
+      "privacy": "Politique de confidentialité",
       "terms": "Conditions d'utilisation",
       "signOut": "Se déconnecter"
+    },
+    "account": {
+      "details": "Détails du compte",
+      "managedByClerk": "Géré de manière sécurisée par Clerk",
+      "authDescription": "Votre identité, vos sessions actives et votre mot de passe sont gérés par Clerk et votre fournisseur OAuth.",
+      "restoreDescription": "Restaurez un abonnement App Store ou Google Play antérieur.",
+      "restoring": "Restauration...",
+      "restorePurchases": "Restaurer les achats"
     },
     "editProfile": "Modifier le profil",
     "yourBadges": "Vos insignes",
@@ -135,10 +149,10 @@
     "recentTrips": "Voyages récents"
   },
   "legal": {
-    "privacyPolicy": "politique de confidentialité",
+    "privacyPolicy": "Politique de confidentialité",
     "openPrivacyPolicy": "Ouvrir la politique de confidentialité",
     "termsOfService": "Conditions d'utilisation",
-    "openTerms": "Conditions ouvertes",
-    "back": "Dos"
+    "openTerms": "Ouvrir les Conditions d’utilisation",
+    "back": "Retour"
   }
 }

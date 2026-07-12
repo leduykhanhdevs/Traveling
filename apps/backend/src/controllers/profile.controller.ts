@@ -5,9 +5,9 @@ import { AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/http-response.js';
 import { posthog } from '../services/posthog.service.js';
+import { getVerifiedPrimaryEmail } from '../services/clerk.service.js';
 
 const upsertProfileSchema = z.object({
-  email: z.string().email(),
   preferredLanguage: z.string().min(2),
   dietaryRestrictions: z.array(z.string()).default([]),
   travelStyle: z.string().min(2),
@@ -37,14 +37,16 @@ export const putProfile = asyncHandler(async (req, res) => {
     throw new AppError('UNAUTHORIZED', 'Sign in to update your profile.', 401);
   }
   const body = upsertProfileSchema.parse(req.body);
+  const email = await getVerifiedPrimaryEmail(req.auth.userId);
   const user = await prisma.user.upsert({
     where: {
       clerkId: req.auth.userId,
     },
-    update: body,
+    update: { ...body, email },
     create: {
       clerkId: req.auth.userId,
       ...body,
+      email,
     },
   });
   posthog.identify({

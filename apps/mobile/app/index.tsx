@@ -13,10 +13,10 @@ export default function Index(): JSX.Element {
       return;
     }
 
-    if (!isSignedIn) {
-      router.replace('/(auth)/login');
-    } else if (!onboardingComplete) {
+    if (!onboardingComplete) {
       router.replace('/(auth)/onboarding');
+    } else if (!isSignedIn) {
+      router.replace('/(auth)/login');
     } else {
       router.replace('/(tabs)/discover');
     }

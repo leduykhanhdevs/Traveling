@@ -28,8 +28,8 @@ export const normalizeError = (error: unknown): AppError => {
   }
 
   if (error instanceof Error) {
-    return new AppError('INTERNAL_ERROR', error.message, 500);
+    return new AppError('INTERNAL_ERROR', 'An unexpected error occurred.', 500);
   }
 
-  return new AppError('INTERNAL_ERROR', 'An unexpected error occurred.', 500, error);
+  return new AppError('INTERNAL_ERROR', 'An unexpected error occurred.', 500);
 };

@@ -372,10 +372,26 @@ export const listPersonalEmergencyContacts = async (
   return contacts.map(toEmergencyContactSummary);
 };
 
+const FREE_TIER_EMERGENCY_CONTACT_LIMIT = 3;
+
 export const createPersonalEmergencyContact = async (
   input: CreateEmergencyContactInput,
 ): Promise<EmergencyContactSummary> => {
   const userId = await findUserIdByClerkId(input.clerkUserId);
+
+  const { getEntitlementStatus } = await import('./billing.service.js');
+  const status = await getEntitlementStatus(input.clerkUserId);
+  if (status.tier !== 'premium') {
+    const existingCount = await prisma.emergencyContact.count({ where: { userId } });
+    if (existingCount >= FREE_TIER_EMERGENCY_CONTACT_LIMIT) {
+      throw new AppError(
+        'PAYMENT_REQUIRED',
+        `Free plan is limited to ${FREE_TIER_EMERGENCY_CONTACT_LIMIT} emergency contacts. Upgrade to premium to add more.`,
+        402,
+      );
+    }
+  }
+
   const contact = await prisma.emergencyContact.create({
     data: {
       userId,

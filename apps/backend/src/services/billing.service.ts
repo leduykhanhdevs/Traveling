@@ -3,6 +3,7 @@ import { env } from '../config/env.js';
 import { fetchJson } from './http-client.js';
 import { redis } from './redis.service.js';
 import { AppError } from '../utils/errors.js';
+import { logUnknownError } from '../utils/logger.js';
 
 type RevenueCatSubscriberResponse = {
   subscriber?: {
@@ -27,8 +28,8 @@ export const getEntitlementStatus = async (appUserId: string): Promise<Entitleme
     // 1. Check DB for active manual or bank-transfer grants
     const activeGrant = await prisma.premiumGrant.findFirst({
       where: {
-        userId: appUserId,
-        expiresAt: { gt: new Date() },
+        user: { clerkId: appUserId },
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
     });
 
@@ -50,15 +51,19 @@ export const getEntitlementStatus = async (appUserId: string): Promise<Entitleme
       'RevenueCat',
     );
     const premium = data.subscriber?.entitlements?.premium;
-    const expires = premium?.expires_date
-      ? Date.parse(premium.expires_date)
-      : Number.POSITIVE_INFINITY;
+    const expires = premium
+      ? premium.expires_date
+        ? Date.parse(premium.expires_date)
+        : Number.POSITIVE_INFINITY
+      : 0;
     return {
-      tier: expires > Date.now() ? 'premium' : 'free',
+      tier: !Number.isNaN(expires) && expires > Date.now() ? 'premium' : 'free',
       freeLimits: QUERY_TIERS,
     };
   } catch (error) {
-    console.error('Error in getEntitlementStatus', error);
+    logUnknownError('Entitlement lookup failed; defaulting to free tier', error, {
+      userId: appUserId,
+    });
     return {
       tier: 'free',
       freeLimits: QUERY_TIERS,

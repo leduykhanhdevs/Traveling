@@ -3,103 +3,35 @@ import { useMemo, useState } from 'react';
 import { FlatList, Modal, Text, TouchableOpacity, View } from 'react-native';
 import { PrimaryButton } from './PrimaryButton';
 
-type PhraseCategory = 'Greetings' | 'Directions' | 'Food' | 'Emergency' | 'Numbers';
-
 export type PhrasebookPhrase = {
   id: string;
-  category: PhraseCategory;
+  category: string;
   phrase: string;
-  phonetic: string;
 };
 
 type PhrasebookSheetProps = {
-  offlineAvailable: boolean;
   onClose: () => void;
   onPlayPhrase: (phrase: PhrasebookPhrase) => void;
+  phrases: readonly PhrasebookPhrase[];
   visible: boolean;
 };
 
-const categories: readonly PhraseCategory[] = [
-  'Greetings',
-  'Directions',
-  'Food',
-  'Emergency',
-  'Numbers',
-];
-
-const phrases: readonly PhrasebookPhrase[] = [
-  {
-    id: 'greeting-hello',
-    category: 'Greetings',
-    phrase: 'Xin chao',
-    phonetic: 'sin chow',
-  },
-  {
-    id: 'greeting-thanks',
-    category: 'Greetings',
-    phrase: 'Cam on',
-    phonetic: 'gahm un',
-  },
-  {
-    id: 'directions-station',
-    category: 'Directions',
-    phrase: 'Nha ga o dau?',
-    phonetic: 'nya gah uh dow',
-  },
-  {
-    id: 'directions-taxi',
-    category: 'Directions',
-    phrase: 'Toi can taxi',
-    phonetic: 'toy kun taxi',
-  },
-  {
-    id: 'food-vegetarian',
-    category: 'Food',
-    phrase: 'Toi an chay',
-    phonetic: 'toy an chai',
-  },
-  {
-    id: 'food-not-spicy',
-    category: 'Food',
-    phrase: 'Dung cay qua',
-    phonetic: 'dung kai kwah',
-  },
-  {
-    id: 'emergency-help',
-    category: 'Emergency',
-    phrase: 'Giup toi voi',
-    phonetic: 'zoop toy voy',
-  },
-  {
-    id: 'emergency-doctor',
-    category: 'Emergency',
-    phrase: 'Toi can bac si',
-    phonetic: 'toy kun bak see',
-  },
-  {
-    id: 'numbers-one',
-    category: 'Numbers',
-    phrase: 'Mot, hai, ba',
-    phonetic: 'moht, high, bah',
-  },
-  {
-    id: 'numbers-price',
-    category: 'Numbers',
-    phrase: 'Bao nhieu tien?',
-    phonetic: 'bow nyew teen',
-  },
-];
-
 export const PhrasebookSheet = ({
-  offlineAvailable,
   onClose,
   onPlayPhrase,
+  phrases,
   visible,
 }: PhrasebookSheetProps): JSX.Element => {
-  const [activeCategory, setActiveCategory] = useState<PhraseCategory>('Greetings');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const categories = useMemo(
+    () => [...new Set(phrases.map((phrase) => phrase.category))],
+    [phrases],
+  );
+  const selectedCategory =
+    activeCategory && categories.includes(activeCategory) ? activeCategory : categories[0] ?? null;
   const activePhrases = useMemo(
-    () => phrases.filter((phrase) => phrase.category === activeCategory),
-    [activeCategory],
+    () => phrases.filter((phrase) => phrase.category === selectedCategory),
+    [phrases, selectedCategory],
   );
 
   return (
@@ -133,7 +65,7 @@ export const PhrasebookSheet = ({
             horizontal
             keyExtractor={(item) => item}
             renderItem={({ item }) => {
-              const selected = item === activeCategory;
+              const selected = item === selectedCategory;
               return (
                 <TouchableOpacity
                   accessibilityHint={`Shows ${item} phrases.`}
@@ -153,7 +85,7 @@ export const PhrasebookSheet = ({
           />
 
           <FlatList
-            accessibilityLabel={`${activeCategory} phrases`}
+            accessibilityLabel={`${selectedCategory ?? ''} phrases`}
             contentContainerClassName="gap-3 pb-3"
             data={activePhrases}
             keyExtractor={(item) => item.id}
@@ -162,14 +94,11 @@ export const PhrasebookSheet = ({
                 <View className="flex-row items-start justify-between gap-3">
                   <View className="flex-1">
                     <Text className="font-inter-bold text-lg text-white">{item.phrase}</Text>
-                    <Text className="mt-1 font-inter text-sm text-zinc-300">{item.phonetic}</Text>
-                    {offlineAvailable ? (
-                      <View className="mt-3 self-start rounded-full bg-emerald-500/20 px-3 py-1">
-                        <Text className="font-inter-semibold text-xs text-emerald-300">
-                          ✓ Available offline
-                        </Text>
-                      </View>
-                    ) : null}
+                    <View className="mt-3 self-start rounded-full bg-emerald-500/20 px-3 py-1">
+                      <Text className="font-inter-semibold text-xs text-emerald-300">
+                        ✓ Available offline
+                      </Text>
+                    </View>
                   </View>
                   <TouchableOpacity
                     accessibilityHint={`Plays ${item.phrase} aloud.`}

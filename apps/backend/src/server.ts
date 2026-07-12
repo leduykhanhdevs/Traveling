@@ -15,6 +15,8 @@ import { legalRouter } from './routes/legal.routes.js';
 import { webhookRouter } from './routes/webhook.routes.js';
 import { sendSuccess } from './utils/http-response.js';
 import { posthog } from './services/posthog.service.js';
+import { stableHash } from './utils/hash.js';
+import { AppError } from './utils/errors.js';
 
 type SentryExpressCompat = typeof Sentry & {
   Handlers?: {
@@ -25,7 +27,13 @@ type SentryExpressCompat = typeof Sentry & {
 };
 
 const sentry = Sentry as SentryExpressCompat;
-const sentryDsn = process.env.SENTRY_DSN;
+const sentryDsn = env.SENTRY_DSN;
+const productionOrigins = new Set(
+  (env.CORS_ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
 
 Sentry.init({
   dsn: sentryDsn,
@@ -34,19 +42,21 @@ Sentry.init({
 });
 
 const sentryUserContext: express.RequestHandler = (req, _res, next) => {
-  Sentry.setUser(req.auth?.userId ? { id: req.auth.userId } : null);
+  Sentry.setUser(req.auth?.userId ? { id: stableHash(req.auth.userId) } : null);
   next();
 };
 
 const appleAppSiteAssociation = {
   applinks: {
     apps: [],
-    details: [
-      {
-        appID: 'TEAM123456.com.traveling.app',
-        paths: ['/discover/*', '/itinerary/*', '/community/*'],
-      },
-    ],
+    details: env.APPLE_TEAM_ID
+      ? [
+          {
+            appID: `${env.APPLE_TEAM_ID}.${env.APPLE_BUNDLE_ID}`,
+            paths: ['/discover/*', '/itinerary/*', '/community/*'],
+          },
+        ]
+      : [],
   },
 } as const;
 
@@ -61,19 +71,29 @@ export const createServer = (): express.Express => {
   app.use(helmet());
   app.use(
     cors({
-      origin: env.NODE_ENV === 'production' ? env.APP_URL : true,
+      origin: (origin, callback) => {
+        if (env.NODE_ENV !== 'production' || !origin || productionOrigins.has(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new AppError('CORS_ORIGIN_DENIED', 'Origin is not allowed.', 403));
+      },
       credentials: true,
     }),
   );
   app.use(compression());
-  
-  app.use('/api/v1/payments/bank-transfer/webhook', express.raw({ type: 'application/json' }), webhookRouter);
-  
-  app.use(express.json({ limit: '20mb' }));
-  app.use(express.urlencoded({ extended: true }));
   app.use(correlationIdMiddleware);
   setupExpressRequestContext(posthog, app);
   app.use(requestLogger);
+
+  app.use(
+    '/api/v1/payments/bank-transfer/webhook',
+    express.raw({ type: 'application/json', limit: '256kb' }),
+    webhookRouter,
+  );
+
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '100kb' }));
   app.get('/health', (_req, res) => {
     sendSuccess(res, {
       status: 'ok',
